@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* Placeholder theme. The cyber design tokens arrive in phase 02 (design system). */
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}

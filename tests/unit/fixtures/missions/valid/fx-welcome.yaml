@@ -1,0 +1,232 @@
+# A complete fixture mission for the mission schema, loader and evaluator tests. It isn't shipped:
+# real missions live in src/content/missions. It uses every kind of check (event, answer with and
+# without choices, fileState on the learner's machine and on a named host, commandRun, and nested
+# all/any), a bonus objective and a hidden one. Everything is fictional and on the Range, the
+# team's practice lab (192.168.60.0/24), with speakers from md-files/story-bible.md.
+id: fx-welcome
+slug: fx-welcome
+version: 1
+title: Welcome to the Range
+difficulty: intro
+estimatedMinutes: 8
+skills: [linux, blue-team]
+hook: "First day on the Range. Your mentor's waiting, and so is your first choice."
+learningGoals:
+  - Why written permission comes before any test
+  - How to find the computers on a practice network
+  - How to lock a file so only its owner can read it
+concepts: [fx-intro]
+briefing:
+  scenario: >-
+    Noor Halvorsen, your mentor at Candlewright Security, is showing you round the Range: the
+    team's practice lab, where every machine is a copy that resets.
+  role: "You're the team's newest recruit, signed in as `recruit` on `range-ws-01`."
+  authorization: >-
+    You're on the Range, Candlewright's practice lab. Every machine here belongs to the team and
+    exists for training. Signed: Theo Ashgrove, team lead.
+story:
+  - on: start
+    speaker: mentor-noor
+    text: >-
+      Welcome to Candlewright! I'm Noor, your mentor. We find weak spots in computers before
+      anyone else does, but only when the owner asks us to.
+  - on: { objective: pick-a-path }
+    speaker: teammate-theo
+    text: "This letter says exactly what we may test. No letter, no test."
+  - on: { event: host.discovered, match: { hostId: range-srv-01 } }
+    speaker: teammate-kit
+    text: "There it is: range-srv-01. Every computer you find lights up on the map."
+  - on: complete
+    speaker: mentor-noor
+    text: "A choice, a scan and a fix on day one. You're already doing what analysts do."
+scenario:
+  seed: 20260913
+  startTime: "2026-03-02T09:00:00Z"
+  network:
+    subnets:
+      - { cidr: 192.168.60.0/24, name: range }
+    hosts:
+      - id: range-ws-01
+        hostname: range-ws-01.range.candlewright.example
+        interfaces:
+          - { ip: 192.168.60.10, subnet: 192.168.60.0/24 }
+        os: { family: linux, name: Linux, version: "6.8" }
+        users:
+          - { name: recruit, uid: 1000 }
+          - { name: guest, uid: 1001 }
+        fs:
+          entries:
+            - path: /home/recruit/welcome.txt
+              content: |
+                Welcome to the Range! Everything here is a practice copy.
+                Start by finding the other computer on this network.
+            - path: /home/recruit/.welcome-note
+              mode: "600"
+              content: |
+                You found the hidden note! SIM{look-closer}
+            - path: /srv/shared
+              type: dir
+              owner: recruit
+              mode: "755"
+            - path: /srv/shared/app.conf
+              owner: recruit
+              mode: 644 # unquoted on purpose: YAML reads a number, and the schema accepts it
+              content: |
+                # practice settings
+                db_password=practice-only-123
+            - path: /var/log/range.log
+              content: |
+                2026-03-02T08:58:00Z INFO range[12]: practice lab reset
+                2026-03-02T08:59:30Z INFO range[12]: recruit signed in
+      - id: range-srv-01
+        hostname: range-srv-01.range.candlewright.example
+        interfaces:
+          - { ip: 192.168.60.20, subnet: 192.168.60.0/24 }
+        os: { family: linux, name: Linux, version: "6.8" }
+        services:
+          - { port: 22, protocol: tcp, name: ssh, product: sshd, version: "9.6" }
+          - port: 80
+            protocol: tcp
+            name: http
+            product: httpd
+            version: "2.4.58"
+            http:
+              pages:
+                "/": { status: 200, title: Range status }
+        users:
+          - { name: admin, uid: 1000 }
+        fs:
+          entries:
+            - path: /srv/backup/backup.conf
+              owner: admin
+              mode: "640"
+              content: |
+                rotate the backup password every month
+  session: { host: range-ws-01, user: recruit }
+  flags:
+    - { id: look-closer, token: "SIM{look-closer}" }
+objectives:
+  - id: pick-a-path
+    description: Decide what to do about Kit's idea
+    why: Every real test starts with permission, so this choice comes first.
+    success: You waited for permission. That's the call a professional makes.
+    check:
+      kind: answer
+      accept: [Wait for the letter, Ask Theo]
+      choices:
+        - text: Look now
+          reply:
+            speaker: teammate-theo
+            text: >-
+              Checking a server without permission is a crime, even if you mean well. That's
+              why we wait for the signature.
+        - text: Wait for the letter
+        - text: Ask Theo
+          reply:
+            speaker: teammate-theo
+            text: Good question to ask. We wait for the letter.
+  - id: read-welcome
+    description: Read the welcome note in your home folder with `logview`
+    why: Reading what's already on a machine is how every investigation starts.
+    success: You read your first file on the Range!
+    check:
+      kind: event
+      event: file.read
+      match: { path: /home/recruit/welcome.txt }
+  - id: scan-range
+    description: Find the other computer on the Range with `netscan`
+    why: You can only protect the computers you know about.
+    success: You found range-srv-01! It's on your map now.
+    check:
+      kind: all
+      of:
+        - kind: commandRun
+          pattern: "^netscan\\b"
+        - kind: any
+          of:
+            - kind: event
+              event: host.discovered
+              match: { hostId: range-srv-01 }
+            - kind: event
+              event: scan.completed
+              match: { hostsUp: 2 }
+  - id: name-the-host
+    description: Type the name of the computer you found
+    why: Writing down what you find is how a report starts.
+    success: That's the one. Names matter in a report.
+    check:
+      kind: answer
+      accept: [range-srv-01, range-srv-01.range.candlewright.example]
+  - id: lock-the-file
+    description: Make `/srv/shared/app.conf` readable by its owner only
+    why: A password anyone can read isn't a secret.
+    success: You locked the file! Now only its owner can read that password.
+    check:
+      kind: all
+      of:
+        - kind: fileState
+          path: /srv/shared/app.conf
+          predicate: { modeExcludes: "044", owner: recruit, notReadableBy: guest }
+        - kind: fileState
+          host: range-ws-01
+          path: /srv/shared
+          predicate: { type: dir, readableBy: recruit }
+  - id: read-the-manual
+    description: Read the help page for `netscan`
+    why: Every tool comes with instructions, and reading them is a real skill.
+    success: "Curious Cat: you read the help page for `netscan`."
+    optional: true
+    check:
+      kind: event
+      event: help.viewed
+      match: { command: netscan }
+  - id: look-closer
+    description: Find the hidden welcome note
+    why: Files whose names start with a dot don't show up in a normal listing.
+    success: "Look Closer: you found the hidden welcome note!"
+    hidden: true
+    check:
+      kind: event
+      event: flag.found
+      match: { flagId: look-closer }
+hints:
+  pick-a-path:
+    - What did Theo say a test needs before it starts?
+    - Real testers only test what the owner has agreed to, in writing.
+    - Pick "Wait for the letter" or "Ask Theo".
+  read-welcome:
+    - There's a note waiting for you in your home folder.
+    - "`logview` shows what's inside a file, one numbered line at a time."
+    - Type `logview /home/recruit/welcome.txt`.
+  scan-range:
+    - Which tool looks for computers on a network?
+    - "`netscan` checks every address in a range and lists the computers that answer."
+    - Type `netscan 192.168.60.0/24`.
+  name-the-host:
+    - Look at what your scan found.
+    - The scan lists each computer by its name and its address.
+    - The name starts with `range-srv`.
+  lock-the-file:
+    - Who can read this file right now?
+    - A file's mode says who may read it. The last two digits cover the group and everyone else.
+    - Give it the mode `600`, so only its owner can read and change it.
+  read-the-manual:
+    - Tools can explain themselves.
+    - Adding `--help` after a command name shows its help page.
+    - Type `netscan --help`.
+debrief:
+  summary: You chose permission first, found a computer on the Range, and locked a file.
+  whatYouLearned:
+    - Written permission comes before any test
+    - "`netscan` finds the computers on a network"
+    - A file's mode decides who can read it
+  ethicsNote: >-
+    Scanning a network you don't own can look like the start of an attack to its owner, and
+    doing it without permission is a crime. Your team only scans networks whose owners have
+    signed a letter, and the Range belongs to the team.
+  defensiveTakeaway: >-
+    Keep secrets in files only their owner can read, and check file modes whenever a password
+    has to live in a file.
+  nextTease: "A bakery's letter is signed. Something on its order server doesn't look right."
+  furtherReading: [fx-ports]
+guidedTour: true

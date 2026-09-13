@@ -221,6 +221,9 @@ function discovery(value: unknown, path: string): DiscoveryState {
         ...(x.osGuess !== undefined && { osGuess: str(x.osGuess, `${p}.osGuess`) }),
         firstSeenTick: int(x.firstSeenTick, `${p}.firstSeenTick`),
         via: str(x.via, `${p}.via`),
+        // Optional so snapshots from before `answered` existed still load. They can't say, so
+        // their hosts count as answered, like every host a tool records.
+        answered: x.answered === undefined ? true : bool(x.answered, `${p}.answered`),
         portScanned: bool(x.portScanned, `${p}.portScanned`),
         accessed: bool(x.accessed, `${p}.accessed`),
         services: record(x.services, `${p}.services`, (s, sp): DiscoveredService => {
@@ -260,6 +263,8 @@ export function validateState(
         user: str(session.user, "state.session.user"),
         cwd: str(session.cwd, "state.session.cwd"),
         env: record(session.env, "state.session.env", str),
+        // Snapshots from before `history` existed have none.
+        history: optional(session.history, (h) => arr(h, "state.session.history", str)) ?? [],
       },
       network: network(o.network, "state.network"),
       machines: record(o.machines, "state.machines", (m, p): Machine => {

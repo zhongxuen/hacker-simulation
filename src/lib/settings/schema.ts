@@ -22,6 +22,11 @@ export const SETTINGS_SHAPE = {
    * (src/styles/motion.css).
    */
   reducedMotionOverride: ReducedMotionOverrideSchema.catch("system"),
+  /**
+   * Beginner mode (phase 05): the terminal's plain-language explainer lines under errors, and its
+   * row of suggested commands. On by default, because most learners are brand new.
+   */
+  beginnerMode: z.boolean().catch(true),
 } as const;
 
 export const SettingsSchema = z.object(SETTINGS_SHAPE);

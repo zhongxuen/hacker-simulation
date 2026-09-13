@@ -19,6 +19,7 @@ export const FS_ERROR_CODES = [
   "ELOOP", // too many symbolic links (usually a loop)
   "EINVAL", // the request makes no sense (see `detail`)
   "EBUSY", // refusing to touch the root directory
+  "EFBIG", // a write would make a file bigger than the simulation allows
 ] as const;
 
 export const SIM_ERROR_CODES = [
@@ -32,6 +33,8 @@ export const SIM_ERROR_CODES = [
   "CONNECTION_REFUSED", // the host answered, but nothing is listening on that port
   "PROTOCOL_MISMATCH", // something is listening, but it speaks a different protocol
   "OUT_OF_SCOPE", // a target outside the simulated network; nothing is ever sent
+  "SUDO_DENIED", // the user may not act as root with sudo
+  "NO_MANUAL_ENTRY", // `man` has no page by that name
 ] as const;
 
 export type FsErrorCode = (typeof FS_ERROR_CODES)[number];
@@ -86,7 +89,9 @@ export type SimError =
       readonly expected: string;
       readonly found: string;
     }
-  | { readonly code: "OUT_OF_SCOPE"; readonly target: string };
+  | { readonly code: "OUT_OF_SCOPE"; readonly target: string }
+  | { readonly code: "SUDO_DENIED"; readonly user: string }
+  | { readonly code: "NO_MANUAL_ENTRY"; readonly topic: string };
 
 const FS_MESSAGES: Record<FsErrorCode, string> = {
   ENOENT: "No such file or directory",
@@ -99,7 +104,11 @@ const FS_MESSAGES: Record<FsErrorCode, string> = {
   ELOOP: "Too many levels of symbolic links",
   EINVAL: "Invalid argument",
   EBUSY: "Device or resource busy",
+  EFBIG: "File too large",
 };
+
+/** The short system message for a filesystem error code: "No such file or directory". */
+export const fsMessage = (code: FsErrorCode): string => FS_MESSAGES[code];
 
 export function isFsError(error: SimError): error is FsError {
   return (FS_ERROR_CODES as readonly string[]).includes(error.code);
@@ -123,7 +132,10 @@ export function formatError(tool: string, error: SimError): string {
     case "UNKNOWN_COMMAND":
       return `${error.command}: command not found`;
     case "BAD_FLAG":
-      return `${tool}: unrecognized option '${error.flag}'`;
+      // GNU tools word a single-letter option differently from a long one.
+      return /^-[^-]$/.test(error.flag)
+        ? `${tool}: invalid option -- '${error.flag.slice(1)}'`
+        : `${tool}: unrecognized option '${error.flag}'`;
     case "MISSING_ARGUMENT":
       return error.argument.startsWith("-")
         ? `${tool}: option '${error.argument}' requires a value`
@@ -142,6 +154,10 @@ export function formatError(tool: string, error: SimError): string {
       return `${tool}: ${endpoint(error.target, error.port)}: expected ${error.expected}, got ${error.found}`;
     case "OUT_OF_SCOPE":
       return `${tool}: ${error.target}: outside the simulated network (nothing was sent)`;
+    case "SUDO_DENIED":
+      return `${tool}: ${error.user} is not in the sudoers file. This incident will be reported.`;
+    case "NO_MANUAL_ENTRY":
+      return `No manual entry for ${error.topic}`;
     default:
       return formatFsError(tool, error);
   }

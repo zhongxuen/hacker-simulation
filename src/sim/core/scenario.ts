@@ -77,7 +77,9 @@ export function createInitialState(spec: ScenarioSpec, seed: number): SimState {
         SHELL: account.shell,
         USER: account.name,
         ...spec.session.env,
+        PWD: cwd,
       },
+      history: [],
     },
     network,
     machines,
@@ -121,7 +123,10 @@ function sessionStart(
   return { host, account, cwd: "/" };
 }
 
-/** The learner starts knowing their own machine, plus any hosts the briefing mentions. */
+/**
+ * The learner starts knowing their own machine, plus any hosts the briefing mentions. Briefing
+ * hosts haven't answered anything yet, so the map shows them as "unknown" until a tool hears back.
+ */
 function initialDiscovery(
   network: NetworkGraph,
   sessionHost: Host,
@@ -144,6 +149,7 @@ function initialDiscovery(
       hostname: host.hostname,
       via: "briefing",
       tick: 0,
+      answered: false,
     }).discovery;
   }
   return discovery;

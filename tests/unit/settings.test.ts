@@ -64,6 +64,7 @@ describe("parseSettings", () => {
     expect(parseSettings(undefined)).toEqual({
       sidebarCollapsed: false,
       reducedMotionOverride: "system",
+      beginnerMode: true,
     });
     expect(DEFAULT_SETTINGS).toEqual(parseSettings({}));
   });
@@ -72,17 +73,21 @@ describe("parseSettings", () => {
     expect(parseSettings({ sidebarCollapsed: "yes", reducedMotionOverride: "reduce" })).toEqual({
       sidebarCollapsed: false,
       reducedMotionOverride: "reduce",
+      beginnerMode: true,
     });
     expect(parseSettings({ sidebarCollapsed: true, reducedMotionOverride: "sometimes" })).toEqual({
       sidebarCollapsed: true,
       reducedMotionOverride: "system",
+      beginnerMode: true,
     });
+    expect(parseSettings({ beginnerMode: false }).beginnerMode).toBe(false);
+    expect(parseSettings({ beginnerMode: "off" }).beginnerMode).toBe(true);
   });
 
   it("drops unknown keys", () => {
     expect(
       parseSettings({ sidebarCollapsed: true, completedMissions: ["intro-01"], xp: 900 }),
-    ).toEqual({ sidebarCollapsed: true, reducedMotionOverride: "system" });
+    ).toEqual({ sidebarCollapsed: true, reducedMotionOverride: "system", beginnerMode: true });
   });
 
   it("treats anything that isn't an object as nothing saved", () => {
@@ -105,7 +110,11 @@ describe("settings store", () => {
     const store = storeOver(
       withSaved(JSON.stringify({ sidebarCollapsed: true, reducedMotionOverride: "full" })),
     );
-    expect(store.get()).toEqual({ sidebarCollapsed: true, reducedMotionOverride: "full" });
+    expect(store.get()).toEqual({
+      sidebarCollapsed: true,
+      reducedMotionOverride: "full",
+      beginnerMode: true,
+    });
   });
 
   it("falls back to defaults on corrupt JSON, without throwing", () => {
@@ -117,12 +126,17 @@ describe("settings store", () => {
   it("drops unknown keys and saves only known settings", () => {
     const storage = withSaved(JSON.stringify({ sidebarCollapsed: true, streak: 12 }));
     const store = storeOver(storage);
-    expect(store.get()).toEqual({ sidebarCollapsed: true, reducedMotionOverride: "system" });
+    expect(store.get()).toEqual({
+      sidebarCollapsed: true,
+      reducedMotionOverride: "system",
+      beginnerMode: true,
+    });
 
     store.update({ reducedMotionOverride: "reduce" });
     expect(JSON.parse(storage.getItem(SETTINGS_STORAGE_KEY) ?? "")).toEqual({
       sidebarCollapsed: true,
       reducedMotionOverride: "reduce",
+      beginnerMode: true,
     });
   });
 
@@ -163,6 +177,7 @@ describe("settings store", () => {
     expect(onChange).toHaveBeenLastCalledWith({
       sidebarCollapsed: false,
       reducedMotionOverride: "reduce",
+      beginnerMode: true,
     });
 
     store.update({ reducedMotionOverride: "reduce" });

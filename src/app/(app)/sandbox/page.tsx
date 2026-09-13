@@ -1,21 +1,23 @@
 import type { Metadata } from "next";
-import { SectionPlaceholder } from "@/components/shell/section-placeholder";
 import { getAppSection } from "@/lib/app-sections";
-import { FIRST_STEP } from "@/lib/next-step";
+import { SandboxWorkspace } from "./sandbox-workspace";
 
 export const metadata: Metadata = { title: getAppSection("sandbox").label };
 
 export default function SandboxPage() {
   return (
-    <SectionPlaceholder headline="Practice freely. Nothing can break." nextStep={FIRST_STEP}>
-      <p>
-        The sandbox is a practice space: a pretend network of computers where you can try any
-        command as often as you like.
-      </p>
-      <p>
-        Everything in it is simulated, so nothing you do can harm a real computer. If something goes
-        wrong, you can start it fresh with one click.
-      </p>
-    </SectionPlaceholder>
+    <div className="space-y-8">
+      <div className="max-w-3xl">
+        <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+          Practice freely. Nothing can break.
+        </h1>
+        <p className="mt-4 text-lg leading-8 text-secondary">
+          The sandbox is a practice space on the Range, your team&apos;s training lab. Pick a
+          machine and try any command as often as you like. There are no goals and no score, and
+          nothing here touches a real computer.
+        </p>
+      </div>
+      <SandboxWorkspace />
+    </div>
   );
 }

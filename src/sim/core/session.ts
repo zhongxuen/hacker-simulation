@@ -4,7 +4,7 @@ import type { FsContext } from "../fs/ops";
 import type { Vfs } from "../fs/types";
 import { hostById } from "../net/graph";
 import type { DiscoveryState, Host } from "../net/types";
-import type { Machine, SimState } from "./types";
+import type { FileChange, Machine, Session, SimEvent, SimState } from "./types";
 
 /** The host the learner is on. Always exists: createInitialState and deserialize check it. */
 export function sessionHost(state: SimState): Host {
@@ -41,4 +41,14 @@ export function withSessionFs(state: SimState, fs: Vfs): SimState {
 
 export function withDiscovery(state: SimState, discovery: DiscoveryState): SimState {
   return discovery === state.discovery ? state : { ...state, discovery };
+}
+
+/** A new state with the session's fields changed. */
+export function withSession(state: SimState, changes: Partial<Session>): SimState {
+  return { ...state, session: { ...state.session, ...changes } };
+}
+
+/** A `file.changed` event on the session's host. */
+export function fileChanged(state: SimState, path: string, change: FileChange): SimEvent {
+  return { type: "file.changed", hostId: state.session.hostId, path, change };
 }

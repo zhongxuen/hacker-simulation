@@ -25,3 +25,59 @@ export function renderHelp(name: string, help: ToolHelp): OutputLine[] {
   lines.push("", "WHY IT MATTERS", ...help.concept.map((paragraph) => `  ${paragraph}`));
   return lines.map(stdout);
 }
+
+const INDENT = "       ";
+const DEEP_INDENT = "              ";
+
+/**
+ * Renders a tool's manual page, laid out like `man`: NAME (the plain-language one-liner, readable
+ * in five seconds), SYNOPSIS, DESCRIPTION, OPTIONS, EXAMPLES, and CONCEPT, which says why the
+ * command matters in security work. That last section is what makes it a teaching tool.
+ */
+export function renderManPage(name: string, help: ToolHelp): OutputLine[] {
+  const title = `${name.toUpperCase()}(1)`;
+  const middle = "Hacker Simulation manual";
+  const gap = Math.max(2, Math.floor((72 - title.length * 2 - middle.length) / 2));
+  const lines: string[] = [
+    `${title}${" ".repeat(gap)}${middle}${" ".repeat(gap)}${title}`,
+    "",
+    "NAME",
+    `${INDENT}${name} - ${help.oneLiner}`,
+    "",
+    "SYNOPSIS",
+    ...help.usage.map((usage) => `${INDENT}${usage}`),
+    "",
+    "DESCRIPTION",
+  ];
+  help.description.forEach((paragraph, i) => {
+    if (i > 0) lines.push("");
+    lines.push(`${INDENT}${paragraph}`);
+  });
+  if (help.options?.length) {
+    lines.push("", "OPTIONS");
+    help.options.forEach((option, i) => {
+      if (i > 0) lines.push("");
+      lines.push(`${INDENT}${option.flags}`, `${DEEP_INDENT}${option.text}`);
+    });
+  }
+  if (help.examples?.length) {
+    lines.push("", "EXAMPLES");
+    help.examples.forEach((example, i) => {
+      if (i > 0) lines.push("");
+      lines.push(`${INDENT}${example.command}`, `${DEEP_INDENT}${example.text}`);
+    });
+  }
+  lines.push("", "CONCEPT");
+  help.concept.forEach((paragraph, i) => {
+    if (i > 0) lines.push("");
+    lines.push(`${INDENT}${paragraph}`);
+  });
+  lines.push(
+    "",
+    "SIMULATED",
+    `${INDENT}${SIMULATED_NOTICE.replace(/^SIMULATED: /, "")}`,
+    "",
+    title,
+  );
+  return lines.map(stdout);
+}

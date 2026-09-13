@@ -25,9 +25,25 @@ const REAL_TOOL_NAMES = [
   "journalctl",
 ];
 
+/** The v1 command table from md-files/05-terminal-module.md, plus echo for redirection. */
+const LINUX_COMMAND_TABLE = [
+  ...["pwd", "ls", "cd", "tree"],
+  ...["cat", "less", "head", "tail", "touch", "mkdir", "rm", "cp", "mv", "stat", "file"],
+  ...["grep", "wc", "sort", "uniq", "cut", "sed", "echo"],
+  ...["whoami", "id", "ps", "uname", "env", "history", "date"],
+  ...["chmod", "chown", "sudo"],
+  ...["ping", "hostname", "ifconfig"],
+  ...["man", "help", "clear", "exit"],
+];
+
 describe("tool registry", () => {
-  it("registers the four built-in tools", () => {
-    expect(defaultRegistry.names()).toEqual(["hashid", "logview", "netscan", "webprobe"]);
+  it("registers the security tools and the whole Linux command set", () => {
+    const names = defaultRegistry.names();
+    expect(names).toEqual(
+      expect.arrayContaining(["hashid", "logview", "netscan", "webprobe", ...LINUX_COMMAND_TABLE]),
+    );
+    expect(names).toHaveLength(4 + LINUX_COMMAND_TABLE.length);
+    expect([...names].sort()).toEqual(names);
     expect(defaultRegistry.has("netscan")).toBe(true);
     expect(defaultRegistry.get("nmap")).toBeUndefined();
   });
@@ -45,9 +61,10 @@ describe("tool registry", () => {
   it("lists every tool's name and one-liner, sorted, without running anything", () => {
     const tools = listTools();
     expect(tools.map((tool) => tool.name)).toEqual(defaultRegistry.names());
-    expect(tools[0]).toEqual({
+    expect(tools.find((tool) => tool.name === "hashid")).toEqual({
       name: "hashid",
       summary: defaultRegistry.get("hashid")?.help.oneLiner,
+      category: "investigate",
     });
     const custom = createRegistry([BUILTIN_TOOLS[0] as Tool]);
     expect(listTools(custom).map((tool) => tool.name)).toEqual(["netscan"]);
@@ -73,11 +90,15 @@ describe("tool help", () => {
         ...(help.options ?? []).map((o) => o.text),
       ];
       for (const line of all) expect(line, line).not.toMatch(BANNED_WORDS);
-      // Every example runs this tool.
+      // Every example runs this tool: on its own, after sudo, or further along a pipeline.
       for (const example of help.examples ?? []) {
-        expect(example.command === tool.name || example.command.startsWith(`${tool.name} `)).toBe(
-          true,
-        );
+        const words = example.command.split(" ");
+        const runs =
+          words[0] === tool.name ||
+          (words[0] === "sudo" && words[1] === tool.name) ||
+          example.command.includes(`| ${tool.name} `) ||
+          example.command.endsWith(`| ${tool.name}`);
+        expect(runs, `${tool.name}: ${example.command}`).toBe(true);
       }
     },
   );

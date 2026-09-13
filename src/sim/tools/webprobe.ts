@@ -88,6 +88,7 @@ export function htmlComments(body: string): string[] {
 
 export const webprobe: Tool = {
   name: NAME,
+  category: "network",
   help: {
     oneLiner: "ask a website for one page, and see what it tells you about itself.",
     usage: ["webprobe <address or name>", "webprobe http://<address>:<port>/<path>"],

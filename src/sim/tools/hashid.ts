@@ -144,6 +144,7 @@ function entryFromLine(line: string): Entry {
 
 export const hashid: Tool = {
   name: NAME,
+  category: "investigate",
   help: {
     oneLiner: "look at a scrambled password (a hash) and name the method that made it.",
     usage: ["hashid <hash>", "hashid --file <file>"],

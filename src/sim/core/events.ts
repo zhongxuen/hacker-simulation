@@ -14,6 +14,7 @@ export const SIM_EVENT_TYPES = [
   "scan.completed",
   "web.probed",
   "file.read",
+  "file.changed",
   "log.queried",
   "hash.identified",
   "flag.found",

@@ -4,76 +4,40 @@
  *   step(state, cmd, ctx) => { state, output, events, exitCode }
  *
  * It never mutates its inputs, never reads real time or randomness, and never evaluates anything
- * the learner typed as code: the first word is looked up in the tool registry, and the tool is a
- * plain function over data.
+ * the learner typed as code: command names are looked up in the tool registry, and a tool is a
+ * plain function over data. A `shell` command arrives already parsed into a structure (see
+ * shell/types.ts); the engine runs that structure, it never re-reads shell syntax.
  */
 import { defaultRegistry } from "../tools";
-import { renderHelp } from "../tools/help";
-import { failure, formatArgv, success } from "./output";
+import { runShell } from "../shell/run";
 import { freezeInDev } from "./freeze";
-import { createRng, deriveSeed } from "./rng";
-import type { ExecCommand, SimCommand, SimContext, SimEvent, SimResult, SimState } from "./types";
+import { revealFlags, runTool } from "./run-tool";
+import type { ExecCommand, SimCommand, SimContext, SimResult, SimState } from "./types";
 
 export function step(state: SimState, cmd: SimCommand, ctx: SimContext): SimResult {
   const now = ctx.now(); // exactly once per step, so a stepping clock stays in sync with commands
+  const registry = ctx.registry ?? defaultRegistry;
   switch (cmd.type) {
     case "exec":
-      return freezeInDev(exec(state, cmd, ctx, now));
+      return freezeInDev(exec(state, cmd, { registry, now }));
+    case "shell":
+      return freezeInDev(runShell(state, cmd, { registry, now }));
   }
 }
 
-function exec(state: SimState, cmd: ExecCommand, ctx: SimContext, now: number): SimResult {
-  const [name, ...args] = cmd.argv;
-  // An empty line does nothing and doesn't count as a command.
-  if (name === undefined || name.trim() === "") return success(state, []);
-
-  const tick = state.tick + 1;
-  const base: SimState = { ...state, tick };
-  const tool = (ctx.registry ?? defaultRegistry).get(name);
-  let result: SimResult;
-  if (!tool) {
-    result = failure(name, { code: "UNKNOWN_COMMAND", command: name }, base);
-  } else if (asksForHelp(args)) {
-    result = success(base, renderHelp(tool.name, tool.help), [
-      { type: "help.viewed", command: tool.name },
-    ]);
-  } else {
-    const rng = createRng(deriveSeed(state.seed, tick));
-    result = tool.run(args, base, {
-      rng,
-      now,
-      tick,
-      ...(cmd.stdin !== undefined && { stdin: cmd.stdin }),
-    });
-  }
-  return finish(result, name, formatArgv(cmd.argv));
-}
-
-/** Every tool supports `--help`, handled here so no tool can forget it. A `--` ends options. */
-function asksForHelp(args: readonly string[]): boolean {
-  const help = args.indexOf("--help");
-  const end = args.indexOf("--");
-  return help !== -1 && (end === -1 || help < end);
-}
-
-/** Adds the events every command gets: errors it reported, flags it revealed, and that it ran. */
-function finish(result: SimResult, command: string, line: string): SimResult {
-  const events: SimEvent[] = [...result.events];
-  for (const output of result.output) {
-    if (output.error) events.push({ type: "command.error", command, ...output.error });
-  }
-
-  // A flag counts as found when its token appears anywhere in the output, from any tool.
-  let { state } = result;
-  const text = result.output.map((output) => output.text).join("\n");
-  const found = state.flags.filter(
-    (flag) => !state.flagsFound.includes(flag.id) && text.includes(flag.token),
-  );
-  if (found.length > 0) {
-    state = { ...state, flagsFound: [...state.flagsFound, ...found.map((flag) => flag.id)] };
-    for (const flag of found) events.push({ type: "flag.found", flagId: flag.id });
-  }
-
-  events.push({ type: "command.run", command, line, exitCode: result.exitCode });
-  return { state, output: result.output, events, exitCode: result.exitCode };
+function exec(
+  state: SimState,
+  cmd: ExecCommand,
+  options: { registry: NonNullable<SimContext["registry"]>; now: number },
+): SimResult {
+  const result = runTool(state, cmd.argv, {
+    ...options,
+    ...(cmd.stdin !== undefined && { stdin: cmd.stdin }),
+  });
+  if (result.events.length === 0) return result; // an empty line: nothing ran
+  // Flags found come just before the closing command.run event.
+  const flags = revealFlags(result.state, result.output);
+  const events = [...result.events];
+  events.splice(events.length - 1, 0, ...flags.events);
+  return { ...result, state: flags.state, events };
 }

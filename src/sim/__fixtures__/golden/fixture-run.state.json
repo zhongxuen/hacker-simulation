@@ -5,6 +5,7 @@
       "hosts": {
         "db-01": {
           "accessed": false,
+          "answered": true,
           "firstSeenTick": 4,
           "hostId": "db-01",
           "hostname": "db-01.corp.example",
@@ -18,6 +19,7 @@
         },
         "printer-01": {
           "accessed": false,
+          "answered": true,
           "firstSeenTick": 5,
           "hostId": "printer-01",
           "hostname": "printer-01",
@@ -39,6 +41,7 @@
         },
         "web-01": {
           "accessed": false,
+          "answered": true,
           "firstSeenTick": 2,
           "hostId": "web-01",
           "hostname": "web-01.corp.example",
@@ -71,6 +74,7 @@
         },
         "ws-01": {
           "accessed": true,
+          "answered": true,
           "firstSeenTick": 0,
           "hostId": "ws-01",
           "hostname": "ws-01.corp.example",
@@ -641,9 +645,11 @@
         "HOME": "/home/recruit",
         "HOSTNAME": "ws-01.corp.example",
         "PATH": "/usr/local/bin:/usr/bin:/bin",
+        "PWD": "/home/recruit",
         "SHELL": "/bin/bash",
         "USER": "recruit"
       },
+      "history": [],
       "hostId": "ws-01",
       "user": "recruit"
     },

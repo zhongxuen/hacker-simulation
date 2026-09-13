@@ -12,8 +12,11 @@ const tokens = customPropertiesIn(motionCss, ":root");
 const animations = customPropertiesIn(motionCss, "@theme inline");
 
 const CELEBRATION_BUDGET_MS = 1500;
-/** Loading indicators loop until the work is done. Nothing else may loop. */
-const MAY_LOOP = new Set(["animate-spin", "animate-indeterminate"]);
+/**
+ * Loading indicators loop until the work is done, and the terminal cursor blinks while you can
+ * type (md-files/05-terminal-module.md). Nothing else may loop.
+ */
+const MAY_LOOP = new Set(["animate-spin", "animate-indeterminate", "animate-cursor-blink"]);
 
 /** `250ms` → 250, `1.2s` → 1200. */
 function toMs(value: string | undefined): number {

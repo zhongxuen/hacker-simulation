@@ -122,6 +122,11 @@ type CoachMarkProps = CoachMarkStep & {
   target: RefObject<HTMLElement | null>;
   /** Defaults to "bottom": the card below the target. */
   placement?: CoachMarkPlacement;
+  /**
+   * Move focus to the card when the step shows. Defaults to true. Turn it off for a step that
+   * asks the learner to type somewhere (the terminal's prompt), so focus stays where they type.
+   */
+  focusCard?: boolean;
 };
 
 interface Box {
@@ -146,7 +151,12 @@ const EDGE = 16;
  * element straight away. Focus moves to the card on each step and goes back where it was when the
  * tour ends. Escape skips the tour.
  */
-export function CoachMark({ target, placement = "bottom", ...step }: CoachMarkProps) {
+export function CoachMark({
+  target,
+  placement = "bottom",
+  focusCard = true,
+  ...step
+}: CoachMarkProps) {
   const [box, setBox] = useState<Box | null>(null);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
@@ -199,11 +209,11 @@ export function CoachMark({ target, placement = "bottom", ...step }: CoachMarkPr
     };
   }, []);
 
-  // Move focus to the card on every step, once it's on screen.
+  // Move focus to the card on every step, once it's on screen (unless the step asks not to).
   const shown = box !== null;
   useEffect(() => {
-    if (shown) cardRef.current?.focus();
-  }, [shown, step.step]);
+    if (shown && focusCard) cardRef.current?.focus();
+  }, [shown, step.step, focusCard]);
 
   if (!box) return null;
 

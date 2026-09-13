@@ -99,6 +99,11 @@
   --animate-glow-pulse: glow-pulse calc(var(--duration-celebrate) * var(--motion-scale)) ease-in-out
     2 both;
 
+  /* The terminal's cursor blinks while you can type there. Motion scale 0 holds it still and
+     visible: the keyframes rest on the element's own opacity. */
+  --animate-cursor-blink: cursor-blink calc(var(--duration-loop) * 1.1 * var(--motion-scale))
+    step-end infinite;
+
   /* Loading indicators. Replaces Tailwind's animate-spin so it stops under reduced motion. */
   --animate-spin: spin calc(var(--duration-loop) * var(--motion-scale)) linear infinite;
   --animate-indeterminate: indeterminate calc(var(--duration-loop) * 1.4 * var(--motion-scale))
@@ -201,6 +206,12 @@
     box-shadow:
       0 0 0 2px var(--focus-ring),
       0 0 0 0.5rem color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
   }
 }
 

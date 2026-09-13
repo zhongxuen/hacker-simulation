@@ -8,6 +8,7 @@ export { SIM_EVENT_TYPES } from "./core/events";
 export { FS_ERROR_CODES, SIM_ERROR_CODES } from "./core/errors";
 export type {
   ExecCommand,
+  FileChange,
   FlagDef,
   Machine,
   OutputLine,
@@ -51,6 +52,7 @@ export type {
 export type {
   DiscoveredHost,
   DiscoveredService,
+  DiscoveredTopology,
   DiscoveryState,
   Host,
   HostSpec,
@@ -64,5 +66,27 @@ export type {
   Protocol,
   Service,
   Subnet,
+  TopologyLink,
+  TopologyNode,
+  TopologyNodeState,
+  TopologySubnet,
 } from "./net/types";
-export type { Tool, ToolContext, ToolHelp, ToolRegistry, ToolSummary } from "./tools/types";
+export type {
+  Tool,
+  ToolCategory,
+  ToolContext,
+  ToolHelp,
+  ToolRegistry,
+  ToolSummary,
+} from "./tools/types";
+export type {
+  ShellAssignment,
+  ShellCommand,
+  ShellCondition,
+  ShellListItem,
+  ShellPipeline,
+  ShellRedirect,
+  ShellSimpleCommand,
+  ShellWord,
+  ShellWordPart,
+} from "./shell/types";

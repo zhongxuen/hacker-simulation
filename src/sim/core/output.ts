@@ -13,6 +13,16 @@ export const errorLine = (tool: string, error: SimError): OutputLine => ({
   error,
 });
 
+/**
+ * An error line worded the way one particular tool words it ("ls: cannot access 'x': ..."), still
+ * carrying the typed error, so the explainer layer doesn't depend on the wording.
+ */
+export const errorLineText = (text: string, error: SimError): OutputLine => ({
+  stream: "stderr",
+  text,
+  error,
+});
+
 export function success(
   state: SimState,
   output: readonly OutputLine[],

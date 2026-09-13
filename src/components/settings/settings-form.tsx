@@ -76,6 +76,18 @@ export function SettingsForm() {
       </SettingCard>
 
       <SettingCard
+        title="Beginner mode"
+        description="Extra help in the terminal, for when you're new to typing commands."
+      >
+        <Switch
+          checked={settings.beginnerMode}
+          onChange={(checked) => change({ beginnerMode: checked })}
+          label="Show beginner help in the terminal"
+          detail="Explains every error in plain words underneath it, and suggests commands to try. Turn it off for a cleaner screen."
+        />
+      </SettingCard>
+
+      <SettingCard
         title="Animations"
         description="Ticks, sparkles and other moving effects. Turning them down never hides anything."
       >

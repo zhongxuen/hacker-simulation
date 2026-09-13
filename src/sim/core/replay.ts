@@ -3,6 +3,7 @@
  * it rebuilds the exact final state and output. That gives free regression tests, bug reports
  * that are one JSON blob, and the transcript the AI Mentor reads in phase 10.
  */
+import { checkShellCommand } from "../shell/validate";
 import { steppingClock } from "./clock";
 import { err, ok, type Result } from "./result";
 import { createInitialState, scenarioStartMs } from "./scenario";
@@ -132,6 +133,12 @@ export function deserializeRun(text: string): Result<Run, SnapshotError> {
   const checked: SimCommand[] = [];
   for (const [i, command] of commands.entries()) {
     const c = command as Record<string, unknown> | null;
+    if (c?.type === "shell") {
+      const shell = checkShellCommand(c, `commands[${i}]`);
+      if (!shell.ok) return bad(shell.reason);
+      checked.push(shell.command);
+      continue;
+    }
     const argvOk =
       Array.isArray(c?.argv) &&
       c.argv.length <= MAX_ARGS &&
@@ -142,7 +149,9 @@ export function deserializeRun(text: string): Result<Run, SnapshotError> {
       !argvOk ||
       (c.stdin !== undefined && typeof c.stdin !== "string")
     ) {
-      return bad(`commands[${i}]: expected { type: "exec", argv: string[], stdin?: string }`);
+      return bad(
+        `commands[${i}]: expected { type: "exec", argv: string[], stdin?: string } or a shell command`,
+      );
     }
     checked.push({
       type: "exec",

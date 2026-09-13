@@ -1,0 +1,86 @@
+# A small second fixture mission, so the loader tests have a catalog: a different difficulty and
+# skill, and fx-welcome as its "Best after" prerequisite.
+id: fx-map
+slug: fx-mapping-the-range
+version: 2
+title: Mapping the Range
+difficulty: easy
+estimatedMinutes: 12
+skills: [networking]
+prerequisites: [fx-welcome]
+hook: "The Range is dark. Light it up, one computer at a time."
+learningGoals:
+  - What an address on a network is
+  - How a scan finds the computers that answer
+concepts: [fx-ports]
+briefing:
+  scenario: >-
+    Idris Fenwick, the team's defender, wants a map of the Range before the next practice run.
+  role: "You're the team's newest recruit, working from `range-ws-01`."
+  authorization: >-
+    Candlewright owns every machine on the Range, 192.168.60.0/24, and set it up for practice.
+    Signed: Theo Ashgrove, team lead.
+story:
+  - on: start
+    speaker: teammate-idris
+    text: "I'm Idris. Let's find out what's out there, one computer at a time."
+scenario:
+  seed: 7
+  network:
+    hosts:
+      - id: range-ws-01
+        hostname: range-ws-01
+        interfaces:
+          - { ip: 192.168.60.10, subnet: 192.168.60.0/24 }
+        os: { family: linux, name: Linux }
+        users:
+          - { name: recruit, uid: 1000 }
+        fs: {}
+      - id: range-printer-01
+        hostname: range-printer-01
+        interfaces:
+          - { ip: 192.168.60.30, subnet: 192.168.60.0/24 }
+        os: { family: embedded, name: Printer firmware }
+        respondsToPing: false
+        services:
+          - { port: 9100, protocol: tcp, name: printer, product: printd, version: "1.2" }
+  session: { host: range-ws-01, user: recruit }
+objectives:
+  - id: run-a-scan
+    description: Scan the Range with `netscan`
+    why: A scan is how you find out which computers are switched on.
+    success: Your first scan! The map starts to light up.
+    check: { kind: event, event: scan.completed }
+  - id: find-the-printer
+    description: Find the printer on the Range
+    why: Forgotten devices are where trouble hides.
+    success: You found the printer!
+    check: { kind: event, event: host.discovered, match: { hostId: range-printer-01 } }
+  - id: name-the-port
+    description: Type the number of the printer's open port
+    why: Each open port is a door someone could knock on.
+    success: "Port 9100: that's where the printer takes print jobs."
+    check: { kind: answer, accept: ["9100"] }
+hints:
+  run-a-scan:
+    - Which tool looks for computers?
+    - "`netscan` checks a range of addresses."
+    - Type `netscan 192.168.60.0/24`.
+  find-the-printer:
+    - Some devices ignore "are you there?" messages.
+    - A scan can skip that check and look anyway.
+    - Try `netscan --help` to find the option that skips it.
+  name-the-port:
+    - Look at the ports your scan listed for the printer.
+    - Ports are numbered doors, and the scan lists each open one.
+    - It's a four-digit number starting with 9.
+debrief:
+  summary: You mapped the Range and found a printer that hides from pings.
+  whatYouLearned:
+    - An address says where a computer is on a network
+    - A scan finds the computers that answer
+  ethicsNote: >-
+    On a real network, a scan can set off alarms and worry the people who run it, and scanning
+    without permission is a crime. Your team scans only networks it has written permission for.
+  defensiveTakeaway: Keep a list of every device on your network, printers included.
+  nextTease: "Idris has found a note on the printer. Nobody on the team wrote it."

@@ -34,7 +34,13 @@ const EXAMPLES: Record<(typeof SIM_ERROR_CODES)[number], SimError> = {
     found: "ssh",
   },
   OUT_OF_SCOPE: { code: "OUT_OF_SCOPE", target: "100.64.0.1" },
+  EFBIG: { code: "EFBIG", path: "big.txt" },
+  SUDO_DENIED: { code: "SUDO_DENIED", user: "recruit" },
+  NO_MANUAL_ENTRY: { code: "NO_MANUAL_ENTRY", topic: "nmap" },
 };
+
+/** Codes whose real message doesn't start with the tool's name. */
+const UNPREFIXED: readonly string[] = ["UNKNOWN_COMMAND", "NO_MANUAL_ENTRY"];
 
 describe("error codes", () => {
   it("are unique", () => {
@@ -45,7 +51,7 @@ describe("error codes", () => {
     for (const code of SIM_ERROR_CODES) {
       const line = formatError("demo", EXAMPLES[code]);
       expect(line, code).not.toContain("\n");
-      expect(line.startsWith("demo:") || line.startsWith("sl:"), code).toBe(true);
+      if (!UNPREFIXED.includes(code)) expect(line.startsWith("demo:"), code).toBe(true);
     }
   });
 
@@ -53,6 +59,11 @@ describe("error codes", () => {
     expect(formatError("cat", EXAMPLES.EACCES)).toBe("cat: /etc/shadow: Permission denied");
     expect(formatError("cat", EXAMPLES.ENOENT)).toBe("cat: notes.txt: No such file or directory");
     expect(formatError("x", EXAMPLES.UNKNOWN_COMMAND)).toBe("sl: command not found");
+    expect(formatError("man", EXAMPLES.NO_MANUAL_ENTRY)).toBe("No manual entry for nmap");
+    expect(formatError("ls", { code: "BAD_FLAG", flag: "-z" })).toBe("ls: invalid option -- 'z'");
+    expect(formatError("ls", { code: "BAD_FLAG", flag: "--fast" })).toBe(
+      "ls: unrecognized option '--fast'",
+    );
     expect(
       formatError("chown", { code: "EINVAL", path: "f", detail: "unknown-user", value: "bob" }),
     ).toBe("chown: invalid user: 'bob'");

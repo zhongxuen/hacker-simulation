@@ -43,6 +43,7 @@ export function lineLevel(line: string): string | undefined {
 
 export const logview: Tool = {
   name: NAME,
+  category: "investigate",
   help: {
     oneLiner: "read a computer's diary: the log files where it writes down what happened.",
     usage: ["logview", "logview <file> [--grep <text>] [--level <level>] [--last <n>] [--count]"],

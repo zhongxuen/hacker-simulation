@@ -1,0 +1,66 @@
+# expect: scenario (network is not valid): host "range-ws-01": 8.8.8.8 is outside the reserved ranges
+# The schema accepts this file, but the engine refuses to build a scenario with a real, public
+# address in it, and the loader reports the engine's problem. Otherwise valid.
+id: fx-public-address
+slug: fx-public-address
+version: 1
+title: A machine with a real address
+difficulty: easy
+estimatedMinutes: 10
+skills: [networking]
+hook: "The Range is dark. Light it up, one computer at a time."
+learningGoals:
+  - What an address on a network is
+  - How a scan finds the computers that answer
+briefing:
+  scenario: Idris wants a map of the Range.
+  role: "You're the team's newest recruit."
+  authorization: The Range belongs to Candlewright. Signed, Theo Ashgrove.
+story:
+  - on: start
+    speaker: teammate-idris
+    text: "Let's find out what's out there."
+scenario:
+  seed: 1
+  network:
+    hosts:
+      - id: range-ws-01
+        hostname: range-ws-01
+        interfaces:
+          - { ip: 8.8.8.8, subnet: 8.8.8.0/24 }
+        os: { family: linux, name: Linux }
+        users:
+          - { name: recruit, uid: 1000 }
+        fs: {}
+  session: { host: range-ws-01, user: recruit }
+objectives:
+  - id: run-a-scan
+    description: Scan the Range with `netscan`
+    why: A scan is how you find out which computers are switched on.
+    success: Your first scan!
+    check: { kind: event, event: scan.completed }
+  - id: read-the-help
+    description: Read the help page for `netscan`
+    why: Every tool comes with instructions.
+    success: You read the help page!
+    check: { kind: event, event: help.viewed }
+  - id: name-it
+    description: Type the name of your own computer
+    why: Knowing where you stand comes first.
+    success: That's you.
+    check: { kind: answer, accept: [range-ws-01] }
+hints:
+  run-a-scan:
+    [Which tool looks for computers?, "`netscan` checks a range.", Type `netscan 192.168.60.0/24`.]
+  read-the-help:
+    [Tools can explain themselves., "`--help` shows a help page.", Type `netscan --help`.]
+  name-it:
+    [Look at your prompt., The prompt shows your computer's name., It starts with `range-ws`.]
+debrief:
+  summary: You mapped the Range.
+  whatYouLearned:
+    - An address says where a computer is
+    - A scan finds the computers that answer
+  ethicsNote: Scanning without permission is a crime. Your team scans only networks it has permission for.
+  defensiveTakeaway: Keep a list of every device on your network.
+  nextTease: "Something on the Range doesn't look right."

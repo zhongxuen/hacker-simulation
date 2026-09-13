@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { GLOSSARY } from "@/content/glossary";
+import type { Mission } from "@/content/schemas/mission";
 import {
   describeDeadReference,
   findDeadReferences,
@@ -15,6 +16,7 @@ import {
   renderLessonBody,
   type LessonCatalog,
 } from "@/features/learning/server";
+import { loadMissionCatalog } from "@/features/missions/server";
 import { listTools } from "@/sim";
 
 /**
@@ -24,13 +26,21 @@ import { listTools } from "@/sim";
  * `concepts`. It also builds and renders every lesson, so a broken one never ships.
  */
 
-/**
- * Missions and their `concepts`. Phase 06 adds the mission catalog in src/content/missions; until
- * then there are none, so a lesson that names a mission fails here.
- */
-const MISSIONS: readonly MissionReferences[] = [];
+/** Missions and their `concepts`, from the mission catalog in src/content/missions. */
+const missionReferences = (missions: readonly Mission[]): MissionReferences[] =>
+  missions.map((mission) => ({ id: mission.id, concepts: mission.concepts }));
 
-/** Every command a learner can type. Phase 05 adds the terminal's own commands (ls, cd, …). */
+/** Each mission's debrief `furtherReading` entries that aren't lessons, as `mission id → lesson id`. */
+const deadFurtherReading = (missions: readonly Mission[], lessonIds: ReadonlySet<string>) =>
+  missions.flatMap((mission) =>
+    mission.debrief.furtherReading
+      .filter((id) => !lessonIds.has(id))
+      .map((id) => `mission ${mission.id} → debrief.furtherReading: no lesson with id "${id}"`),
+  );
+
+const MISSIONS = loadMissionCatalog().missions;
+
+/** Every command a learner can type: the simulated tools and the Linux command set (ls, cd, …). */
 const COMMANDS: readonly string[] = listTools().map((tool) => tool.name);
 
 async function lessonReferences(catalog: LessonCatalog): Promise<LessonReferences[]> {
@@ -49,10 +59,15 @@ describe("the real content", () => {
     const dead = findDeadReferences({
       lessons: await lessonReferences(lessons),
       glossary: GLOSSARY,
-      missions: MISSIONS,
+      missions: missionReferences(MISSIONS),
       commands: COMMANDS,
     });
     expect(dead.map(describeDeadReference)).toEqual([]);
+  });
+
+  it("has no dead further reading in mission debriefs", () => {
+    const lessonIds = new Set(lessons.lessons.map((lesson) => lesson.id));
+    expect(deadFurtherReading(MISSIONS, lessonIds)).toEqual([]);
   });
 
   it("has no loops in lesson prerequisites", () => {
@@ -67,7 +82,18 @@ describe("the real content", () => {
   });
 
   it("knows the engine's commands", () => {
-    expect(COMMANDS).toEqual(expect.arrayContaining(["netscan", "webprobe", "logview", "hashid"]));
+    expect(COMMANDS).toEqual(
+      expect.arrayContaining([
+        "netscan",
+        "webprobe",
+        "logview",
+        "hashid",
+        "ls",
+        "cd",
+        "chmod",
+        "man",
+      ]),
+    );
   });
 });
 
@@ -86,6 +112,29 @@ describe("the fixture lessons", () => {
       commands: COMMANDS,
     });
     expect(dead.map(describeDeadReference)).toEqual([]);
+  });
+});
+
+describe("the fixture missions", () => {
+  it("resolve against the fixture lessons", async () => {
+    const lessons = loadLessonCatalog(join(import.meta.dirname, "fixtures", "lessons"));
+    const missions = loadMissionCatalog(
+      join(import.meta.dirname, "fixtures", "missions", "valid"),
+    ).missions;
+    const dead = findDeadReferences({
+      lessons: await lessonReferences(lessons),
+      glossary: GLOSSARY,
+      missions: missionReferences(missions),
+      commands: COMMANDS,
+    });
+    expect(dead.map(describeDeadReference)).toEqual([]);
+    expect(
+      deadFurtherReading(missions, new Set(lessons.lessons.map((lesson) => lesson.id))),
+    ).toEqual([]);
+    // And a mission naming a lesson that doesn't exist is caught.
+    expect(deadFurtherReading(missions, new Set())).toEqual([
+      'mission fx-welcome → debrief.furtherReading: no lesson with id "fx-ports"',
+    ]);
   });
 });
 

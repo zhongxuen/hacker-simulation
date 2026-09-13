@@ -74,6 +74,7 @@ const includesPort = (selection: PortSelection, port: number) =>
 
 export const netscan: Tool = {
   name: NAME,
+  category: "network",
   help: {
     oneLiner: "find which computers are switched on, and which doors (ports) they have open.",
     usage: ["netscan <target>", "netscan <target> --ports <list>"],

@@ -23,6 +23,12 @@ export interface FsContext {
 
 export type FsResult<T> = Result<T, FsError>;
 
+/**
+ * The largest file the simulation will write, in characters. Real disks fill up too; this keeps a
+ * loop like `cat f >> f` from eating the browser's memory.
+ */
+export const MAX_FILE_CHARS = 1_000_000;
+
 const fail = (code: FsError["code"], path: string, detail?: FsError["detail"]) =>
   err<FsError>(detail ? { code, path, detail } : { code, path });
 
@@ -113,9 +119,11 @@ export function writeFile(
       content: options.append ? node.content + content : content,
       mtime: ctx.now,
     };
+    if (next.content.length > MAX_FILE_CHARS) return fail("EFBIG", path);
     return ok({ root: replaceNode(vfs.root, parts, next) });
   }
   if (found.error.code !== "ENOENT") return found;
+  if (content.length > MAX_FILE_CHARS) return fail("EFBIG", path);
 
   const parent = resolveParent(vfs, ctx.actor, ctx.cwd, path);
   if (!parent.ok) return parent;
@@ -131,6 +139,20 @@ export function writeFile(
     mtime: ctx.now,
   };
   return ok({ root: setEntry(vfs.root, dirParts, name, file, ctx.now) });
+}
+
+/**
+ * `touch`: creates an empty file, or marks an existing one as changed now. Updating the time needs
+ * write permission, or owning the file, like the real thing.
+ */
+export function touch(vfs: Vfs, ctx: FsContext, path: string): FsResult<Vfs> {
+  const found = resolve(vfs, ctx, path);
+  if (!found.ok) return found.error.code === "ENOENT" ? writeFile(vfs, ctx, path, "") : found;
+  const { node, parts } = found.value;
+  const mayTouch =
+    isRoot(ctx.actor) || ctx.actor.user === node.owner || canAccess(ctx.actor, node, "w");
+  if (!mayTouch) return fail("EACCES", path);
+  return ok({ root: replaceNode(vfs.root, parts, { ...node, mtime: ctx.now }) });
 }
 
 /** Creates a directory. With `parents`, creates missing parents and accepts an existing directory. */

@@ -9,6 +9,7 @@
 import type { SimError } from "./errors";
 import type { Accounts, Vfs } from "../fs/types";
 import type { DiscoveryState, NetworkGraph, NetworkSpec, Protocol } from "../net/types";
+import type { ShellCommand } from "../shell/types";
 import type { ToolRegistry } from "../tools/types";
 
 /** Where the learner is: which machine, as which user, in which folder. */
@@ -17,7 +18,10 @@ export interface Session {
   readonly user: string;
   /** Canonical absolute path. */
   readonly cwd: string;
+  /** Shell variables. `PWD` and `OLDPWD` follow `cd`. */
   readonly env: Readonly<Record<string, string>>;
+  /** Command lines run in this session, oldest first, for the `history` command. */
+  readonly history: readonly string[];
 }
 
 /** A host the learner can have a shell on: its users and its filesystem. */
@@ -62,7 +66,11 @@ export interface ExecCommand {
   readonly stdin?: string;
 }
 
-export type SimCommand = ExecCommand;
+/**
+ * `exec` runs one tool with ready-made arguments (tests, replays). `shell` runs a whole command
+ * line the terminal has parsed: pipelines, redirections, `&&`, variables and wildcards.
+ */
+export type SimCommand = ExecCommand | ShellCommand;
 
 export interface OutputLine {
   readonly stream: "stdout" | "stderr";
@@ -126,6 +134,13 @@ export type SimEvent =
     }
   | { readonly type: "file.read"; readonly hostId: string; readonly path: string }
   | {
+      readonly type: "file.changed";
+      readonly hostId: string;
+      /** Canonical path of what changed (the new path, for a move). */
+      readonly path: string;
+      readonly change: FileChange;
+    }
+  | {
       readonly type: "log.queried";
       readonly hostId: string;
       readonly path: string;
@@ -135,6 +150,9 @@ export type SimEvent =
   | { readonly type: "flag.found"; readonly flagId: string };
 
 export type SimEventType = SimEvent["type"];
+
+/** What happened to a file, for `file.changed` events. */
+export type FileChange = "created" | "modified" | "deleted" | "moved" | "permissions" | "owner";
 
 export interface SimResult {
   readonly state: SimState;

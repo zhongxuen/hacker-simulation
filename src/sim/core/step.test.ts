@@ -152,6 +152,7 @@ describe("step", () => {
     const events: SimEvent[] = [{ type: "hash.identified", format: "demo" }];
     const echo: Tool = {
       name: "echo-sim",
+      category: "text",
       help: {
         oneLiner: "repeat what you type.",
         usage: ["echo-sim <words>"],

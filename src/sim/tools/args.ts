@@ -1,6 +1,7 @@
 /**
  * Option parsing for simulated tools: `-p 22`, `-p22`, `--ports 22`, `--ports=22`, boolean flags,
- * and `--` to end options. Unknown options are a typed BAD_FLAG error, never ignored.
+ * clusters of one-letter switches (`-la` is `-l -a`, and `-fn5` is `-f -n 5`), and `--` to end
+ * options. Unknown options are a typed BAD_FLAG error, never ignored.
  */
 import { err, ok, type Result } from "../core/result";
 import type { SimError } from "../core/errors";
@@ -51,6 +52,25 @@ export function parseArgs(
     }
 
     const spec = lookup.get(name);
+    if (!spec && inline === undefined && /^-[^-]{2,}$/.test(arg)) {
+      // A cluster of one-letter options: every letter is a switch, until one that takes a value
+      // swallows the rest of the cluster (or, at the end, the next argument).
+      for (let j = 1; j < arg.length; j++) {
+        const letter = lookup.get(`-${arg[j]}`);
+        if (!letter) return err({ code: "BAD_FLAG", flag: `-${arg[j]}` });
+        if (!letter.takesValue) {
+          options[letter.key] = true;
+          continue;
+        }
+        const rest = arg.slice(j + 1);
+        const value = rest || args[i + 1];
+        if (value === undefined) return err({ code: "MISSING_ARGUMENT", argument: `-${arg[j]}` });
+        if (!rest) i++;
+        options[letter.key] = value;
+        break;
+      }
+      continue;
+    }
     if (!spec) return err({ code: "BAD_FLAG", flag: name });
     if (!spec.takesValue) {
       if (inline !== undefined) return err({ code: "BAD_FLAG", flag: arg });

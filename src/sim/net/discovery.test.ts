@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { fixtureState, run } from "../__fixtures__/harness";
-import { serializeState } from "../core/serialize";
+import { FIXTURE_SCENARIO } from "../__fixtures__/scenario";
+import { createInitialState } from "../core/scenario";
+import { deserializeState, serializeState } from "../core/serialize";
 import {
   emptyDiscovery,
   isDiscovered,
@@ -26,6 +28,7 @@ describe("discovery state", () => {
       hostname: "web-01",
       firstSeenTick: 3,
       via: "netscan",
+      answered: true,
       portScanned: false,
       accessed: false,
       services: {},
@@ -97,6 +100,37 @@ describe("discovery state", () => {
     ).toThrow();
   });
 
+  it("keeps a host heard of apart from one that answered, and never un-answers it", () => {
+    const heard = recordHost(emptyDiscovery(), {
+      hostId: "web-01",
+      ip: "10.0.1.20",
+      via: "briefing",
+      tick: 0,
+      answered: false,
+    }).discovery;
+    expect(heard.hosts["web-01"]?.answered).toBe(false);
+    const answered = recordHost(heard, {
+      hostId: "web-01",
+      ip: "10.0.1.20",
+      via: "netscan",
+      tick: 2,
+    });
+    expect(answered.isNew).toBe(false);
+    expect(answered.discovery.hosts["web-01"]).toMatchObject({
+      answered: true,
+      via: "briefing",
+      firstSeenTick: 0,
+    });
+    const again = recordHost(answered.discovery, {
+      hostId: "web-01",
+      ip: "10.0.1.20",
+      via: "briefing",
+      tick: 3,
+      answered: false,
+    });
+    expect(again.discovery).toBe(answered.discovery);
+  });
+
   it("tracks port-scanned and accessed separately", () => {
     const base = recordHost(emptyDiscovery(), {
       hostId: "h",
@@ -150,5 +184,32 @@ describe("discovery through the tools", () => {
   it("doesn't learn a firewalled port's service, even on a reachable host", () => {
     const state = run(fixtureState(), "netscan", "db-01", "-p", "all").state;
     expect(state.discovery.hosts["db-01"]).toMatchObject({ portScanned: true, services: {} });
+  });
+});
+
+describe("snapshots", () => {
+  it("round-trips a host heard of in the briefing", () => {
+    const state = createInitialState({ ...FIXTURE_SCENARIO, knownHosts: ["web-01"] }, 1);
+    const restored = deserializeState(serializeState(state));
+    expect(restored.ok && restored.value.discovery.hosts["web-01"]?.answered).toBe(false);
+  });
+
+  it("loads snapshots from before `answered` existed, counting their hosts as answered", () => {
+    const envelope = JSON.parse(serializeState(run(fixtureState(), "netscan", "web-01").state));
+    for (const host of Object.values(envelope.state.discovery.hosts)) {
+      delete (host as { answered?: boolean }).answered;
+    }
+    const restored = deserializeState(JSON.stringify(envelope));
+    expect(restored.ok).toBe(true);
+    if (!restored.ok) return;
+    expect(restored.value.discovery.hosts["web-01"]?.answered).toBe(true);
+    expect(restored.value.discovery.hosts["ws-01"]?.answered).toBe(true);
+  });
+
+  it("still refuses an `answered` that isn't true or false", () => {
+    const envelope = JSON.parse(serializeState(fixtureState()));
+    envelope.state.discovery.hosts["ws-01"].answered = "yes";
+    const restored = deserializeState(JSON.stringify(envelope));
+    expect(restored.ok || restored.error.reason).toMatch(/answered: expected true or false/);
   });
 });

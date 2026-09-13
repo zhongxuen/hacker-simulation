@@ -54,9 +54,10 @@ export default function PrivacyPage() {
             </>
           }
         >
-          A few choices about how the app looks: whether the sidebar is small, and how many
-          animations you see. New settings will join them as the app grows. They&apos;ll always be
-          choices about how the app looks and works, never a record of what you&apos;ve done.
+          A few choices about how the app looks and helps: whether the sidebar is small, how many
+          animations you see, and whether the terminal shows beginner help. New settings will join
+          them as the app grows. They&apos;ll always be choices about how the app looks and works,
+          never a record of what you&apos;ve done.
         </StoreCard>
 
         <StoreCard

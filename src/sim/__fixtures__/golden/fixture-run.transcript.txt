@@ -1,0 +1,339 @@
+$ netscan --help
+  netscan - find which computers are switched on, and which doors (ports) they have open.
+
+  SIMULATED: this tool only works inside Hacker Simulation's practice network. It never contacts a real computer.
+
+  USAGE
+    netscan <target>
+    netscan <target> --ports <list>
+
+  WHAT IT DOES
+    Every computer on a network has an address, called an IP address, like a house number on a street. netscan knocks on addresses and lists the computers that answer. A computer on a network is also called a host.
+    The target can be one address (10.0.1.20), a name (web-01), or a range. A range like 10.0.1.0/24 means every address from 10.0.1.0 to 10.0.1.255: the /24 says the first three numbers stay the same.
+    Each computer also has numbered doors for different jobs, called ports. With --ports, netscan checks which doors are open and guesses which program, called a service, answers behind each one.
+    If a computer never answers, it may be switched off, or a firewall may be blocking you. A firewall is a set of rules about who may talk to whom.
+
+  OPTIONS
+    -p, --ports <list>   Which ports to check: 22, 20-25, 22,80,443, common (a short list of popular ports), or all.
+    --no-ping            Check ports even on computers that ignore 'are you there?' messages (pings). Needs --ports.
+    --help               Show this help.
+
+  EXAMPLES
+    netscan 10.0.1.0/24
+        Find every computer switched on in the 10.0.1.x network.
+    netscan web-01 --ports common
+        Check the most common ports on the computer called web-01.
+    netscan 10.0.1.0/24 -p 9100 --no-ping
+        Look for printers, even ones that ignore pings.
+
+  WHY IT MATTERS
+    You can't protect what you don't know about. Security teams scan their own networks to find forgotten computers and open ports that should be closed. The list they build is called an asset inventory.
+    Scanning a network you don't own, without written permission, is a crime in many countries. Your team only scans networks it has permission to test, and this practice network is one of them.
+[exit 0]
+  @ help.viewed {"command":"netscan"}
+  @ command.run {"command":"netscan","exitCode":0,"line":"netscan --help"}
+
+$ netscan 10.0.1.0/24
+  netscan (simulated) · looking for hosts in 10.0.1.0/24 · from ws-01.corp.example (10.0.1.10)
+
+  ADDRESS    NAME                 STATUS
+  10.0.1.10  ws-01.corp.example   up (this computer)
+  10.0.1.20  web-01.corp.example  up (replied in 1.2 ms)
+
+  Done: 256 addresses checked · 2 hosts up · 2.34 s
+[exit 0]
+  @ host.discovered {"hostId":"web-01","ip":"10.0.1.20","via":"netscan"}
+  @ scan.completed {"hostsUp":2,"openPorts":0,"portScan":false,"target":"10.0.1.0/24"}
+  @ command.run {"command":"netscan","exitCode":0,"line":"netscan 10.0.1.0/24"}
+
+$ netscan 10.0.1.20 --ports common
+  netscan (simulated) · checking 18 common ports on 10.0.1.20 · from ws-01.corp.example (10.0.1.10)
+
+  10.0.1.20  web-01.corp.example  up (replied in 1.6 ms)
+    PORT    STATE  SERVICE
+    22/tcp  open   ssh
+    80/tcp  open   http
+    OS guess: Linux
+
+  Done: 1 address checked · 1 host up · 2 open ports · 0.48 s
+[exit 0]
+  @ service.discovered {"hostId":"web-01","ip":"10.0.1.20","port":22,"protocol":"tcp","service":"ssh","via":"netscan"}
+  @ service.discovered {"hostId":"web-01","ip":"10.0.1.20","port":80,"protocol":"tcp","service":"http","via":"netscan"}
+  @ scan.completed {"hostsUp":1,"openPorts":2,"portScan":true,"target":"10.0.1.20"}
+  @ command.run {"command":"netscan","exitCode":0,"line":"netscan 10.0.1.20 --ports common"}
+
+$ netscan 10.0.2.0/24 -p common
+  netscan (simulated) · checking 18 common ports on 10.0.2.0/24 · from ws-01.corp.example (10.0.1.10)
+
+  10.0.2.20  web-01.corp.example  up (replied in 1.1 ms)
+    PORT    STATE  SERVICE
+    22/tcp  open   ssh
+    80/tcp  open   http
+    OS guess: Linux
+
+  10.0.2.40  db-01.corp.example  up (replied in 0.8 ms)
+    no open ports found among the ports checked
+    OS guess: Linux
+
+  Done: 256 addresses checked · 2 hosts up · 2 open ports · 2.33 s
+[exit 0]
+  @ host.discovered {"hostId":"db-01","ip":"10.0.2.40","via":"netscan"}
+  @ scan.completed {"hostsUp":2,"openPorts":2,"portScan":true,"target":"10.0.2.0/24"}
+  @ command.run {"command":"netscan","exitCode":0,"line":"netscan 10.0.2.0/24 -p common"}
+
+$ netscan 10.0.1.0/24 -p 9100 --no-ping
+  netscan (simulated) · checking port 9100 on 10.0.1.0/24 · from ws-01.corp.example (10.0.1.10)
+
+  10.0.1.10  ws-01.corp.example  up (this computer)
+    no open ports found among the ports checked
+    OS guess: Linux
+
+  10.0.1.20  web-01.corp.example  up (replied in 0.7 ms)
+    no open ports found among the ports checked
+    OS guess: Linux
+
+  10.0.1.30  printer-01  up (replied in 1.7 ms)
+    PORT      STATE  SERVICE
+    9100/tcp  open   printer
+    OS guess: embedded device
+
+  Done: 256 addresses checked · 3 hosts up · 1 open port · 2.00 s
+[exit 0]
+  @ host.discovered {"hostId":"printer-01","ip":"10.0.1.30","via":"netscan"}
+  @ service.discovered {"hostId":"printer-01","ip":"10.0.1.30","port":9100,"protocol":"tcp","service":"printer","via":"netscan"}
+  @ scan.completed {"hostsUp":3,"openPorts":1,"portScan":true,"target":"10.0.1.0/24"}
+  @ command.run {"command":"netscan","exitCode":0,"line":"netscan 10.0.1.0/24 -p 9100 --no-ping"}
+
+$ netscan mystery-box
+! netscan: mystery-box: Name or service not known
+[exit 1]
+  @ command.error {"code":"HOST_NOT_FOUND","command":"netscan","target":"mystery-box"}
+  @ command.run {"command":"netscan","exitCode":1,"line":"netscan mystery-box"}
+
+$ netscan portal.corp
+! netscan: portal.corp: outside the simulated network (nothing was sent)
+[exit 1]
+  @ command.error {"code":"OUT_OF_SCOPE","command":"netscan","target":"portal.corp"}
+  @ command.run {"command":"netscan","exitCode":1,"line":"netscan portal.corp"}
+
+$ netscan 100.64.0.1
+! netscan: 100.64.0.1: outside the simulated network (nothing was sent)
+[exit 1]
+  @ command.error {"code":"OUT_OF_SCOPE","command":"netscan","target":"100.64.0.1"}
+  @ command.run {"command":"netscan","exitCode":1,"line":"netscan 100.64.0.1"}
+
+$ netscan 10.0.0.0/8
+! netscan: invalid target: '10.0.0.0/8'
+! Try 'netscan --help' for more information.
+[exit 2]
+  @ command.error {"argument":"target","code":"BAD_ARGUMENT","command":"netscan","reason":"range-too-large","value":"10.0.0.0/8"}
+  @ command.run {"command":"netscan","exitCode":2,"line":"netscan 10.0.0.0/8"}
+
+$ netscan 10.0.1.0/24 --fast
+! netscan: unrecognized option '--fast'
+! Try 'netscan --help' for more information.
+[exit 2]
+  @ command.error {"code":"BAD_FLAG","command":"netscan","flag":"--fast"}
+  @ command.run {"command":"netscan","exitCode":2,"line":"netscan 10.0.1.0/24 --fast"}
+
+$ webprobe 10.0.1.20
+  webprobe (simulated) · http://10.0.1.20/ · web-01.corp.example (10.0.1.20)
+
+  HTTP/1.1 200 OK
+    Server: httpd/2.4.58
+    X-Powered-By: PageForge/3.1
+
+  Page title:   Staff portal
+  HTML comments (notes left in the page source):
+    <!-- TODO: remove the test account before launch -->
+    <!-- build note: SIM{view-source} -->
+  Fingerprint:  httpd 2.4.58 · OS guess: Linux
+[exit 0]
+  @ service.fingerprinted {"hostId":"web-01","port":80,"product":"httpd","version":"2.4.58"}
+  @ web.probed {"hostId":"web-01","path":"/","port":80,"status":200}
+  @ flag.found {"flagId":"view-source"}
+  @ command.run {"command":"webprobe","exitCode":0,"line":"webprobe 10.0.1.20"}
+
+$ webprobe web-01 --path /admin
+  webprobe (simulated) · http://web-01/admin · web-01.corp.example (10.0.1.20)
+
+  HTTP/1.1 401 Unauthorized
+    Server: httpd/2.4.58
+    X-Powered-By: PageForge/3.1
+
+  Page title:   Sign in required
+  Fingerprint:  httpd 2.4.58 · OS guess: Linux
+[exit 0]
+  @ web.probed {"hostId":"web-01","path":"/admin","port":80,"status":401}
+  @ command.run {"command":"webprobe","exitCode":0,"line":"webprobe web-01 --path /admin"}
+
+$ webprobe http://web-01.corp.example/old
+  webprobe (simulated) · http://web-01.corp.example/old · web-01.corp.example (10.0.1.20)
+
+  HTTP/1.1 301 Moved Permanently
+    Server: httpd/2.4.58
+    X-Powered-By: PageForge/3.1
+    Location: /
+
+  Page title:   (none)
+  Fingerprint:  httpd 2.4.58 · OS guess: Linux
+[exit 0]
+  @ web.probed {"hostId":"web-01","path":"/old","port":80,"status":301}
+  @ command.run {"command":"webprobe","exitCode":0,"line":"webprobe http://web-01.corp.example/old"}
+
+$ webprobe 10.0.1.20:22
+! webprobe: 10.0.1.20:22: expected http, got ssh
+[exit 1]
+  @ command.error {"code":"PROTOCOL_MISMATCH","command":"webprobe","expected":"http","found":"ssh","port":22,"target":"10.0.1.20"}
+  @ command.run {"command":"webprobe","exitCode":1,"line":"webprobe 10.0.1.20:22"}
+
+$ webprobe 10.0.1.20:8080
+! webprobe: 10.0.1.20:8080: Connection refused
+[exit 1]
+  @ command.error {"code":"CONNECTION_REFUSED","command":"webprobe","port":8080,"target":"10.0.1.20"}
+  @ command.run {"command":"webprobe","exitCode":1,"line":"webprobe 10.0.1.20:8080"}
+
+$ webprobe vault-01
+! webprobe: vault-01:80: Connection timed out (no reply)
+[exit 1]
+  @ command.error {"code":"HOST_UNREACHABLE","command":"webprobe","port":80,"target":"vault-01"}
+  @ command.run {"command":"webprobe","exitCode":1,"line":"webprobe vault-01"}
+
+$ webprobe 10.0.2.40:5432
+! webprobe: 10.0.2.40:5432: Connection timed out (no reply)
+[exit 1]
+  @ command.error {"code":"HOST_UNREACHABLE","command":"webprobe","port":5432,"target":"10.0.2.40"}
+  @ command.run {"command":"webprobe","exitCode":1,"line":"webprobe 10.0.2.40:5432"}
+
+$ logview
+  logview (simulated) · files in /var/log
+
+    auth.log     6 lines  readable
+    private.log  -        no permission (owner root, group root)
+    syslog       4 lines  readable
+
+  Open one with: logview /var/log/<name>
+[exit 0]
+  @ command.run {"command":"logview","exitCode":0,"line":"logview"}
+
+$ logview /var/log/auth.log --grep failed
+  logview (simulated) · /var/log/auth.log · 3 of 6 lines containing "failed"
+
+  2  2026-03-01T23:02:44Z WARN sshd[902]: Failed password for root from 10.0.1.20 port 40112
+  3  2026-03-01T23:02:46Z WARN sshd[902]: Failed password for root from 10.0.1.20 port 40114
+  4  2026-03-01T23:02:49Z WARN sshd[902]: Failed password for admin from 10.0.1.20 port 40118
+[exit 0]
+  @ file.read {"hostId":"ws-01","path":"/var/log/auth.log"}
+  @ log.queried {"hostId":"ws-01","matched":3,"path":"/var/log/auth.log"}
+  @ command.run {"command":"logview","exitCode":0,"line":"logview /var/log/auth.log --grep failed"}
+
+$ logview logs/syslog --level error --count
+  logview (simulated) · /var/log/syslog · 1 of 4 lines at level error
+[exit 0]
+  @ file.read {"hostId":"ws-01","path":"/var/log/syslog"}
+  @ log.queried {"hostId":"ws-01","matched":1,"path":"/var/log/syslog"}
+  @ command.run {"command":"logview","exitCode":0,"line":"logview logs/syslog --level error --count"}
+
+$ logview /var/log/private.log
+! logview: /var/log/private.log: Permission denied
+[exit 1]
+  @ command.error {"code":"EACCES","command":"logview","path":"/var/log/private.log"}
+  @ command.run {"command":"logview","exitCode":1,"line":"logview /var/log/private.log"}
+
+$ logview /etc/shadow
+! logview: /etc/shadow: Permission denied
+[exit 1]
+  @ command.error {"code":"EACCES","command":"logview","path":"/etc/shadow"}
+  @ command.run {"command":"logview","exitCode":1,"line":"logview /etc/shadow"}
+
+$ logview /tmp/loop-a
+! logview: /tmp/loop-a: Too many levels of symbolic links
+[exit 1]
+  @ command.error {"code":"ELOOP","command":"logview","path":"/tmp/loop-a"}
+  @ command.run {"command":"logview","exitCode":1,"line":"logview /tmp/loop-a"}
+
+$ logview /home/alex/todo.txt
+! logview: /home/alex/todo.txt: Permission denied
+[exit 1]
+  @ command.error {"code":"EACCES","command":"logview","path":"/home/alex/todo.txt"}
+  @ command.run {"command":"logview","exitCode":1,"line":"logview /home/alex/todo.txt"}
+
+$ logview ../../../../home/recruit/.secret-note
+  logview (simulated) · /home/recruit/.secret-note · 1 line
+
+  1  You found the hidden note! SIM{hidden-in-plain-sight}
+[exit 0]
+  @ file.read {"hostId":"ws-01","path":"/home/recruit/.secret-note"}
+  @ log.queried {"hostId":"ws-01","matched":1,"path":"/home/recruit/.secret-note"}
+  @ flag.found {"flagId":"hidden-note"}
+  @ command.run {"command":"logview","exitCode":0,"line":"logview ../../../../home/recruit/.secret-note"}
+
+$ logview --grep ssh
+  (with 37 characters piped in)
+  logview (simulated) · (piped input) · 2 of 3 lines containing "ssh"
+
+  2  sshd restarted
+  3  ssh key added
+[exit 0]
+  @ log.queried {"hostId":"ws-01","matched":2,"path":"(piped input)"}
+  @ command.run {"command":"logview","exitCode":0,"line":"logview --grep ssh"}
+
+$ hashid 9b1f3c2e7a4d5b6c8e0f1a2b3c4d5e6f
+  hashid (simulated) · names hash formats by their shape · never cracks them
+
+  9b1f3c2e7a4d5b6c8e0f1a2b3c4d5e6f
+    32 characters, hexadecimal (0-9 and a-f)
+    Most likely: MD5 (fast, and broken for security use: never safe for passwords)
+    Also possible: NTLM, MD4
+[exit 0]
+  @ hash.identified {"format":"md5"}
+  @ command.run {"command":"hashid","exitCode":0,"line":"hashid 9b1f3c2e7a4d5b6c8e0f1a2b3c4d5e6f"}
+
+$ hashid '$2b$12$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0'
+  hashid (simulated) · names hash formats by their shape · never cracks them
+
+  $2b$12$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0
+    60 characters, starts with "$2b$"
+    Most likely: bcrypt (slow and salted: built for storing passwords)
+[exit 0]
+  @ hash.identified {"format":"bcrypt"}
+  @ command.run {"command":"hashid","exitCode":0,"line":"hashid '$2b$12$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0'"}
+
+$ hashid --file hashes.txt
+  hashid (simulated) · names hash formats by their shape · never cracks them
+
+  user svc-web: $1$xYz12$Fq0Wn2d9Lr5Kp8Tq3Vb7M.
+    31 characters, starts with "$1$"
+    Most likely: MD5 crypt (salted but old: too fast by today's standards)
+
+  user guest: ""
+    empty: this account has NO password
+
+  user legacy: 7A3E9C1F5B8D2E4A6C0F9B3D5E7A1C8F
+    32 characters, hexadecimal (0-9 and a-f)
+    Most likely: NTLM (fast and unsalted: how some Windows systems store passwords, and weak protection)
+    Also possible: MD5, MD4
+
+  user nobody: *
+    locked: this account can't log in with a password
+[exit 0]
+  @ hash.identified {"format":"md5-crypt"}
+  @ hash.identified {"format":"empty"}
+  @ hash.identified {"format":"ntlm"}
+  @ hash.identified {"format":"locked"}
+  @ command.run {"command":"hashid","exitCode":0,"line":"hashid --file hashes.txt"}
+
+$ hashid --file /etc/shadow
+! hashid: /etc/shadow: Permission denied
+[exit 1]
+  @ command.error {"code":"EACCES","command":"hashid","path":"/etc/shadow"}
+  @ command.run {"command":"hashid","exitCode":1,"line":"hashid --file /etc/shadow"}
+
+$ sl
+! sl: command not found
+[exit 127]
+  @ command.error {"code":"UNKNOWN_COMMAND","command":"sl"}
+  @ command.run {"command":"sl","exitCode":127,"line":"sl"}
+
+$
+[exit 0]

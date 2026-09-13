@@ -30,15 +30,17 @@ const boundaryZones = [
     except: ["./content", "./sim/types.ts", "./sim/types"],
     message: "src/content may only import from @/content and @/sim/types.",
   },
-  // 3. A feature's internals are private. Everything outside the feature goes through its index.ts.
+  // 3. A feature's internals are private. Everything outside the feature goes through its index.ts,
+  //    or its server.ts for server-only code (anything that reads files, say), which client code
+  //    must never import.
   ...features.map((feature) => ({
     target: [
       ...srcDirs.filter((dir) => dir !== "features").map((dir) => `./src/${dir}`),
       ...features.filter((other) => other !== feature).map((other) => `./src/features/${other}`),
     ],
     from: `./src/features/${feature}`,
-    except: ["./index.ts", "./index.tsx"],
-    message: `Import from "@/features/${feature}" (its index.ts), not from its internals.`,
+    except: ["./index.ts", "./index.tsx", "./server.ts"],
+    message: `Import from "@/features/${feature}" (its index.ts) or "@/features/${feature}/server" (its server.ts), not from its internals.`,
   })),
 ];
 
@@ -66,20 +68,10 @@ const eslintConfig = defineConfig([
               message: "src/sim is headless: no React or Next.js imports.",
             },
             {
-              group: [
-                "node:*",
-                "fs",
-                "fs/*",
-                "net",
-                "http",
-                "https",
-                "http2",
-                "dgram",
-                "dns",
-                "tls",
-                "child_process",
-                "worker_threads",
-              ],
+              // A regex on the whole specifier, so the engine's own src/sim/fs and src/sim/net
+              // folders ("../fs/tree", "@/sim/net/graph") aren't mistaken for Node's modules.
+              regex:
+                "^(node:.*|(fs|net|http|https|http2|dgram|dns|tls|child_process|worker_threads)(/.*)?)$",
               message: "src/sim does no I/O: no filesystem, network, or process access.",
             },
           ],

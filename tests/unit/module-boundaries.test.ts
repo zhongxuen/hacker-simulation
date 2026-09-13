@@ -35,6 +35,18 @@ describe("src/sim boundaries", () => {
         'import { readFileSync } from "node:fs";\nexport { readFileSync };\n',
       ),
     ).toContain("no-restricted-imports");
+    for (const specifier of ["fs", "fs/promises", "net", "http", "child_process"]) {
+      expect(
+        await ruleIdsFor(simFile, `import * as io from "${specifier}";\nexport { io };\n`),
+        specifier,
+      ).toContain("no-restricted-imports");
+    }
+  });
+
+  it("allows the engine's own fs and net folders", async () => {
+    const code =
+      'export type { Vfs } from "../fs/types";\nexport type { Host } from "@/sim/net/types";\n';
+    expect(await ruleIdsFor(simFile, code)).toEqual([]);
   });
 
   it("rejects imports from the rest of src", async () => {

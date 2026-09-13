@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SettingsBootScript } from "@/components/shell/settings-boot-script";
 import "@/styles/globals.css";
 
 const geistSans = Geist({
@@ -15,16 +16,22 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Hacker Simulation",
   description:
-    "A fun, game-like way to learn cybersecurity from absolute zero. Everything is simulated.",
+    "Learn how hackers think, and how to stop them, through a story game. No experience needed, and everything is simulated: nothing touches a real computer.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full bg-neutral-950 text-neutral-100 antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full bg-surface-base text-primary antialiased`}
+      // SettingsBootScript sets data-sidebar and data-motion here before React loads. This silences
+      // those expected attribute differences on <html> only, not on anything inside it.
+      suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">
+        <SettingsBootScript />
+        {children}
+      </body>
     </html>
   );
 }

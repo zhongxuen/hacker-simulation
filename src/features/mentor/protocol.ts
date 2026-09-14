@@ -9,6 +9,40 @@ export type HintTier = 1 | 2 | 3;
 
 export const HINT_TIERS: readonly HintTier[] = [1, 2, 3];
 
+/** What each tier is, in the learner's words: shown beside the tier number, never as a cost. */
+export const HINT_TIER_LABELS: Readonly<Record<HintTier, string>> = {
+  1: "a nudge",
+  2: "the idea",
+  3: "nearly the answer",
+};
+
+/** The three things the mentor does. Each has its own route, prompt and log line. */
+export type MentorKind = "hint" | "explain" | "review";
+
+/** The routes the browser calls. Same-origin; the API key stays on the server. */
+export const MENTOR_ENDPOINTS: Readonly<Record<MentorKind, string>> = {
+  hint: "/api/mentor/hint",
+  explain: "/api/mentor/explain",
+  review: "/api/mentor/review",
+};
+
+/**
+ * What the learner asked Noor to explain (prompt 10.3, "Explain this"):
+ *  - `output`: something the terminal showed. `scope` says whether it's one line or everything a
+ *    command printed; `error` marks an error line. The text is the learner's own screen, so it is
+ *    untrusted and goes into the prompt as data.
+ *  - `term`: a glossary word, by id. The server loads the definition from the glossary itself.
+ */
+export type ExplainSubject =
+  | {
+      readonly kind: "output";
+      readonly command: string;
+      readonly text: string;
+      readonly scope: "line" | "output";
+      readonly error: boolean;
+    }
+  | { readonly kind: "term"; readonly termId: string };
+
 /** Header the route sets so a client (or a proxy) can see at a glance which path answered. */
 export const MENTOR_MODE_HEADER = "x-mentor-mode";
 
@@ -22,13 +56,15 @@ export const MENTOR_STREAM_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
  */
 export type MentorFallbackReason =
   | "disabled"
+  | "cross_site"
   | "request_too_large"
   | "invalid_request"
   | "unknown_target"
   | "no_hints"
   | "model_error"
   | "validation_rejected"
-  | "empty_output";
+  | "empty_output"
+  | "unreadable_output";
 
 /**
  * One line of the NDJSON stream:
@@ -44,11 +80,16 @@ export type MentorStreamEvent =
 /** How the mentor answered: `model` is Noor's live rewrite, `fallback` the authored tier text. */
 export type MentorMode = "model" | "fallback";
 
-/** What a hint request resolves to: the mode, and the text the learner should end up seeing. */
+/**
+ * What a hint or explanation request resolves to: the mode, and the text the learner should end up
+ * seeing.
+ */
 export interface MentorHintResult {
   readonly mode: MentorMode;
   readonly text: string;
 }
+
+export type MentorTextResult = MentorHintResult;
 
 /** The learner gets a moment to try each hint before the next tier unlocks: 30 seconds. */
 export const HINT_COOLDOWN_MS = 30_000;

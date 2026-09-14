@@ -39,7 +39,16 @@ export function CommandCheatSheet({ defaultOpen = true, className }: CommandChea
           {open ? "Hide" : "Show"}
         </button>
       </header>
-      <div id={bodyId} hidden={!open} className="max-h-[32rem] space-y-5 overflow-y-auto px-4 py-4">
+      {/* It scrolls, and holds nothing focusable, so it takes focus itself: arrow keys and Page
+          Down then scroll it for keyboard users too (WCAG 2.1.1). */}
+      <div
+        id={bodyId}
+        hidden={!open}
+        role="region"
+        aria-labelledby={`${bodyId}-title`}
+        tabIndex={0}
+        className="max-h-[32rem] space-y-5 overflow-y-auto px-4 py-4 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus-ring"
+      >
         <p className="text-sm leading-6 text-secondary">
           Type any of these at the prompt. For the full story on one, type{" "}
           <code className="font-mono text-primary">man</code> and its name.

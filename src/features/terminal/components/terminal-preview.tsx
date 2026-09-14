@@ -8,7 +8,7 @@ import {
 } from "@/content/themes";
 import { cx } from "@/lib/cx";
 import type { PromptInfo } from "../session/terminal-session";
-import { PromptLabel } from "./output-block";
+import { PromptLabel } from "./prompt-label";
 import { CursorMark } from "./prompt-input";
 import { CopyText } from "./styled-text";
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FOCUS_RING } from "@/components/ui/focus-ring";
 import { getAppSection } from "@/lib/app-sections";
 import { cx } from "@/lib/cx";
-import { TerminalPlayground } from "./terminal-playground";
+import { LazyTerminalPlayground } from "./lazy-terminal-playground";
 
 export const metadata: Metadata = { title: getAppSection("terminal").label };
 
@@ -32,7 +32,7 @@ export default function TerminalPage() {
           </p>
         </div>
       </div>
-      <TerminalPlayground />
+      <LazyTerminalPlayground />
     </div>
   );
 }

@@ -10,6 +10,11 @@ export interface MentorModelInput {
   readonly system: string;
   readonly messages: readonly { readonly role: "user"; readonly content: string }[];
   readonly maxTokens: number;
+  /**
+   * Constrains the answer to this JSON schema (structured outputs). Only the post-mission review
+   * uses it; hints and explanations are plain text.
+   */
+  readonly jsonSchema?: Readonly<Record<string, unknown>>;
 }
 
 export interface MentorModelUsage {

@@ -1,4 +1,4 @@
-import { renderToStaticMarkup } from "react-dom/server";
+import { prerender } from "react-dom/static";
 import { describe, expect, it } from "vitest";
 import { MINI_TERMINALS } from "@/content/mini-terminals";
 import {
@@ -19,8 +19,14 @@ import { createInitialState } from "@/sim";
  * checks the server-rendered markup: roles, labels and keyboard-reachable controls.
  */
 
-const render = async (mdx: string) =>
-  renderToStaticMarkup((await renderLessonBody(mdx, "test")).content);
+/**
+ * Renders the way the server does for a real page: it waits for every Suspense boundary, so the
+ * lazily loaded <MiniTerminal> (prompt 11.3) arrives as the whole terminal, not its loading state.
+ */
+const render = async (mdx: string) => {
+  const { prelude } = await prerender((await renderLessonBody(mdx, "test")).content);
+  return new Response(prelude).text();
+};
 
 const QUIZ = `<Quiz
   question="Which one is a port?"

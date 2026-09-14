@@ -68,7 +68,9 @@ export function Switch({
       )}
     >
       <span className="min-w-0">
-        <span className="block font-medium text-primary">{label}</span>
+        <span id={`${id}-label`} className="block font-medium text-primary">
+          {label}
+        </span>
         <span id={`${id}-detail`} className="mt-1 block text-sm leading-6 text-secondary">
           {detail}
         </span>
@@ -78,6 +80,8 @@ export function Switch({
         role="switch"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
+        // Named by the label alone; the detail is its description (the <label> wraps both).
+        aria-labelledby={`${id}-label`}
         aria-describedby={`${id}-detail`}
         className="peer sr-only"
       />

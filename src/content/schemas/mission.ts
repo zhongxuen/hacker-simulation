@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { SIM_EVENT_TYPES, type ScenarioSpec, type SimEvent, type SimEventType } from "@/sim/types";
+import { SIM_EVENT_TYPES, type SimEvent, type SimEventType } from "@/sim/types";
 import { CAST_IDS } from "../cast";
 import { SKILL_IDS } from "../skills";
 import { CONTENT_ID_PATTERN, ContentIdSchema, uniqueIds } from "./ids";
+import { MISSION_DIFFICULTIES, normalizeAnswer, type MissionDifficulty } from "./mission-helpers";
 
 /**
  * The mission schema (md-files/06-mission-system.md, "Mission schema" and prompt 06.1).
@@ -27,9 +28,13 @@ import { CONTENT_ID_PATTERN, ContentIdSchema, uniqueIds } from "./ids";
 // Limits
 // ---------------------------------------------------------------------------------------------
 
-export const MISSION_DIFFICULTIES = ["intro", "easy", "medium", "hard"] as const;
-
-export type MissionDifficulty = (typeof MISSION_DIFFICULTIES)[number];
+// The Zod-free pieces the browser needs at runtime live in mission-helpers.ts, re-exported here.
+export {
+  MISSION_DIFFICULTIES,
+  normalizeAnswer,
+  toScenarioSpec,
+  type MissionDifficulty,
+} from "./mission-helpers";
 
 /** The longest a mission of each difficulty may take, in minutes. Missions fit one sitting. */
 export const MISSION_MINUTES_MAX: Readonly<Record<MissionDifficulty, number>> = {
@@ -392,11 +397,6 @@ export type StoryBeat = z.output<typeof StoryBeatSchema>;
 // ---------------------------------------------------------------------------------------------
 // Objective checks
 // ---------------------------------------------------------------------------------------------
-
-/** Answers compare trimmed, case-insensitive, with any run of spaces counted as one space. */
-export function normalizeAnswer(answer: string): string {
-  return answer.trim().toLowerCase().replace(/\s+/g, " ");
-}
 
 /** Ticks when the engine has sent an event of this type whose fields equal every `match` value. */
 const EventCheckSchema = strict(
@@ -1099,18 +1099,4 @@ export function parseMission(data: unknown): MissionParseResult {
       return path === "" ? issue.message : `${path}: ${issue.message}`;
     }),
   };
-}
-
-/**
- * The engine's ScenarioSpec for a mission: its scenario without the seed, with the mission id as
- * the scenario id unless it sets its own. Build the starting state with
- * `createInitialState(toScenarioSpec(mission), mission.scenario.seed)`.
- *
- * The return type is also the compile-time proof that the schema above still matches the engine's
- * ScenarioSpec: if the engine's spec changes shape, this stops compiling.
- */
-export function toScenarioSpec(mission: Pick<Mission, "id" | "scenario">): ScenarioSpec {
-  const { id, seed, ...spec } = mission.scenario;
-  void seed; // the seed goes to createInitialState, not into the spec
-  return { ...spec, id: id ?? mission.id };
 }

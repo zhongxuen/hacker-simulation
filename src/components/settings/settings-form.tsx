@@ -109,6 +109,18 @@ export function SettingsForm({ children }: SettingsFormProps) {
           />
         </SettingCard>
 
+        <SettingCard
+          title="Your mentor"
+          description="Your mentor gives free hints and explains things during missions, whenever you ask."
+        >
+          <Switch
+            checked={settings.nudgeChip}
+            onChange={(checked) => change({ nudgeChip: checked })}
+            label="Offer me a nudge when I seem stuck"
+            detail="A small “Want a nudge?” button appears after a few tries that didn't work, or a few minutes without a new tick. It never opens anything by itself. Turn it off and you can still ask for hints any time."
+          />
+        </SettingCard>
+
         {children}
 
         <SettingCard
@@ -133,6 +145,18 @@ export function SettingsForm({ children }: SettingsFormProps) {
             value={settings.reducedMotionOverride}
             options={MOTION_OPTIONS}
             onChange={(value) => change({ reducedMotionOverride: value })}
+          />
+        </SettingCard>
+
+        <SettingCard
+          title="Anonymous counts"
+          description="Counts like “a mission was started” or “a step was ticked”, added up so we can find the parts that are too hard. Never anything you type, and nothing that says who you are."
+        >
+          <Switch
+            checked={settings.usageCounts}
+            onChange={(checked) => change({ usageCounts: checked })}
+            label="Send anonymous usage counts"
+            detail="Off sends nothing at all. If your browser asks websites not to track it (Do Not Track or Global Privacy Control), nothing is sent either way. The “What we store” page has the details."
           />
         </SettingCard>
 

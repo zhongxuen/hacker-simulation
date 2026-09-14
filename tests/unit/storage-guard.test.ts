@@ -40,6 +40,12 @@ describe("findStorageAccess", () => {
     expect(names.filter((name) => name === "document.cookie")).toHaveLength(2);
   });
 
+  it("flags the Cache API, navigator.storage, service workers and WebSQL too", () => {
+    expect(new Set(scan(join(FIXTURES, "other-storage.ts")).map((access) => access.name))).toEqual(
+      new Set(["caches", "navigator.storage", "navigator.serviceWorker", "openDatabase"]),
+    );
+  });
+
   it("ignores comments and strings that only mention storage", () => {
     expect(scan(join(FIXTURES, "mentions-only.ts"))).toEqual([]);
   });

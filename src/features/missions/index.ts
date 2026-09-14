@@ -21,11 +21,13 @@ export {
   canAnswer,
   createMissionRun,
   currentObjective,
+  failedAttempts,
   HINT_TIERS,
   MAX_NOTE_LENGTH,
   isRunInProgress,
   missionRunReducer,
   rewardSummary,
+  runMinutes,
   visibleObjectives,
   type AnswerFeedback,
   type MissionPhase,
@@ -43,6 +45,7 @@ export {
   type PlayStepResult,
 } from "./run/play";
 export { verifyPlaythrough, type PlaythroughCheck } from "./run/verify";
+export { usageEventsBetween } from "./run/usage";
 
 export { MissionRunner, type MissionRunnerProps } from "./components/mission-runner";
 export { MissionList } from "./components/mission-list";

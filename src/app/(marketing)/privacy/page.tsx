@@ -36,9 +36,9 @@ export default function PrivacyPage() {
           howLong="Until you leave the mission, reload the page, or close the tab. Then it's gone, and your next visit starts fresh."
         >
           Everything about the mission you&apos;re in right now: the practice computer, the commands
-          you&apos;ve typed, the goals you&apos;ve ticked off, the hints you&apos;ve opened, and any
-          notes you&apos;ve made. That&apos;s why every mission fits in one sitting, 5 to 20
-          minutes.
+          you&apos;ve typed, the goals you&apos;ve ticked off, the hints you&apos;ve opened, what
+          your mentor told you, and any notes you&apos;ve made. That&apos;s why every mission fits
+          in one sitting, 5 to 20 minutes.
         </StoreCard>
 
         <StoreCard
@@ -56,9 +56,10 @@ export default function PrivacyPage() {
         >
           A few choices about how the app looks and helps: whether the sidebar is small, how many
           animations you see, whether the terminal shows beginner help, the terminal&apos;s colours,
-          prompt and cursor, and whether the network map shows as a drawing or a table. New settings
-          will join them as the app grows. They&apos;ll always be choices about how the app looks
-          and works, never a record of what you&apos;ve done.
+          prompt and cursor, whether the network map shows as a drawing or a table, whether your
+          mentor offers a nudge when you seem stuck, and whether anonymous counts are sent (below).
+          New settings will join them as the app grows. They&apos;ll always be choices about how the
+          app looks and works, never a record of what you&apos;ve done.
         </StoreCard>
 
         <StoreCard
@@ -66,13 +67,38 @@ export default function PrivacyPage() {
           where="Passed along to write you an answer, then dropped."
           howLong="We don't store any of it."
         >
-          When you ask the mentor for a hint, a few of your most recent commands in that mission go
-          to an AI service (a program that writes text) so it can write a hint that fits what you
-          tried. Only that handful of commands is sent, never your whole session, and nothing in it
-          says who you are. It&apos;s used to write the hint and then dropped; we don&apos;t keep
-          it. If the mentor is switched off or busy, you still get the same hint, written ahead of
-          time. Later we may also count visits to see where beginners get stuck. Those counts will
-          be anonymous and won&apos;t use cookies, and this page will say when they start.
+          When you ask the mentor for something (a hint, an explanation of a line or a word, or a
+          look back at a mission you finished), some of your recent commands in that mission go to
+          an AI service (a program that writes text) so the answer fits what you tried. For an
+          explanation, the line or word you pointed at goes too. For a look back, it&apos;s more of
+          your commands, with only the start of what each one printed, plus which goals you ticked
+          and how many hints you opened. It&apos;s never sent unless you ask, and nothing in it says
+          who you are. It&apos;s used to write the answer and then dropped; we don&apos;t keep it.
+          If the mentor is switched off or busy, you still get an answer written ahead of time.
+        </StoreCard>
+
+        <StoreCard
+          title="Anonymous counts"
+          where="Added up by Vercel, the company that runs this website, as totals we can look at. Never a record of one person."
+          howLong={
+            <>
+              Vercel keeps the totals. It tells one visit from another without a cookie, and forgets
+              which was which after 24 hours. Turn counts off any time on the{" "}
+              <Link href="/settings" className={INLINE_LINK}>
+                Settings page
+              </Link>
+              .
+            </>
+          }
+        >
+          To find the parts of a mission that are too hard, we count things like &ldquo;a mission
+          was started&rdquo;, &ldquo;this step was ticked&rdquo;, &ldquo;a hint was opened&rdquo;
+          and roughly how long the first tick took (in ranges, like &ldquo;1 to 2 minutes&rdquo;).
+          We also count which pages are opened and how fast they load. With each count Vercel sees
+          what any website sees: the page, the kind of browser and device, and roughly which
+          country. It doesn&apos;t keep your internet address. Nothing you type is ever counted: no
+          commands, answers or notes. If your browser asks websites not to track it (a setting
+          called Do Not Track, or Global Privacy Control), nothing is sent at all.
         </StoreCard>
 
         <StoreCard title="Never stored, anywhere" where="Nowhere." howLong="Not at all.">
@@ -85,8 +111,8 @@ export default function PrivacyPage() {
         <h2 className="text-2xl font-semibold tracking-tight">No cookies</h2>
         <p className="mt-3 text-lg leading-8 text-secondary">
           Cookies are small notes a website asks your browser to keep, often to remember who you
-          are. Hacker Simulation doesn&apos;t use any. There&apos;s no sign-in, so there&apos;s
-          nothing for a cookie to remember.
+          are. Hacker Simulation doesn&apos;t use any, and neither do the anonymous counts.
+          There&apos;s no sign-in, so there&apos;s nothing for a cookie to remember.
         </p>
       </section>
 

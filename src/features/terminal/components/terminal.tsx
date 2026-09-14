@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useId,
   useLayoutEffect,
@@ -14,12 +15,14 @@ import { SimulatedBadge } from "@/components/ui/simulated-badge";
 import { cx } from "@/lib/cx";
 import { useSettings } from "@/lib/settings";
 import { announceBlock } from "../a11y/announce";
+import type { TerminalExplainRequest } from "../beginner/explain-request";
 import { completesStep, successText, TERMINAL_TOUR } from "../beginner/tour";
 import type { TerminalSession } from "../hooks/use-terminal-session";
 import { plainTranscript, type TerminalBlock } from "../session/terminal-session";
 import { CommandChips } from "./command-chips";
 import { HelpMenu } from "./help-menu";
-import { OutputBlock, PromptLabel } from "./output-block";
+import { OutputBlock } from "./output-block";
+import { PromptLabel } from "./prompt-label";
 import { PromptInput } from "./prompt-input";
 import { ShortcutsDialog } from "./shortcuts-dialog";
 import { TerminalTour, type TourProgress } from "./terminal-tour";
@@ -40,6 +43,12 @@ export interface TerminalProps {
   className?: string;
   /** Classes for the output area: its height, mostly. */
   outputClassName?: string;
+  /**
+   * "Explain this" (phase 10): when given, every command gets an Explain this button (and every
+   * line a hover shortcut) that hands over what the learner pointed at, with the explanation the
+   * terminal already has as a fallback. Whoever explains it is up to the caller.
+   */
+  onExplain?: (request: TerminalExplainRequest) => void;
 }
 
 interface SearchState {
@@ -82,6 +91,7 @@ export function Terminal({
   actions,
   className,
   outputClassName = "h-[26rem]",
+  onExplain,
 }: TerminalProps) {
   const { beginnerMode, promptStyle, cursorStyle } = useSettings();
   const [value, setValue] = useState("");
@@ -115,6 +125,17 @@ export function Terminal({
   const outputId = useId();
 
   const { blocks, prompt } = session;
+
+  // One stable callback for every block, so a new function from the caller never redraws them.
+  const explainRef = useRef(onExplain);
+  useEffect(() => {
+    explainRef.current = onExplain;
+  }, [onExplain]);
+  const explain = useCallback(
+    (request: TerminalExplainRequest) => explainRef.current?.(request),
+    [],
+  );
+  const canExplain = onExplain !== undefined;
   const ghost = search ? "" : session.ghost(value, cursor);
 
   // Put the caret where a keyboard action asked for it, once the new value is on screen.
@@ -420,6 +441,7 @@ export function Terminal({
               promptStyle={promptStyle}
               latest={block.id === lastId}
               virtualize={index < blocks.length - RECENT_BLOCKS}
+              {...(canExplain && { onExplain: explain })}
             />
           ))}
         </div>

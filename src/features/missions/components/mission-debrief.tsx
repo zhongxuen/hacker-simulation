@@ -8,8 +8,16 @@ import { ArrowRightIcon, CheckIcon, SparkleIcon } from "@/components/ui/icons";
 import { MissionComplete } from "@/components/ui/mission-complete";
 import type { Mission } from "@/content/schemas/mission";
 import { SKILLS } from "@/content/skills";
+import {
+  buildMentorTranscript,
+  MentorReviewCard,
+  REVIEW_TRANSCRIPT_LIMITS,
+  type MentorSession,
+} from "@/features/mentor";
+import type { TerminalBlock } from "@/features/terminal";
 import { cx } from "@/lib/cx";
 import { rewardSummary, type MissionRunAction, type MissionRunState } from "../run/mission-run";
+import { reviewFactsFor } from "../run/review-facts";
 import { MissionText } from "./mission-text";
 import { SkillIconGlyph } from "./skill-badge";
 import type { MissionLinks } from "./types";
@@ -24,6 +32,10 @@ interface MissionDebriefProps {
   run: MissionRunState;
   links: MissionLinks;
   dispatch: (action: MissionRunAction) => void;
+  /** The attempt's mentor, which holds the post-mission review once asked for (phase 10). */
+  mentor: MentorSession;
+  /** The attempt's terminal: every line run, and what's on the screen, for the review. */
+  terminal: { readonly history: readonly string[]; readonly blocks: readonly TerminalBlock[] };
 }
 
 function Block({ title, children, id }: { title: string; children: ReactNode; id: string }) {
@@ -44,8 +56,19 @@ const plural = (count: number, one: string, many: string) => (count === 1 ? one 
  * and secrets you found, what you learned), then the ethics note, how a defender stops this, some
  * further reading, and the next mission with its tease. Hints never appear here: using one is
  * never a mark against anyone.
+ *
+ * Right after the celebration, the learner can ask the mentor to look back at their run (phase 10):
+ * formative feedback that leads with what they did well. It's held with the attempt, so it's only
+ * ever written once, and its "at a glance" facts mention hints only as the free help they are.
  */
-export function MissionDebrief({ mission, run, links, dispatch }: MissionDebriefProps) {
+export function MissionDebrief({
+  mission,
+  run,
+  links,
+  dispatch,
+  mentor,
+  terminal,
+}: MissionDebriefProps) {
   const { debrief } = mission;
   const rewards = rewardSummary(mission, run);
   const secretsLeft = rewards.secretsTotal - rewards.secretsFound.length;
@@ -121,6 +144,21 @@ export function MissionDebrief({ mission, run, links, dispatch }: MissionDebrief
           )}
         </section>
       )}
+
+      <MentorReviewCard
+        state={mentor.state.review}
+        facts={reviewFactsFor(mission, run, terminal.history)}
+        lessonTitle={(lessonId) =>
+          [...links.concepts, ...links.furtherReading].find((lesson) => lesson.id === lessonId)
+            ?.title
+        }
+        onRequest={() =>
+          mentor.requestReview(
+            reviewFactsFor(mission, run, terminal.history),
+            buildMentorTranscript(terminal.blocks, REVIEW_TRANSCRIPT_LIMITS),
+          )
+        }
+      />
 
       <Block id="debrief-learned" title="What you learned">
         <ul className="space-y-1.5">

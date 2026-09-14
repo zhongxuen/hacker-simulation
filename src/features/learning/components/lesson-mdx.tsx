@@ -6,7 +6,7 @@ import {
   QuizSchema,
 } from "@/content/schemas/lesson-components";
 import { AnnotatedView } from "./annotated";
-import { MiniTerminalView } from "./mini-terminal";
+import { LazyMiniTerminal } from "./mini-terminal-lazy";
 import { PacketDiagramView } from "./packet-diagram";
 import { QuizView } from "./quiz";
 
@@ -23,7 +23,8 @@ export function Quiz(props: unknown) {
 }
 
 export function MiniTerminal(props: unknown) {
-  return <MiniTerminalView {...parseComponentProps("MiniTerminal", MiniTerminalSchema, props)} />;
+  // Lazy: the terminal and the engine load as the page hydrates, not in its first download.
+  return <LazyMiniTerminal {...parseComponentProps("MiniTerminal", MiniTerminalSchema, props)} />;
 }
 
 export function PacketDiagram(props: unknown) {

@@ -8,6 +8,7 @@ import {
   BookOpenIcon,
   CloseIcon,
   InfoIcon,
+  LightbulbIcon,
   TerminalIcon,
 } from "@/components/ui/icons";
 import { Spinner } from "@/components/ui/spinner";
@@ -33,6 +34,11 @@ export interface ReferenceDrawerProps {
   missionLessonIds: readonly string[];
   /** The last command the learner ran, like `netscan`. */
   lastCommand?: string;
+  /**
+   * "Explain this" for a glossary word (phase 10): when given, a word's page offers to have it
+   * explained with the mission in mind. Who explains it is up to the caller (the mentor).
+   */
+  onExplainTerm?: (termId: string) => void;
 }
 
 type Detail = { readonly kind: SearchKind; readonly id: string };
@@ -119,6 +125,7 @@ export function ReferenceDrawer({
   missionId,
   missionLessonIds,
   lastCommand,
+  onExplainTerm,
 }: ReferenceDrawerProps) {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -159,7 +166,14 @@ export function ReferenceDrawer({
 
   let body: ReactNode;
   if (detail) {
-    body = <DetailView detail={detail} entry={entryFor(detail)} onOpen={setDetail} />;
+    body = (
+      <DetailView
+        detail={detail}
+        entry={entryFor(detail)}
+        onOpen={setDetail}
+        {...(onExplainTerm && { onExplainTerm })}
+      />
+    );
   } else if (query.trim() !== "") {
     body =
       index.state !== "ready" ? (
@@ -299,7 +313,7 @@ export function ReferenceDrawer({
 function Status({ index }: { index: "idle" | "loading" | "failed" }) {
   return index === "failed" ? (
     <p className="px-3 text-sm leading-6 text-secondary">
-      The reference couldn&apos;t load just now. That&apos;s on our side, not yours. The{" "}
+      The reference couldn&apos;t load right now. That&apos;s on our side, not yours. The{" "}
       <code className="font-mono">man</code> command in the terminal still works.
     </p>
   ) : (
@@ -313,10 +327,12 @@ function DetailView({
   detail,
   entry,
   onOpen,
+  onExplainTerm,
 }: {
   detail: Detail;
   entry: SearchEntry | undefined;
   onOpen: (detail: Detail) => void;
+  onExplainTerm?: (termId: string) => void;
 }) {
   if (detail.kind === "command") {
     return (
@@ -340,6 +356,16 @@ function DetailView({
         <p className="leading-7 text-secondary">
           <GlossaryText text={term.long} />
         </p>
+        {onExplainTerm && (
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<LightbulbIcon />}
+            onClick={() => onExplainTerm(term.id)}
+          >
+            Explain this, with my mission in mind
+          </Button>
+        )}
         {term.relatedTerms.length > 0 && (
           <div>
             <h4 className="text-sm font-semibold text-secondary">Related words</h4>

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ArrowRightIcon } from "@/components/ui/icons";
-import { MISSION_DIFFICULTIES, type MissionDifficulty } from "@/content/schemas/mission";
+import { MISSION_DIFFICULTIES, type MissionDifficulty } from "@/content/schemas/mission-helpers";
 import { SKILL_IDS, SKILLS, type Skill } from "@/content/skills";
 import { cx } from "@/lib/cx";
 import { DIFFICULTY_LABELS, MissionText } from "./mission-text";

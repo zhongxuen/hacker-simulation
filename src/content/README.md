@@ -3,7 +3,7 @@
 Declarative learning content: missions, lessons, and campaigns as data, validated by schemas. Adding a mission should need no new React code.
 
 - `lessons/` — Learning Center lessons as MDX (see its README). `missions/` — one YAML file per mission, plus `missions/playthroughs/` (see its README). `campaigns/` — the campaign: chapters, story framing and the recommended mission order, with its pure helpers (see its README).
-- `themes/` — the terminal's colour themes, prompt styles and cursor styles, all free from the start. Every colour theme is contrast-audited by `tests/unit/terminal-themes.test.ts`; the default must match the `--term-*` tokens in `src/styles/tokens.css`.
+- `themes/` — the terminal's colour themes, prompt styles and cursor styles, all free from the start. Validated against `schemas/theme.ts` by `tests/unit/terminal-themes.test.ts` rather than when the module loads (it runs in the browser on every page, and full Zod would add ~90 KB there). Every colour theme is contrast-audited by the same test; the default must match the `--term-*` tokens in `src/styles/tokens.css`.
 - `mini-terminals.ts` — the tiny practice machines behind a lesson's `<MiniTerminal scenario="…">`: real engine scenarios on the Range.
 - `tracks.ts` — ordered lesson tracks, starting with the six-lesson Start Here track. A recommendation, never a gate.
 - `sandbox/` — the sandbox's practice machines on the Range: engine scenarios with a title, a beginner description and a few commands to try (see its README).

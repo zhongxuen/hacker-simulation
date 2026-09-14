@@ -215,6 +215,16 @@ export function CoachMark({
     if (shown && focusCard) cardRef.current?.focus();
   }, [shown, step.step, focusCard]);
 
+  // The card's height, so it can always be placed where all of it (Next included) is on screen.
+  const [cardHeight, setCardHeight] = useState(0);
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!shown || !card) return;
+    const observer = new ResizeObserver(() => setCardHeight(card.offsetHeight));
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, [shown]);
+
   if (!box) return null;
 
   const spot = {
@@ -230,10 +240,20 @@ export function CoachMark({
     Math.min(centre - cardWidth / 2, viewport.width - cardWidth - EDGE),
   );
   const arrowLeft = Math.max(EDGE, Math.min(centre - cardLeft, cardWidth - EDGE));
-  const cardPosition: CSSProperties =
-    placement === "bottom"
-      ? { top: spot.top + spot.height + GAP, left: cardLeft }
-      : { bottom: viewport.height - spot.top + GAP, left: cardLeft };
+  const { side, top, clamped } = placeCard({
+    placement,
+    spotTop: spot.top,
+    spotBottom: spot.top + spot.height,
+    cardHeight,
+    viewportHeight: viewport.height,
+  });
+  const cardPosition: CSSProperties = {
+    top,
+    left: cardLeft,
+    // On a screen too short for the whole card, it scrolls inside itself instead of hanging off.
+    maxHeight: viewport.height - EDGE * 2,
+    overflowY: "auto",
+  };
 
   return createPortal(
     <>
@@ -249,13 +269,51 @@ export function CoachMark({
       />
       <CoachMarkCard
         {...step}
-        placement={placement}
+        placement={side}
         arrowLeft={arrowLeft}
         cardRef={cardRef}
         style={cardPosition}
+        className={clamped ? "[&>span:first-child]:hidden" : undefined}
         floating
       />
     </>,
     document.body,
   );
+}
+
+/**
+ * Where the card goes: on the preferred side of the target if it fits there, else on the other
+ * side if that has more room, and always inside the screen, so Next and Skip tour can be reached
+ * on a short laptop screen too. When neither side has room it's pushed on screen over the target
+ * (`clamped`), and its pointer is hidden, since it no longer sits beside what it points at.
+ */
+export function placeCard({
+  placement,
+  spotTop,
+  spotBottom,
+  cardHeight,
+  viewportHeight,
+}: {
+  placement: CoachMarkPlacement;
+  spotTop: number;
+  spotBottom: number;
+  cardHeight: number;
+  viewportHeight: number;
+}): { side: CoachMarkPlacement; top: number; clamped: boolean } {
+  const roomBelow = viewportHeight - EDGE - (spotBottom + GAP);
+  const roomAbove = spotTop - GAP - EDGE;
+  const fits = (room: number) => cardHeight <= room;
+  const side: CoachMarkPlacement =
+    placement === "bottom"
+      ? fits(roomBelow) || roomBelow >= roomAbove
+        ? "bottom"
+        : "top"
+      : fits(roomAbove) || roomAbove >= roomBelow
+        ? "top"
+        : "bottom";
+  const ideal = side === "bottom" ? spotBottom + GAP : spotTop - GAP - cardHeight;
+  const highest = EDGE;
+  const lowest = Math.max(EDGE, viewportHeight - EDGE - cardHeight);
+  const top = Math.min(Math.max(ideal, highest), lowest);
+  return { side, top, clamped: top !== ideal };
 }

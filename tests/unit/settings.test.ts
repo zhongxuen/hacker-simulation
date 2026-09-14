@@ -69,6 +69,8 @@ describe("parseSettings", () => {
       terminalTheme: "candlewright",
       promptStyle: "classic",
       cursorStyle: "block",
+      nudgeChip: true,
+      usageCounts: true,
     });
     expect(DEFAULT_SETTINGS).toEqual(parseSettings({}));
   });
@@ -92,6 +94,8 @@ describe("parseSettings", () => {
     });
     expect(parseSettings({ beginnerMode: false }).beginnerMode).toBe(false);
     expect(parseSettings({ beginnerMode: "off" }).beginnerMode).toBe(true);
+    expect(parseSettings({ nudgeChip: false }).nudgeChip).toBe(false);
+    expect(parseSettings({ nudgeChip: "no" }).nudgeChip).toBe(true);
   });
 
   it("drops unknown keys", () => {

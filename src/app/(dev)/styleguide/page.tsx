@@ -10,6 +10,7 @@ import { CelebrationsSection } from "./celebrations-section";
 import { ContrastSection } from "./contrast-section";
 import { LessonComponentsSection } from "./lesson-components-section";
 import { LessonSection } from "./lesson-section";
+import { MentorSection } from "./mentor-section";
 import { MotionToggle } from "./motion-toggle";
 import { PrimitivesSection } from "./primitives-section";
 import { SpacingScaleSection, TypeScaleSection } from "./scales-section";
@@ -24,6 +25,7 @@ export const metadata: Metadata = {
 const SECTIONS = [
   { id: "primitives", label: "Primitives" },
   { id: "celebrations", label: "Beginner and celebration" },
+  { id: "mentor", label: "Mentor" },
   { id: "shell", label: "App shell" },
   { id: "lesson", label: "Lesson content" },
   { id: "lesson-components", label: "Lesson components" },
@@ -107,6 +109,7 @@ export default function StyleguidePage() {
       <main className="mx-auto max-w-6xl space-y-20 px-4 py-12 sm:px-6 lg:px-10">
         <PrimitivesSection id="primitives" />
         <CelebrationsSection id="celebrations" />
+        <MentorSection id="mentor" />
         <ShellSection id="shell" />
         <LessonSection id="lesson" />
         <LessonComponentsSection id="lesson-components" />

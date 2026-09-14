@@ -4,6 +4,7 @@ import { useCallback, useId, useMemo, useState } from "react";
 import { Callout } from "@/components/ui/callout";
 import { SANDBOX_SCENARIOS, type SandboxScenario } from "@/content/sandbox";
 import { NetworkMapPanel } from "@/features/network-visualizer";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { CommandCheatSheet, Terminal, useTerminalSession } from "@/features/terminal";
 import { cx } from "@/lib/cx";
 import { selectTopology } from "@/sim";
@@ -21,10 +22,13 @@ export function SandboxWorkspace() {
   const [scenarioId, setScenarioId] = useState(SANDBOX_SCENARIOS[0]?.id ?? "");
   const scenario = SANDBOX_SCENARIOS.find((candidate) => candidate.id === scenarioId);
   const name = useId();
+  // The server draws this before its code arrives (it loads after the page, prompt 11.3). A pick
+  // made before then would tick the radio without switching the machine, so wait until it can.
+  const hydrated = useHydrated();
 
   return (
     <div className="space-y-6">
-      <fieldset>
+      <fieldset disabled={!hydrated}>
         <legend className="mb-3 font-medium text-primary">Pick a practice machine</legend>
         <div className="grid gap-3 md:grid-cols-3">
           {SANDBOX_SCENARIOS.map((option) => (

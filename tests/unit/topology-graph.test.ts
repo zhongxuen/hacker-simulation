@@ -228,6 +228,7 @@ describe("TopologyGraph", () => {
     expect(count(markup, /data-host-id="/g)).toBe(200);
     expect(count(markup, /role="button"/g)).toBe(200);
     expect(count(markup, /tabindex="0"/g)).toBe(1);
-    expect(Math.min(...times)).toBeLessThan(1000);
+    // Coverage instrumentation (pnpm test:coverage) slows rendering several times over.
+    expect(Math.min(...times)).toBeLessThan(process.env.COVERAGE ? 5000 : 1000);
   });
 });

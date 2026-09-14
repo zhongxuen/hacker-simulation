@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SettingsBootScript } from "@/components/shell/settings-boot-script";
 import { TerminalThemeStyles } from "@/components/shell/terminal-theme-styles";
+import { UsageAnalytics } from "@/components/shell/usage-analytics";
 import "@/styles/globals.css";
 
 const geistSans = Geist({
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <TerminalThemeStyles />
         <SettingsBootScript />
         {children}
+        <UsageAnalytics />
       </body>
     </html>
   );

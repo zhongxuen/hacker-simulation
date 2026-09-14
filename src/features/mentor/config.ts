@@ -22,8 +22,20 @@ export const DEFAULT_MENTOR_MODEL = "claude-haiku-4-5";
 /** The hard cap on the model's output tokens per hint. A hint is a sentence or two. */
 export const MAX_OUTPUT_TOKENS = 300;
 
+/** The cap for an "Explain this" answer: a few sentences, a little longer than a hint. */
+export const MAX_EXPLAIN_OUTPUT_TOKENS = 400;
+
+/**
+ * The cap for a post-mission review: a short JSON object of a few sentences. Generous enough that a
+ * review is never cut off mid-object (which would only fall back to the template anyway).
+ */
+export const MAX_REVIEW_OUTPUT_TOKENS = 1_000;
+
 /** How long to wait for the whole model response before falling back, in milliseconds. */
 export const MODEL_TIMEOUT_MS = 15_000;
+
+/** The review is read whole before anything is shown, so it gets a little longer. */
+export const REVIEW_TIMEOUT_MS = 25_000;
 
 /** The largest request body the route reads, in bytes. Anything larger falls back immediately. */
 export const MAX_REQUEST_BODY_BYTES = 16 * 1024;

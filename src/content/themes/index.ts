@@ -1,9 +1,7 @@
-import {
-  TerminalStyleOptionSchema,
-  TerminalThemeSchema,
-  type TerminalStyleOption,
-  type TerminalTheme,
-} from "../schemas/theme";
+// Types only: this module runs in the browser on every page (the settings read its ids), so it
+// doesn't bring the Zod schema along (md-files/11-testing-security-deployment.md, prompt 11.3).
+// tests/unit/terminal-themes.test.ts validates every theme and style against the schema instead.
+import type { TerminalStyleOption, TerminalTheme } from "../schemas/theme";
 
 /**
  * The terminal's looks, as data (md-files/08-campaign-and-story.md, prompt 08.4). Every one is
@@ -31,7 +29,8 @@ export type TerminalThemeId = (typeof TERMINAL_THEME_IDS)[number];
 
 export const DEFAULT_TERMINAL_THEME: TerminalThemeId = "candlewright";
 
-const theme = (value: TerminalTheme): TerminalTheme => TerminalThemeSchema.parse(value);
+/** Types a theme here; its colours and words are checked against the schema by the tests. */
+const theme = (value: TerminalTheme): TerminalTheme => value;
 
 export const TERMINAL_THEMES: Readonly<Record<TerminalThemeId, TerminalTheme>> = {
   candlewright: theme({
@@ -185,8 +184,8 @@ export type PromptStyleId = (typeof PROMPT_STYLE_IDS)[number];
 
 export const DEFAULT_PROMPT_STYLE: PromptStyleId = "classic";
 
-const option = (value: TerminalStyleOption): TerminalStyleOption =>
-  TerminalStyleOptionSchema.parse(value);
+/** Types a prompt or cursor style; the tests check it against the schema. */
+const option = (value: TerminalStyleOption): TerminalStyleOption => value;
 
 export const PROMPT_STYLES: Readonly<Record<PromptStyleId, TerminalStyleOption>> = {
   classic: option({

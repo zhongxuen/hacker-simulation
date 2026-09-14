@@ -1,10 +1,5 @@
-import {
-  normalizeAnswer,
-  type FileStateCheck,
-  type Mission,
-  type Objective,
-  type ObjectiveCheck,
-} from "@/content/schemas/mission";
+import type { FileStateCheck, Mission, Objective, ObjectiveCheck } from "@/content/schemas/mission";
+import { normalizeAnswer } from "@/content/schemas/mission-helpers";
 import { inspectPath, userCanAccess, type SimEvent, type SimState } from "@/sim";
 
 /**

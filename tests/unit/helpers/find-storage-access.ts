@@ -2,8 +2,10 @@ import ts from "typescript";
 
 /**
  * Finds every reference to browser storage in a source file: localStorage, sessionStorage,
- * indexedDB, cookieStore, and document.cookie, however they're reached (window.localStorage,
- * globalThis["sessionStorage"], const { indexedDB } = self, …).
+ * indexedDB, cookieStore, document.cookie, the Cache API (caches), WebSQL (openDatabase), the old
+ * file system API, navigator.storage (which includes the private file system) and
+ * navigator.serviceWorker (a service worker can keep copies of pages), however they're reached
+ * (window.localStorage, globalThis["sessionStorage"], const { indexedDB } = self, …).
  *
  * It walks the TypeScript syntax tree rather than matching text, so comments and prose that
  * mention these names don't count. Used by tests/unit/storage-guard.test.ts.
@@ -14,7 +16,14 @@ export const STORAGE_GLOBALS: ReadonlySet<string> = new Set([
   "sessionStorage",
   "indexedDB",
   "cookieStore",
+  "caches",
+  "openDatabase",
+  "requestFileSystem",
+  "webkitRequestFileSystem",
 ]);
+
+/** Storage reached through navigator: navigator.storage and navigator.serviceWorker. */
+export const NAVIGATOR_STORAGE: ReadonlySet<string> = new Set(["storage", "serviceWorker"]);
 
 export interface StorageAccess {
   /** 1-based line number. */
@@ -31,6 +40,16 @@ const SCRIPT_KINDS: Readonly<Record<string, ts.ScriptKind>> = {
   ".mjs": ts.ScriptKind.JS,
   ".cjs": ts.ScriptKind.JS,
 };
+
+/** Whether `node` is `navigator`, or something ending in `.navigator` (window.navigator). */
+function isNavigator(node: ts.Expression): boolean {
+  if (ts.isIdentifier(node)) return node.text === "navigator";
+  if (ts.isPropertyAccessExpression(node)) return node.name.text === "navigator";
+  if (ts.isElementAccessExpression(node) && ts.isStringLiteralLike(node.argumentExpression)) {
+    return node.argumentExpression.text === "navigator";
+  }
+  return false;
+}
 
 /** Whether `node` is `document`, or something ending in `.document` (window.document). */
 function isDocument(node: ts.Expression): boolean {
@@ -66,6 +85,19 @@ export function findStorageAccess(source: string, fileName: string): StorageAcce
       STORAGE_GLOBALS.has(node.argumentExpression.text)
     ) {
       record(node, node.argumentExpression.text);
+    } else if (
+      ts.isPropertyAccessExpression(node) &&
+      NAVIGATOR_STORAGE.has(node.name.text) &&
+      isNavigator(node.expression)
+    ) {
+      record(node, `navigator.${node.name.text}`);
+    } else if (
+      ts.isElementAccessExpression(node) &&
+      ts.isStringLiteralLike(node.argumentExpression) &&
+      NAVIGATOR_STORAGE.has(node.argumentExpression.text) &&
+      isNavigator(node.expression)
+    ) {
+      record(node, `navigator.${node.argumentExpression.text}`);
     } else if (
       ts.isPropertyAccessExpression(node) &&
       node.name.text === "cookie" &&

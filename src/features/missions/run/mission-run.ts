@@ -1,10 +1,5 @@
-import {
-  normalizeAnswer,
-  type AnswerCheck,
-  type Mission,
-  type Objective,
-  type StoryBeat,
-} from "@/content/schemas/mission";
+import type { AnswerCheck, Mission, Objective, StoryBeat } from "@/content/schemas/mission";
+import { normalizeAnswer } from "@/content/schemas/mission-helpers";
 import type { SimEvent, SimState } from "@/sim/types";
 import { evaluateObjectives, eventMatches, isMissionComplete } from "../evaluate";
 
@@ -68,6 +63,18 @@ export interface MissionRunState {
   /** Command lines run in this attempt, and Reset machine presses: shown in no score, ever. */
   readonly commandsRun: number;
   readonly resets: number;
+  /**
+   * Command lines that didn't work (the engine reported an error, or a command exited non-zero).
+   * Only the mentor's "Want a nudge?" chip reads it (phase 10), and never as a score.
+   */
+  readonly failedCommands: number;
+  /**
+   * When Start mission and the first "See your debrief" were pressed (milliseconds, from the page),
+   * or null. The post-mission review says roughly how long the mission took (phase 10). The times
+   * come in with the action, so the reducer stays pure.
+   */
+  readonly startedAt: number | null;
+  readonly finishedAt: number | null;
   /** The learner's notes on hosts in the network map's details panel, by host id. */
   readonly notes: Readonly<Record<string, string>>;
 }
@@ -77,7 +84,7 @@ export const MAX_NOTE_LENGTH = 2000;
 
 export type MissionRunAction =
   /** Start mission: from the briefing into the workspace, with the machine's starting state. */
-  | { readonly type: "start"; readonly sim: SimState }
+  | { readonly type: "start"; readonly sim: SimState; readonly at?: number }
   /** A command ran in the terminal: its events and the engine's new state. */
   | { readonly type: "command"; readonly events: readonly SimEvent[]; readonly sim: SimState }
   /** Reset machine: the scenario's starting state again. Ticks already earned stay. */
@@ -89,7 +96,7 @@ export type MissionRunAction =
   /** The secret-found toast for this objective was seen. */
   | { readonly type: "acknowledgeSecret"; readonly objectiveId: string }
   /** Go to the debrief. Only once the mission is complete. */
-  | { readonly type: "debrief" }
+  | { readonly type: "debrief"; readonly at?: number }
   /** Back from the debrief to the workspace, to keep exploring. */
   | { readonly type: "resume" }
   /** Restart mission: back to the briefing with a fresh run. */
@@ -115,6 +122,9 @@ export function createMissionRun(attempt = 0): MissionRunState {
     newSecrets: [],
     commandsRun: 0,
     resets: 0,
+    failedCommands: 0,
+    startedAt: null,
+    finishedAt: null,
     notes: {},
   };
 }
@@ -135,7 +145,12 @@ function reduce(mission: Mission, run: MissionRunState, action: MissionRunAction
   switch (action.type) {
     case "start": {
       if (run.phase !== "briefing") return run;
-      const started: MissionRunState = { ...run, phase: "workspace", sim: action.sim };
+      const started: MissionRunState = {
+        ...run,
+        phase: "workspace",
+        sim: action.sim,
+        startedAt: action.at ?? null,
+      };
       const beats = mission.story.flatMap((beat, index) => (beat.on === "start" ? [index] : []));
       return advance(mission, playBeats(mission, started, beats), []);
     }
@@ -148,6 +163,7 @@ function reduce(mission: Mission, run: MissionRunState, action: MissionRunAction
           sim: action.sim,
           events: [...run.events, ...action.events],
           commandsRun: run.commandsRun + 1,
+          failedCommands: run.failedCommands + (commandFailed(action.events) ? 1 : 0),
         },
         action.events,
       );
@@ -165,7 +181,12 @@ function reduce(mission: Mission, run: MissionRunState, action: MissionRunAction
       return { ...run, newSecrets: run.newSecrets.filter((id) => id !== action.objectiveId) };
     case "debrief":
       return run.phase === "workspace" && isMissionComplete(mission, run.completed)
-        ? { ...run, phase: "debrief", newSecrets: [] }
+        ? {
+            ...run,
+            phase: "debrief",
+            newSecrets: [],
+            finishedAt: run.finishedAt ?? action.at ?? null,
+          }
         : run;
     case "resume":
       return run.phase === "debrief" ? { ...run, phase: "workspace" } : run;
@@ -180,6 +201,14 @@ function reduce(mission: Mission, run: MissionRunState, action: MissionRunAction
       return { ...run, notes };
     }
   }
+}
+
+/** Whether a command line didn't work: the engine reported an error, or a command exited non-zero. */
+function commandFailed(events: readonly SimEvent[]): boolean {
+  return events.some(
+    (event) =>
+      event.type === "command.error" || (event.type === "command.run" && event.exitCode !== 0),
+  );
 }
 
 /** Adds these beats to the story feed, once each, in the order given. */
@@ -359,6 +388,26 @@ export function rewardSummary(mission: Mission, run: MissionRunState): RewardSum
     secretsFound: secrets.filter(done),
     secretsTotal: secrets.length,
   };
+}
+
+/**
+ * Attempts that didn't work so far: command lines that errored, and answers that weren't accepted.
+ * The mentor's "Want a nudge?" chip counts the ones since the last tick (phase 10). Never a score.
+ */
+export function failedAttempts(run: MissionRunState): number {
+  const rejectedAnswers = Object.entries(run.answers).reduce(
+    (sum, [objectiveId, answers]) =>
+      sum + Math.max(0, answers.length - (run.completed.includes(objectiveId) ? 1 : 0)),
+    0,
+  );
+  return run.failedCommands + rejectedAnswers;
+}
+
+/** The time from Start mission to the debrief, in minutes, or null when either is unknown. */
+export function runMinutes(run: MissionRunState): number | null {
+  return run.startedAt === null || run.finishedAt === null
+    ? null
+    : Math.max(0, run.finishedAt - run.startedAt) / 60_000;
 }
 
 /** A run is in progress while the learner is in the workspace and the mission isn't finished. */

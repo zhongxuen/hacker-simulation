@@ -9,6 +9,7 @@ import {
   type RefObject,
 } from "react";
 import type { CursorStyleId } from "@/content/themes";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { cx } from "@/lib/cx";
 
 /**
@@ -89,6 +90,9 @@ export function PromptInput({
 }: PromptInputProps) {
   const [focused, setFocused] = useState(false);
   const mirrorRef = useRef<HTMLDivElement>(null);
+  // Drawn by the server, the prompt only works once its code has run (a terminal can arrive after
+  // the page, prompt 11.3). Read-only until then, so nothing a quick typist enters is lost.
+  const hydrated = useHydrated();
 
   // Keep the mirror scrolled like the input when the line is wider than the box.
   useLayoutEffect(() => {
@@ -121,6 +125,7 @@ export function PromptInput({
         type="text"
         value={value}
         disabled={disabled}
+        readOnly={!hydrated}
         aria-label={label}
         aria-describedby={describedBy}
         autoComplete="off"

@@ -11,6 +11,20 @@ import type { MentorModelRunner } from "./model";
  * We stream (`client.messages.stream`) so a slow response never hits an HTTP timeout, and so the
  * handler can release Noor's hint sentence by sentence as it validates.
  */
+let sharedRunner: { readonly apiKey: string; readonly runner: MentorModelRunner } | undefined;
+
+/**
+ * The runner the routes share, built once per server instance: the SDK client is reusable and holds
+ * no per-request state, so nothing about a learner or a request outlives the request. It is only
+ * ever created when a key is present, so no key means no client.
+ */
+export function getAnthropicRunner(apiKey: string): MentorModelRunner {
+  if (sharedRunner?.apiKey !== apiKey) {
+    sharedRunner = { apiKey, runner: createAnthropicRunner(apiKey) };
+  }
+  return sharedRunner.runner;
+}
+
 export function createAnthropicRunner(apiKey: string): MentorModelRunner {
   const client = new Anthropic({ apiKey });
 
@@ -26,6 +40,11 @@ export function createAnthropicRunner(apiKey: string): MentorModelRunner {
           role: message.role,
           content: message.content,
         })),
+        // The review's answer is JSON in a fixed shape (structured outputs). The text still streams
+        // as text deltas; the handler parses and checks it once it's complete.
+        ...(input.jsonSchema && {
+          output_config: { format: { type: "json_schema", schema: { ...input.jsonSchema } } },
+        }),
       },
       { signal },
     );

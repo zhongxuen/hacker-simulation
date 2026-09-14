@@ -41,6 +41,13 @@ export { explainError, explainParseError, type ExplainContext } from "./beginner
 export { COMMAND_ALIASES, suggestFix, type Suggestion } from "./beginner/suggest";
 export { explainBlock, type WhatHappened } from "./beginner/what-happened";
 export {
+  canExplainBlock,
+  explainableLines,
+  explainRequestFor,
+  MAX_EXPLAIN_CHOICES,
+  type TerminalExplainRequest,
+} from "./beginner/explain-request";
+export {
   completeAtCursor,
   ghostSuggestion,
   reverseSearch,

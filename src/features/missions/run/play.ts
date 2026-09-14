@@ -1,4 +1,5 @@
-import { toScenarioSpec, type Mission } from "@/content/schemas/mission";
+import type { Mission } from "@/content/schemas/mission";
+import { toScenarioSpec } from "@/content/schemas/mission-helpers";
 import { getCastMember } from "@/content/cast";
 import {
   createTerminalSession,

@@ -22,6 +22,8 @@ interface MissionBriefingProps {
   links: MissionLinks;
   onStart: () => void;
   headingRef: RefObject<HTMLHeadingElement | null>;
+  /** Start mission was pressed and the practice computer is on its way: the button shows it's busy. */
+  starting?: boolean;
 }
 
 /**
@@ -29,7 +31,13 @@ interface MissionBriefingProps {
  * who you are, the written permission that makes it OK, how long it takes, "Best after" links
  * (a suggestion, never a lock), and one big Start mission button.
  */
-export function MissionBriefing({ mission, links, onStart, headingRef }: MissionBriefingProps) {
+export function MissionBriefing({
+  mission,
+  links,
+  onStart,
+  headingRef,
+  starting = false,
+}: MissionBriefingProps) {
   const { briefing } = mission;
 
   return (
@@ -160,7 +168,13 @@ export function MissionBriefing({ mission, links, onStart, headingRef }: Mission
       )}
 
       <div className="mt-8 flex flex-col items-start gap-3">
-        <Button variant="primary" size="lg" icon={<PlayIcon />} onClick={onStart}>
+        <Button
+          variant="primary"
+          size="lg"
+          icon={<PlayIcon />}
+          loading={starting}
+          onClick={onStart}
+        >
           Start mission
         </Button>
         <p className="text-sm text-muted">

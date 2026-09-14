@@ -167,11 +167,103 @@ describe("handleHintRequest — fallback without a model call", () => {
 
   it("returns a 4xx fallback for a malformed body", async () => {
     const response = await handleHintRequest(
-      new Request("https://app.test/api/mentor/hint", { method: "POST", body: "not json" }),
+      new Request("https://app.test/api/mentor/hint", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "not json",
+      }),
       { config: ENABLED, getMission: getMissionById, runner: runnerYielding(["x"]) },
     );
     expect(response.status).toBe(400);
     expect((await readEvents(response))[0]?.type).toBe("fallback");
+  });
+
+  // Prompt 11.2: a text/plain POST needs no CORS preflight, so any site could send one from its
+  // visitors' browsers. Only JSON is read, and a browser has to ask before sending JSON cross-site.
+  it("refuses a body that isn't JSON (415), before any model call", async () => {
+    const runner = vi.fn(runnerYielding(["x"]));
+    const response = await handleHintRequest(
+      new Request("https://app.test/api/mentor/hint", {
+        method: "POST",
+        headers: { "content-type": "text/plain" },
+        body: JSON.stringify(validBody),
+      }),
+      { config: ENABLED, getMission: getMissionById, runner },
+    );
+    expect(response.status).toBe(415);
+    expect((await readEvents(response))[0]).toEqual({
+      type: "fallback",
+      reason: "invalid_request",
+    });
+    expect(runner).not.toHaveBeenCalled();
+  });
+
+  it("refuses a request from another site (403), before any model call", async () => {
+    const crossSite: Record<string, string>[] = [
+      { "sec-fetch-site": "cross-site" },
+      { "sec-fetch-site": "same-site" },
+      { origin: "https://elsewhere.example" },
+      { origin: "not a url" },
+    ];
+    for (const headers of crossSite) {
+      const runner = vi.fn(runnerYielding(["x"]));
+      const response = await handleHintRequest(
+        new Request("https://app.test/api/mentor/hint", {
+          method: "POST",
+          headers: { "content-type": "application/json", ...headers },
+          body: JSON.stringify(validBody),
+        }),
+        { config: ENABLED, getMission: getMissionById, runner },
+      );
+      expect(response.status, JSON.stringify(headers)).toBe(403);
+      expect((await readEvents(response))[0]).toEqual({ type: "fallback", reason: "cross_site" });
+      expect(runner).not.toHaveBeenCalled();
+    }
+  });
+
+  it("accepts the app's own pages: same-origin, or an Origin matching the host", async () => {
+    const sameSite: Record<string, string>[] = [
+      { "sec-fetch-site": "same-origin", origin: "https://app.test" },
+      { origin: "https://app.test" },
+      {},
+    ];
+    for (const headers of sameSite) {
+      const response = await handleHintRequest(
+        new Request("https://app.test/api/mentor/hint", {
+          method: "POST",
+          headers: { "content-type": "application/json; charset=utf-8", ...headers },
+          body: JSON.stringify(validBody),
+        }),
+        { config: ENABLED, getMission: getMissionById, runner: runnerYielding(["Try ls."]) },
+      );
+      expect(response.headers.get("x-mentor-mode"), JSON.stringify(headers)).toBe("model");
+    }
+  });
+
+  it("stops reading a body sent in chunks with no length once it passes the cap", async () => {
+    let pulled = 0;
+    const endless = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += 1;
+        controller.enqueue(new TextEncoder().encode(`{"x":"${"y".repeat(4096)}`));
+      },
+    });
+    const response = await handleHintRequest(
+      new Request("https://app.test/api/mentor/hint", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: endless,
+        duplex: "half",
+      } as RequestInit),
+      { config: ENABLED, getMission: getMissionById, runner: runnerYielding(["x"]) },
+    );
+    expect(response.status).toBe(413);
+    expect((await readEvents(response))[0]).toEqual({
+      type: "fallback",
+      reason: "request_too_large",
+    });
+    // 16 KB of 4 KB chunks: it gave up after a handful, not after reading forever.
+    expect(pulled).toBeLessThan(10);
   });
 
   it("falls back for an over-cap body", async () => {

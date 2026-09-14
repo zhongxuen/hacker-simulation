@@ -1,16 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toScenarioSpec, type Mission } from "@/content/schemas/mission";
-import { useTerminalSession } from "@/features/terminal";
-import type { SimEvent, SimState } from "@/sim/types";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import type { Mission } from "@/content/schemas/mission";
+import { reportFirstTick, trackUsage } from "@/lib/analytics";
 import { missionProgress } from "../evaluate";
 import { isRunInProgress, type MissionRunAction, type MissionRunState } from "../run/mission-run";
 import { useMissionRun } from "../run/use-mission-run";
+import { usageEventsBetween } from "../run/usage";
 import { MissionBriefing } from "./mission-briefing";
-import { MissionDebrief } from "./mission-debrief";
-import { MissionWorkspace } from "./mission-workspace";
 import type { MissionLinks, MissionRunStatus } from "./types";
+
+/**
+ * Everything after Start mission (the engine, terminal, network map, mentor, workspace and
+ * debrief) is one chunk, loaded on demand (md-files/11-testing-security-deployment.md, prompt 11.3).
+ * The promise is kept, so warming it up during the briefing and rendering it later share one
+ * download.
+ */
+let missionPlayModule: Promise<typeof import("./mission-play")> | undefined;
+const loadMissionPlay = () => (missionPlayModule ??= import("./mission-play"));
+const MissionPlay = lazy(loadMissionPlay);
 
 export interface MissionRunnerProps {
   mission: Mission;
@@ -49,36 +57,25 @@ interface MissionAttemptProps extends MissionRunnerProps {
   dispatch: (action: MissionRunAction) => void;
 }
 
-/** One attempt at the mission: its terminal session lives here, across workspace and debrief. */
+/**
+ * One attempt at the mission. The briefing needs nothing but the mission, so it shows at once;
+ * pressing Start mission loads MissionPlay (fetched in the background while the learner reads),
+ * which builds the practice computer and starts the run. Until it arrives, the briefing stays up
+ * with its button busy.
+ */
 function MissionAttempt({ mission, links, run, dispatch, onStatusChange }: MissionAttemptProps) {
-  const scenario = useMemo(() => toScenarioSpec(mission), [mission]);
-  const onEvents = useCallback(
-    (events: readonly SimEvent[], sim: SimState) => dispatch({ type: "command", events, sim }),
-    [dispatch],
-  );
-  const onReset = useCallback((sim: SimState) => dispatch({ type: "reset", sim }), [dispatch]);
-  const session = useTerminalSession({
-    scenario,
-    seed: mission.scenario.seed,
-    onEvents,
-    onReset,
-  });
+  const [startedAt, setStartedAt] = useState<number | null>(null);
 
-  // The guided tour plays on the first visit to the workspace only, not after the debrief
-  // (adjusting state while rendering, when the phase changes).
-  const [shownPhase, setShownPhase] = useState(run.phase);
-  const [tourDone, setTourDone] = useState(false);
-  if (shownPhase !== run.phase) {
-    if (shownPhase === "workspace") setTourDone(true);
-    setShownPhase(run.phase);
-  }
-
-  // The mentor's "That's your first host!" plays once per attempt: when the first new computer
-  // turns up on the map, until the learner dismisses it (md-files/07-network-visualizer.md).
-  const [mapTip, setMapTip] = useState<"waiting" | "showing" | "done">("waiting");
-  if (mapTip === "waiting" && run.events.some((event) => event.type === "host.discovered")) {
-    setMapTip("showing");
-  }
+  // Warm up the play chunk while the learner reads the briefing, so Start mission is instant.
+  useEffect(() => {
+    const warm = () => void loadMissionPlay().catch(() => {});
+    if (typeof window.requestIdleCallback === "function") {
+      const handle = window.requestIdleCallback(warm, { timeout: 3000 });
+      return () => window.cancelIdleCallback(handle);
+    }
+    const timer = window.setTimeout(warm, 1500);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   // Moving between briefing, workspace and debrief puts focus on the new screen's heading (the
   // debrief focuses its own).
@@ -94,35 +91,43 @@ function MissionAttempt({ mission, links, run, dispatch, onStatusChange }: Missi
     window.scrollTo({ top: 0 });
   }, [run.phase, run.attempt]);
 
+  // Anonymous usage counts (md-files/metrics.md): what changed in the run, as ids only. Nothing
+  // is sent when the browser asks not to be tracked or the learner turned counts off.
+  const previousRun = useRef(run);
+  useEffect(() => {
+    for (const event of usageEventsBetween(mission, previousRun.current, run)) {
+      trackUsage(event);
+      if (event.name === "Objective ticked") reportFirstTick();
+    }
+    previousRun.current = run;
+  }, [mission, run]);
+
   const { done, total } = missionProgress(mission, run.completed);
   const inProgress = isRunInProgress(mission, run);
   useEffect(() => {
     onStatusChange?.({ phase: run.phase, inProgress, done, total });
   }, [onStatusChange, run.phase, inProgress, done, total]);
 
-  if (run.phase === "briefing") {
-    return (
-      <MissionBriefing
+  const briefing = (
+    <MissionBriefing
+      mission={mission}
+      links={links}
+      headingRef={headingRef}
+      starting={startedAt !== null}
+      onStart={() => setStartedAt(Date.now())}
+    />
+  );
+  if (startedAt === null) return briefing;
+  return (
+    <Suspense fallback={briefing}>
+      <MissionPlay
         mission={mission}
         links={links}
+        run={run}
+        dispatch={dispatch}
         headingRef={headingRef}
-        onStart={() => dispatch({ type: "start", sim: session.sim })}
+        startedAt={startedAt}
       />
-    );
-  }
-  if (run.phase === "debrief") {
-    return <MissionDebrief mission={mission} run={run} links={links} dispatch={dispatch} />;
-  }
-  return (
-    <MissionWorkspace
-      mission={mission}
-      run={run}
-      dispatch={dispatch}
-      session={session}
-      startTour={mission.guidedTour && !tourDone}
-      headingRef={headingRef}
-      mapTip={mapTip === "showing"}
-      onDismissMapTip={() => setMapTip("done")}
-    />
+    </Suspense>
   );
 }

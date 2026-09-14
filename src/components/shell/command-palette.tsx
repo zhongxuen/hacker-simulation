@@ -302,7 +302,7 @@ export function CommandPalette({ nextStep, ref }: CommandPaletteProps) {
         {searching && <p className="px-3 py-2 text-sm text-muted">Looking through the lessons…</p>}
         {index.state === "failed" && query.trim() !== "" && (
           <p className="px-3 py-2 text-sm text-muted">
-            Lessons, words and commands couldn&apos;t load just now. The places above still work.
+            Lessons, words and commands couldn&apos;t load right now. The places above still work.
           </p>
         )}
         {results.length === 0 && !searching && (

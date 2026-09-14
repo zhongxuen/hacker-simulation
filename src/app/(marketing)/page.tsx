@@ -40,8 +40,8 @@ export default function HomePage() {
         </p>
       </div>
       <p className="text-sm text-muted">
-        We&apos;re still building the first mission, so for now the button shows you what&apos;s
-        coming.
+        Your first mission takes about 8 minutes, and you&apos;ll type your first command in the
+        first minute.
       </p>
     </main>
   );

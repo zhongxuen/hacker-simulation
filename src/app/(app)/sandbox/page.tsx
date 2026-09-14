@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getAppSection } from "@/lib/app-sections";
-import { SandboxWorkspace } from "./sandbox-workspace";
+import { LazySandboxWorkspace } from "./lazy-sandbox-workspace";
 
 export const metadata: Metadata = { title: getAppSection("sandbox").label };
 
@@ -17,7 +17,7 @@ export default function SandboxPage() {
           nothing here touches a real computer.
         </p>
       </div>
-      <SandboxWorkspace />
+      <LazySandboxWorkspace />
     </div>
   );
 }

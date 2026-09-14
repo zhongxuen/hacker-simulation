@@ -108,6 +108,11 @@
   --animate-spin: spin calc(var(--duration-loop) * var(--motion-scale)) linear infinite;
   --animate-indeterminate: indeterminate calc(var(--duration-loop) * 1.4 * var(--motion-scale))
     var(--ease-standard) infinite;
+  /* The mentor's typing indicator: three dots that rise in turn while a reply is being written.
+     Each dot sets --typing-delay. Motion scale 0 holds them still: the keyframes rest on the dot's
+     own style. */
+  --animate-typing-dot: typing-dot calc(var(--duration-loop) * 1.2 * var(--motion-scale))
+    var(--ease-standard) calc(var(--typing-delay, 0ms) * var(--motion-scale)) infinite;
 }
 
 /*
@@ -212,6 +217,13 @@
 @keyframes cursor-blink {
   50% {
     opacity: 0;
+  }
+}
+
+@keyframes typing-dot {
+  30% {
+    opacity: 1;
+    transform: translateY(-0.25rem);
   }
 }
 

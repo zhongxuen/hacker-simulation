@@ -1,13 +1,8 @@
-import {
-  createAnthropicRunner,
-  handleHintRequest,
-  readMentorConfig,
-  type MentorModelRunner,
-} from "@/features/mentor/server";
+import { getAnthropicRunner, handleHintRequest, readMentorConfig } from "@/features/mentor/server";
 import { getMissionById } from "@/features/missions/server";
 
 /**
- * POST /api/mentor/hint — the AI Mentor proxy (md-files/10-ai-mentor.md, prompts 10.1, 10.2).
+ * POST /api/mentor/hint — the AI Mentor's hint proxy (md-files/10-ai-mentor.md, prompts 10.1, 10.2).
  *
  * Server-only and stateless: no module-level state remembers a request or a learner. Each call is
  * validated fresh, the authored hint is loaded from the mission content (never from the request),
@@ -26,19 +21,9 @@ import { getMissionById } from "@/features/missions/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * The model runner is built once per server instance (the SDK client is reusable and holds no
- * per-request state). It is only ever created when a key is present, so no key means no client.
- */
-let cachedRunner: MentorModelRunner | undefined;
-function getRunner(apiKey: string): MentorModelRunner {
-  cachedRunner ??= createAnthropicRunner(apiKey);
-  return cachedRunner;
-}
-
 export async function POST(request: Request): Promise<Response> {
   const config = readMentorConfig();
-  const runner = config.apiKey && !config.disabled ? getRunner(config.apiKey) : undefined;
+  const runner = config.apiKey && !config.disabled ? getAnthropicRunner(config.apiKey) : undefined;
 
   return handleHintRequest(request, {
     config,

@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { TERMINAL_COLOR_KEYS, TerminalThemeSchema } from "@/content/schemas/theme";
+import {
+  TERMINAL_COLOR_KEYS,
+  TerminalStyleOptionSchema,
+  TerminalThemeSchema,
+} from "@/content/schemas/theme";
 import {
   CURSOR_STYLE_IDS,
   CURSOR_STYLES,
@@ -111,5 +115,18 @@ describe("the terminal themes", () => {
     for (const option of [...Object.values(PROMPT_STYLES), ...Object.values(CURSOR_STYLES)]) {
       expect(findBannedWords(`${option.name} ${option.description}`)).toEqual([]);
     }
+  });
+
+  // The theme module doesn't parse its data when it loads (it runs in the browser on every page,
+  // and full Zod would add ~90 KB there), so this is where every style meets the schema.
+  it("validates every prompt and cursor style, each under its own id", () => {
+    for (const [id, option] of [
+      ...Object.entries(PROMPT_STYLES),
+      ...Object.entries(CURSOR_STYLES),
+    ]) {
+      expect(TerminalStyleOptionSchema.safeParse(option).success, id).toBe(true);
+      expect(option.id).toBe(id);
+    }
+    for (const [id, theme] of Object.entries(TERMINAL_THEMES)) expect(theme.id).toBe(id);
   });
 });

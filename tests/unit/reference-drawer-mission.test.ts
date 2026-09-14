@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { toScenarioSpec } from "@/content/schemas/mission";
+import { staticMentorSession } from "@/features/mentor";
 import { createMissionRun, missionRunReducer, type MissionRunState } from "@/features/missions";
 import { loadMissionCatalog } from "@/features/missions/server";
 import {
@@ -72,6 +73,7 @@ function render(state: TerminalSessionState, run: MissionRunState, referenceOpen
       run,
       dispatch: () => {},
       session: sessionFor(state),
+      mentor: staticMentorSession(),
       startTour: false,
       headingRef: { current: null },
       mapTip: false,

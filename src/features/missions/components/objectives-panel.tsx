@@ -1,19 +1,17 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LightbulbIcon } from "@/components/ui/icons";
 import { ObjectiveTick } from "@/components/ui/objective-tick";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { Spinner } from "@/components/ui/spinner";
 import type { Mission, Objective } from "@/content/schemas/mission";
 import {
-  buildMentorTranscript,
-  nextTierUnlockTime,
-  requestMentorHint,
+  HINT_TIER_LABELS,
+  HINTS_ARE_FREE,
+  MENTOR_FIRST_NAME,
   type HintTier,
 } from "@/features/mentor";
-import type { TerminalBlock } from "@/features/terminal";
 import { cx } from "@/lib/cx";
 import { missionProgress } from "../evaluate";
 import {
@@ -24,39 +22,39 @@ import {
   type MissionRunState,
 } from "../run/mission-run";
 import { AnswerInput } from "./answer-input";
-import { MissionText, plainMissionText } from "./mission-text";
+import { MissionText } from "./mission-text";
 
 interface ObjectivesPanelProps {
   mission: Mission;
   run: MissionRunState;
   onAnswer: (objectiveId: string, answer: string) => void;
+  /** How many hint tiers the mentor has shown for an objective (phase 10). */
+  hintsShown: (objectiveId: string) => number;
+  /** Show the first hint for an objective, in the mentor panel. */
   onHint: (objectiveId: string) => void;
+  /** Open the mentor panel on an objective's hints, where the next one can be asked for. */
+  onOpenHints: (objectiveId: string) => void;
   /** The objective whose answer box shows in the story panel instead of here. */
   answeringInStory?: string;
-  /**
-   * The learner's terminal activity, so a hint request can tell Noor what they actually tried
-   * (phase 10). Optional: when absent, an empty transcript is sent and hints still work.
-   */
-  terminalBlocks?: readonly TerminalBlock[];
 }
 
 /**
  * The live checklist: every main and bonus objective, and each secret once it's found. Each one
- * opens to show why it matters and its hints (three tiers, free, never counted anywhere). The
- * current objective starts open. Ticks and success lines come from ObjectiveTick, instantly.
+ * opens to show why it matters and a way to its hints (three tiers, free, never counted anywhere).
+ * The current objective starts open. Ticks and success lines come from ObjectiveTick, instantly.
  *
- * Hints are the mentor's (phase 10): tier 1 is available at once, later tiers unlock after a short
- * cooldown so the learner gets a moment to try the previous one. When a tier is shown, Noor
- * personalises the authored hint to what the learner tried; while it streams, a small status shows,
- * and if the model is unavailable the authored text shows verbatim, still in Noor's voice.
+ * Hints are the mentor's (phase 10), and they live in the mentor panel, so there's one place to
+ * read them: "Show me a hint" here shows the first one there, and "See the hints" opens the panel
+ * on this step, where the next tier waits for its short cooldown.
  */
 export function ObjectivesPanel({
   mission,
   run,
   onAnswer,
+  hintsShown,
   onHint,
+  onOpenHints,
   answeringInStory,
-  terminalBlocks,
 }: ObjectivesPanelProps) {
   const current = currentObjective(mission, run);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
@@ -116,12 +114,11 @@ export function ObjectivesPanel({
             </p>
           )}
           {!done && hints && (
-            <HintLadder
-              mission={mission}
-              objective={objective}
-              alreadyShown={run.hintsShown[objective.id] ?? 0}
+            <HintButton
+              objectiveId={objective.id}
+              shown={hintsShown(objective.id)}
               onHint={onHint}
-              terminalBlocks={terminalBlocks}
+              onOpenHints={onOpenHints}
             />
           )}
         </div>
@@ -194,185 +191,37 @@ export function ObjectivesPanel({
   );
 }
 
-/** The mentor's phrasing of one hint tier, kept in memory for the run so a re-render never refetches. */
-interface MentorHint {
-  /** `writing` while the text streams, then `model` (Noor's rewrite) or `fallback` (authored text). */
-  readonly status: "writing" | "model" | "fallback";
-  readonly text: string;
-}
-
 /**
- * The hint ladder for one objective. Tier 1 is free and immediate; each later tier unlocks after a
- * short cooldown, shown as a calm countdown (never as a penalty — hints are free). Revealing a tier
- * asks Noor to personalise the authored hint; her text streams in, and falls back to the authored
- * text verbatim if the model is unavailable. Tier reveal times and Noor's text live in this
- * component, so they reset with each attempt (nothing is stored) and never refetch on a re-render.
- *
- * `alreadyShown` comes from the run store: after the workspace remounts (back from the debrief),
- * tiers shown before stay shown, in their authored words, with no cooldown and no new request.
+ * The way to an objective's hints. Before any is open, it shows the first one (in the mentor panel).
+ * After that it says which hint the learner is on, and opens the panel, where the next one waits.
+ * Hints are free, and it says so.
  */
-function HintLadder({
-  mission,
-  objective,
-  alreadyShown,
+function HintButton({
+  objectiveId,
+  shown,
   onHint,
-  terminalBlocks,
+  onOpenHints,
 }: {
-  mission: Mission;
-  objective: Objective;
-  alreadyShown: number;
+  objectiveId: string;
+  shown: number;
   onHint: (objectiveId: string) => void;
-  terminalBlocks?: readonly TerminalBlock[];
+  onOpenHints: (objectiveId: string) => void;
 }) {
-  const authoredTiers = mission.hints[objective.id];
-  // Local tier state: reveal timestamps (one per tier shown) and Noor's text per tier. Tiers shown
-  // before a remount count as shown long ago, so their cooldown has passed.
-  const [revealTimes, setRevealTimes] = useState<readonly number[]>(() =>
-    Array.from({ length: Math.min(alreadyShown, HINT_TIERS) }, () => 0),
-  );
-  const [mentorByTier, setMentorByTier] = useState<Readonly<Record<number, MentorHint>>>({});
-  const [now, setNow] = useState(() => Date.now());
-  // One array for the ladder's whole life, so the unmount cleanup sees every request made.
-  const controllers = useRef<AbortController[]>([]);
-  const cooldownId = useId();
-  // Read once to a screen reader when a hint's final words land, never while they stream in.
-  const [spoken, setSpoken] = useState("");
-
-  const shown = revealTimes.length;
-  const lastRevealAt = revealTimes[shown - 1];
-  const unlockAt = lastRevealAt === undefined ? undefined : nextTierUnlockTime(lastRevealAt);
-  const cooldownLeft = unlockAt === undefined ? 0 : Math.max(0, unlockAt - now);
-
-  // Tick a light clock only while a cooldown is counting down, so the countdown updates.
-  useEffect(() => {
-    if (unlockAt === undefined || shown >= HINT_TIERS || Date.now() >= unlockAt) return;
-    const timer = window.setInterval(() => {
-      setNow(Date.now());
-      if (Date.now() >= unlockAt) window.clearInterval(timer);
-    }, 250);
-    return () => window.clearInterval(timer);
-  }, [unlockAt, shown]);
-
-  // Abort any in-flight hint request when the ladder unmounts (restart, or leaving the mission).
-  useEffect(() => {
-    const inFlight = controllers.current;
-    return () => {
-      for (const controller of inFlight) controller.abort();
-    };
-  }, []);
-
-  if (!authoredTiers) return null;
-
-  const reveal = () => {
-    const tier = (shown + 1) as HintTier;
-    // The button stays focusable during a cooldown (aria-disabled), so a press then does nothing.
-    if (tier > HINT_TIERS || cooldownLeft > 0) return;
-    onHint(objective.id); // keep the run store's tier count in step
-    setRevealTimes((times) => [...times, Date.now()]);
-
-    const controller = new AbortController();
-    controllers.current.push(controller);
-    setMentorByTier((current) => ({ ...current, [tier]: { status: "writing", text: "" } }));
-    void requestMentorHint({
-      mission,
-      objectiveId: objective.id,
-      tier,
-      transcript: buildMentorTranscript(terminalBlocks ?? []),
-      signal: controller.signal,
-      onText: (text) =>
-        setMentorByTier((current) => {
-          const existing = current[tier];
-          // Once the final result has landed, don't let a trailing chunk overwrite it.
-          if (existing && existing.status !== "writing") return current;
-          return { ...current, [tier]: { status: "writing", text } };
-        }),
-    })
-      .then((result) => {
-        setMentorByTier((current) => ({
-          ...current,
-          [tier]: { status: result.mode, text: result.text },
-        }));
-        setSpoken(`Hint ${tier} from Noor: ${plainMissionText(result.text)}`);
-      })
-      .catch(() => {
-        // Only a caller-triggered abort reaches here; nothing to show.
-      });
-  };
-
-  const remainingSeconds = Math.ceil(cooldownLeft / 1000);
-
+  const tier = Math.min(shown, HINT_TIERS) as HintTier;
   return (
-    <div className="space-y-2">
-      {shown > 0 && (
-        <ol className="space-y-2" aria-label="Hints from Noor">
-          {Array.from({ length: shown }, (_, index) => {
-            const tier = (index + 1) as HintTier;
-            const authored = authoredTiers[index] ?? "";
-            const mentor = mentorByTier[tier];
-            const text = mentor && mentor.text.trim() !== "" ? mentor.text : authored;
-            const writing = mentor?.status === "writing" && mentor.text.trim() === "";
-            return (
-              <li
-                key={tier}
-                className="rounded-md border border-subtle bg-surface-base px-3 py-2 text-sm leading-6"
-              >
-                <div className="flex gap-2">
-                  <LightbulbIcon className="mt-0.5 size-4 shrink-0 text-accent" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-accent">
-                      Noor · hint {tier} of {HINT_TIERS}
-                    </p>
-                    {writing ? (
-                      <p className="mt-1 flex items-center gap-2 text-secondary">
-                        <Spinner className="size-4 text-accent" />
-                        <span>Noor is writing a hint…</span>
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-secondary">
-                        <MissionText text={text} />
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      )}
-
-      {shown < HINT_TIERS && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          {/* It stays in place, and focusable, while the next tier waits: pressing it then does
-              nothing, and focus never drops to the page. */}
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<LightbulbIcon />}
-            onClick={reveal}
-            aria-disabled={cooldownLeft > 0 || undefined}
-            aria-describedby={cooldownLeft > 0 ? cooldownId : undefined}
-            className="aria-disabled:cursor-not-allowed aria-disabled:text-muted"
-          >
-            {shown === 0 ? "Show me a hint" : "Show me another hint"}
-          </Button>
-          {cooldownLeft > 0 && (
-            <p id={cooldownId} className="text-sm leading-6 text-muted">
-              Give this one a try.{" "}
-              {/* The seconds tick for sighted learners; a screen reader hears a steady sentence. */}
-              <span aria-hidden="true">
-                Another hint in {remainingSeconds} {remainingSeconds === 1 ? "second" : "seconds"}.
-              </span>
-              <span className="sr-only">Another hint is ready in a few seconds.</span>
-            </p>
-          )}
-        </div>
-      )}
-
-      {shown > 0 && (
-        <p className="text-xs leading-5 text-muted">Hints are free. Use as many as you like.</p>
-      )}
-      <p aria-live="polite" className="sr-only">
-        {spoken}
+    <div className="space-y-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        icon={<LightbulbIcon />}
+        aria-haspopup="dialog"
+        onClick={() => (shown === 0 ? onHint(objectiveId) : onOpenHints(objectiveId))}
+      >
+        {shown === 0 ? "Show me a hint" : `See ${MENTOR_FIRST_NAME}'s hints`}
+      </Button>
+      <p className="px-3 text-xs leading-5 text-muted">
+        {shown > 0 && `You're on hint ${tier} of ${HINT_TIERS}: ${HINT_TIER_LABELS[tier]}. `}
+        {HINTS_ARE_FREE}
       </p>
     </div>
   );

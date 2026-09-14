@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type { Mission } from "@/content/schemas/mission";
+import { staticMentorSession } from "@/features/mentor";
 import {
   createMissionRun,
   MissionRunner,
@@ -40,7 +41,14 @@ function finishedRun(of: Mission, extras: readonly string[]): MissionRunState {
 
 const debrief = (of: Mission, run: MissionRunState, links: MissionLinks = NO_LINKS) =>
   renderToStaticMarkup(
-    createElement(MissionDebrief, { mission: of, run, links, dispatch: () => {} }),
+    createElement(MissionDebrief, {
+      mission: of,
+      run,
+      links,
+      dispatch: () => {},
+      mentor: staticMentorSession(),
+      terminal: { history: [], blocks: [] },
+    }),
   )
     .replace(/<[^>]+>/g, " ")
     .replace(/&#x27;/g, "'")

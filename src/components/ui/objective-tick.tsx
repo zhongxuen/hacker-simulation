@@ -20,6 +20,11 @@ type ObjectiveTickProps = ObjectiveStatus & {
    * calm.
    */
   celebrate?: boolean;
+  /**
+   * More about the objective, under it and its success line: why it matters, a hint, an answer
+   * box. Keep it calm: the tick is the celebration.
+   */
+  details?: ReactNode;
   className?: string;
 };
 
@@ -32,7 +37,7 @@ type ObjectiveTickProps = ObjectiveStatus & {
  * objectives, not learners.
  */
 export function ObjectiveTick(props: ObjectiveTickProps) {
-  const { children, bonus = false, celebrate = false, className } = props;
+  const { children, bonus = false, celebrate = false, details, className } = props;
   const done = props.status === "done";
   const rootRef = useRef<HTMLLIElement>(null);
 
@@ -95,6 +100,7 @@ export function ObjectiveTick(props: ObjectiveTickProps) {
             </p>
           )}
         </div>
+        {details}
       </div>
     </li>
   );

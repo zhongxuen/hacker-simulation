@@ -172,18 +172,20 @@ objectives:
           path: /srv/shared
           predicate: { type: dir, readableBy: recruit }
   - id: read-the-manual
+    name: Curious Cat
     description: Read the help page for `netscan`
     why: Every tool comes with instructions, and reading them is a real skill.
-    success: "Curious Cat: you read the help page for `netscan`."
+    success: You read the help page for `netscan`. Every tool here has one.
     optional: true
     check:
       kind: event
       event: help.viewed
       match: { command: netscan }
   - id: look-closer
+    name: Look Closer
     description: Find the hidden welcome note
     why: Files whose names start with a dot don't show up in a normal listing.
-    success: "Look Closer: you found the hidden welcome note!"
+    success: You found the hidden welcome note!
     hidden: true
     check:
       kind: event

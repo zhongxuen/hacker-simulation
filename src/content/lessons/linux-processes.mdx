@@ -1,0 +1,118 @@
+---
+id: linux-processes
+title: "Processes: programs that are running"
+topic: linux
+level: 1
+readingMinutes: 4
+analogy: "A program on the disk is like a recipe in a book. A process is someone cooking that recipe right now, in a kitchen with their name on the door."
+summary: What's running on a computer right now, whose account it runs as, and how to spot what shouldn't be there.
+prerequisites: [linux-users-groups]
+relatedMissions: [linux-01, net-01]
+relatedCommands: [ps, whoami]
+glossaryTerms: [process, service, port, root]
+---
+
+## The one-sentence version
+
+A <Term id="process">process</Term> is a program that's running right now: each one has a number, belongs to an account, and was started by a command.
+
+A program sitting on the disk is like a recipe in a book. A process is someone actually cooking it, in a kitchen with their name on the door. `ps aux` lists every kitchen that's busy:
+
+<Annotated
+  title="ps aux on a practice computer"
+  code={`USER     PID   %CPU  %MEM  TTY    TIME      COMMAND
+root     1     0.0   0.1   ?      00:00:03  /sbin/init
+root     2     0.0   0.1   ?      00:00:00  [kthreadd]
+root     311   0.0   0.1   ?      00:00:00  /usr/sbin/cron -f
+syslog   322   0.0   0.1   ?      00:00:01  /usr/sbin/rsyslogd -n
+recruit  1042  0.0   0.1   pts/0  00:00:00  -bash
+recruit  1044  0.0   0.1   pts/0  00:00:00  ps`}
+  notes={[
+    {
+      line: 1,
+      label: "The columns",
+      text: "Which account, the process number (PID, short for process ID), how busy it is, which terminal it's attached to, and the command that started it.",
+    },
+    {
+      line: 2,
+      label: "The first process",
+      text: "Number 1 starts when the computer does, and it starts everything else. It runs as root.",
+    },
+    {
+      line: 4,
+      label: "A background helper",
+      text: "`cron` runs jobs on a timetable. The `?` means no terminal: it runs in the background with no window.",
+    },
+    {
+      line: 5,
+      label: "Its own account",
+      text: "The program that writes the logs runs as its own account, `syslog`, not as root.",
+    },
+    {
+      line: 6,
+      label: "That's you",
+      text: "`-bash` is your terminal's shell, running as `recruit`.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+Knowing what's running is how you spot what shouldn't be. An unfamiliar name, a program running from the scratch folder `/tmp`, or a familiar program running as the wrong account are classic signs that someone installed something without permission.
+
+The account a process runs as decides what it can touch. A process running as <Term id="root">root</Term> can reach everything, so if it has a weak spot, taking it over means taking over the computer. That's why careful admins run each program under its own limited account.
+
+## How it actually works
+
+Programs live in files, like `/usr/sbin/cron`. Running one creates a process, and the computer gives it the next free number, its PID. It carries the account of whoever started it.
+
+Some processes wait in the background for work. A program that waits for messages from the network, like a web server, is called a <Term id="service">service</Term>. It listens behind a numbered door called a <Term id="port">port</Term>. So every open port a network scan finds is really a process on that computer, waiting for someone to knock.
+
+`ps` on its own shows only the processes in your own terminal. `ps aux` shows everything on the computer. On a real computer, an admin can stop a process by its number, but stopping it only helps if you also find out how it started.
+
+## See it
+
+Look at what's running on this practice computer. Then run `ps` again and compare the numbers: every command you run is a new process with a new PID.
+
+<MiniTerminal
+  scenario="range-home"
+  commands={["ps", "ps aux", "whoami"]}
+  task="Type `ps aux` to see everything running on this computer."
+  expect="ps"
+  success="You listed the running processes. Spot `-bash`: that's your own terminal, running as `recruit`."
+/>
+
+<Quiz
+  question="In `ps aux`, you spot a program called `/tmp/.x` running as root. What should a defender think?"
+  options={[
+    {
+      text: "That's worth investigating straight away",
+      correct: true,
+      explanation:
+        "Three warning signs at once: it runs from `/tmp`, which any account can write to, its name is hidden with a dot, and it has root's power.",
+    },
+    {
+      text: "It's fine: programs running as root are trusted",
+      explanation:
+        "Root is the most powerful account, so a strange program running as root is the most worrying kind, not the least.",
+    },
+    {
+      text: "Nothing: `/tmp` is where programs normally live",
+      explanation:
+        "`/tmp` is scratch space for temporary files. Real programs live in folders like `/usr/bin` and `/usr/sbin`.",
+    },
+  ]}
+/>
+
+## In practice
+
+In [Mapping the network](/missions/net-01), each open port you find on the bakery's computers is a process waiting behind it, like an old login service nobody remembers starting. In [Reading the machine](/missions/linux-01), the ordering website runs as its own account, `orders`, instead of as root.
+
+<TryIt mission="net-01" />
+
+## Common misconceptions
+
+- **"A program and a process are the same thing."** One program can run as many processes at once, like two cooks using the same recipe.
+- **"Closing the window stops everything I started."** Services run with no window at all. That's how a web server keeps answering all night.
+- **"Only the programs I opened are running."** Every computer runs a crowd of background processes you never started, from logging to timetables.
+- **"Stopping a suspicious process fixes the problem."** If whatever started it is still there, it comes back. Defenders find out how it got there before they call it fixed.

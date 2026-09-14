@@ -1,0 +1,120 @@
+---
+id: linux-logs
+title: Reading logs
+topic: linux
+level: 1
+readingMinutes: 5
+analogy: "A log is a computer's diary. Every time something happens, it writes one line with the date and time, and it never tears out a page by itself."
+summary: Where a Linux computer writes down what happened, how to read one line, and how to find the lines that matter.
+prerequisites: [linux-filesystem]
+relatedMissions: [linux-01]
+relatedCommands: [logview, grep, tail, cat, sort]
+glossaryTerms: [log-file, timestamp, brute-force-attack]
+---
+
+## The one-sentence version
+
+A <Term id="log-file">log file</Term> is a computer's diary: every time something happens, a program writes one line about it, starting with the date and time.
+
+It never tears out a page by itself, which is what makes it so useful after something goes wrong. Here are a few lines from the sign-in log on a practice computer:
+
+<Annotated
+  title="/var/log/auth.log, the sign-in log"
+  code={`2026-03-02T08:30:10Z INFO sshd[901]: Accepted password for recruit from 192.168.60.10 port 50122
+2026-03-02T08:41:03Z WARN sshd[944]: Failed password for kit from 192.168.60.21 port 40011
+2026-03-02T08:41:09Z INFO sshd[944]: Accepted password for kit from 192.168.60.21 port 40011`}
+  notes={[
+    {
+      line: 1,
+      label: "A normal sign-in",
+      text: "The time, how important the line is (INFO), which program wrote it (sshd, the remote sign-in service, with its process number), and what happened: `recruit` signed in from `192.168.60.10`.",
+    },
+    {
+      line: 2,
+      label: "A mistyped password",
+      text: "WARN means worth a look. Kit got their password wrong once.",
+    },
+    {
+      line: 3,
+      label: "Kit again, six seconds later",
+      text: "Same computer, right password. A single slip, then success, is what a person mistyping looks like.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+Logs are how defenders find out what happened, often days later. A sign-in at 2 in the morning from an address nobody recognises, or a burst of wrong passwords seconds apart, are the lines that start an investigation.
+
+A burst of wrong passwords usually means someone is guessing, trying one password after another. That's called a <Term id="brute-force-attack">brute-force attack</Term>. Because logs give intruders away, they often try to delete them, which is why defenders send copies somewhere the intruder can't reach.
+
+## How it actually works
+
+On Linux, logs live in `/var/log`. Two you'll meet often:
+
+- `auth.log`: every sign-in, good or bad, and every use of `sudo`.
+- `syslog`: general news from the computer's programs.
+
+Every line starts with a <Term id="timestamp">timestamp</Term>. In `2026-03-02T08:30:10Z`, the `T` separates the date from the time, and the `Z` means the time is in UTC, one shared world clock, so logs from computers in different places line up.
+
+Logs can hold private details, so many are locked. `auth.log` belongs to root and the `adm` group, and only accounts in that group can read it.
+
+You rarely read a whole log. You filter it:
+
+- `grep Failed /var/log/auth.log` keeps only the lines containing "Failed".
+- `tail -n 5 /var/log/auth.log` shows the last five lines, usually the newest.
+- `logview /var/log/auth.log --grep failed` numbers the lines and filters them in one go.
+- `sort /var/log/auth.log` puts the lines in time order, because a timestamp at the front sorts correctly.
+
+## See it
+
+This practice computer's sign-in log has something in it worth finding. Your account is in the `adm` group, so you're allowed to read it.
+
+<MiniTerminal
+  scenario="range-logs"
+  commands={[
+    "logview /var/log/auth.log",
+    "grep Failed /var/log/auth.log",
+    "sort /var/log/auth.log",
+  ]}
+  task="Find the failed sign-ins with `grep Failed /var/log/auth.log`."
+  expect="grep"
+  success="You filtered a log! Three wrong passwords for `admin` from one address, seconds apart, at 2 in the morning. That's what guessing looks like."
+/>
+
+<Quiz
+  question="Three failed sign-ins for `admin` from `192.168.60.66`, seconds apart, at 02:14. What's the best first reading?"
+  options={[
+    {
+      text: "Someone may be guessing the password, so it's worth a closer look",
+      correct: true,
+      explanation:
+        "A quick burst of failures on a powerful account, at night, from one address is the classic pattern of password guessing.",
+    },
+    {
+      text: "Kit mistyped their password",
+      explanation:
+        "Kit's slip was one failure followed by a success, on Kit's own account, from Kit's own computer. This is a different account and address.",
+    },
+    {
+      text: "Nothing: failed sign-ins are normal",
+      explanation:
+        "One failure is normal: people mistype. Several in a few seconds on the admin account isn't a person having a bad morning.",
+    },
+  ]}
+/>
+
+Notice that the 02:14 lines sit below the 08:41 ones in the file. Try `sort` on the log and see where they really belong.
+
+## In practice
+
+In the mission [Reading the machine](/missions/linux-01), Idris, the team's defender, reads the order database's log and spots a sign-in with the password you found, from an address on the bakery's customer wifi. That one line turns a tidy-up into an investigation.
+
+<TryIt mission="linux-01" />
+
+## Common misconceptions
+
+- **"Deleting the log hides what happened."** A missing log, or a gap in one, is a clue on its own. And good defenders keep a copy on another computer, out of an intruder's reach.
+- **"Logs record everything."** They only record what programs are set up to write. If nobody turned on logging for something, there's no line about it.
+- **"The newest line is always at the bottom."** Usually, but logs get merged and rotated. Trust the timestamps, not the position.
+- **"Anyone can read the logs."** Many are locked to root and the `adm` group, because they hold names, addresses and other private details.

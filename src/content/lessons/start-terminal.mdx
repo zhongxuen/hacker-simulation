@@ -1,0 +1,103 @@
+---
+id: start-terminal
+title: What is a terminal?
+topic: foundations
+level: 0
+readingMinutes: 3
+analogy: "A terminal is like texting a very literal friend: you type one clear instruction, and it types back exactly what happened."
+summary: Talking to a computer by typing instead of clicking, and your first command.
+prerequisites: [start-computer]
+relatedMissions: [intro-01]
+relatedCommands: [whoami, ls, cat, help]
+glossaryTerms: [terminal, command, prompt, command-option]
+---
+
+## The one-sentence version
+
+A <Term id="terminal">terminal</Term> is a window where you talk to a computer by typing instead of clicking. Each instruction you type is called a <Term id="command">command</Term>.
+
+Think of it like texting a very literal friend. You send one clear message, and it replies with exactly what happened. Try it now: the box below is a real practice terminal.
+
+<MiniTerminal
+  scenario="range-home"
+  commands={["whoami"]}
+  task="Click in the terminal, type `whoami` and press Enter."
+  expect="whoami"
+  success="You sent your first command! The computer answered with the name of the account you're using: `recruit`."
+/>
+
+## Why it matters in security
+
+Most of the computers that run websites, shops and banks don't have a screen or a mouse. They sit in a building somewhere, and the people who look after them type commands. Attackers type commands too. So if you want to protect a computer, or find out what happened to one, a terminal is where you'll spend your time.
+
+It's also faster than clicking once you know a few commands. One line can search thousands of files.
+
+## How it actually works
+
+Every line starts with a <Term id="prompt">prompt</Term>, like `recruit@range-ws-01:~$`. It tells you who you are, which computer you're on, and which folder you're in. When you see it, the computer is ready.
+
+You type a command's name, sometimes followed by extra settings called <Term id="command-option">options</Term>, like the `-a` in `ls -a`. Then you press Enter, the computer does it, and the answer appears underneath.
+
+<Annotated
+  title="One command, line by line"
+  code={`recruit@range-ws-01:~$ ls -a
+.  ..  notes  .secret-snack  todo.txt  welcome.txt`}
+  notes={[
+    {
+      line: 1,
+      label: "Prompt, then your command",
+      text: "Everything up to the `$` is the prompt. `ls -a` is what you typed: the command `ls` with the option `-a`.",
+    },
+    {
+      line: 2,
+      label: "The answer",
+      text: "Everything in this folder, hidden files included. `.secret-snack` starts with a dot, so a plain `ls` would leave it out.",
+    },
+  ]}
+/>
+
+## Try it
+
+Here's the same practice computer again. Type `ls` to list what's in the folder, then `cat welcome.txt` to read a file. Tab finishes a file name for you, and the up arrow brings back your last command.
+
+<MiniTerminal
+  scenario="range-home"
+  commands={["ls", "cat welcome.txt", "ls -a"]}
+  task="List the files with `ls`, then read one with `cat`."
+  expect="cat"
+  success="You read a file from the terminal. Reading files is most of what investigators do all day."
+/>
+
+<Quiz
+  question="You typed a command and nothing appeared except a new prompt. What does that usually mean?"
+  options={[
+    {
+      text: "The computer ignored you",
+      explanation:
+        "The computer always does something with a command. If it couldn't, it says so in an error message.",
+    },
+    {
+      text: "It worked, and there was nothing to show",
+      correct: true,
+      explanation:
+        "Many commands, like `cd`, print nothing when they work. A fresh prompt means the computer is ready for the next one.",
+    },
+    {
+      text: "You broke the computer",
+      explanation:
+        "Not here, and rarely anywhere. A new prompt is a sign that everything is fine. On this practice computer, Reset machine undoes anything you change.",
+    },
+  ]}
+/>
+
+## In practice
+
+In your first mission, [Welcome to the team](/missions/intro-01), you'll type `whoami` and `ls` on your own practice computer, with a short tour pointing at where to type. Type `help` in any terminal here to see every command, grouped by what it's for.
+
+## Common misconceptions
+
+- **"The terminal is only for experts."** Everyone starts with three or four commands. You've already used two.
+- **"One wrong command could wreck the computer."** On a real computer, a few commands can delete things, so professionals read before they press Enter. Here, nothing is real, and Reset machine puts everything back.
+- **"It's a different program from the rest of the computer."** It's another way into the same files and programs you'd reach by clicking.
+
+<TryIt mission="intro-01" />

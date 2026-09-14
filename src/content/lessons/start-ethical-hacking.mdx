@@ -1,0 +1,98 @@
+---
+id: start-ethical-hacking
+title: What is ethical hacking?
+topic: foundations
+level: 0
+readingMinutes: 3
+analogy: "An ethical hacker is like a locksmith the homeowner hired to test the locks: same skills as a burglar, but invited, and on your side."
+summary: Hackers, defenders, and why permission is the whole difference.
+prerequisites: []
+relatedMissions: [intro-01]
+relatedCommands: [cat]
+glossaryTerms: [hacker, ethical-hacking, white-hat, black-hat, authorization]
+---
+
+## The one-sentence version
+
+<Term id="ethical-hacking">Ethical hacking</Term> means testing how well a computer system is
+protected, with the owner's permission, so its weak spots get fixed before a criminal finds them.
+
+Picture a locksmith the homeowner hired to test the locks. A burglar and that locksmith might try the very same door. One was invited. The other wasn't.
+
+<Quiz
+  question="Two people type the same commands on the same computer. What makes one of them an ethical hacker?"
+  options={[
+    {
+      text: "They're better at it",
+      explanation:
+        "Skill has nothing to do with it. A very skilled person without permission is still breaking in.",
+    },
+    {
+      text: "The owner gave them permission, in writing",
+      correct: true,
+      explanation:
+        "That's the whole difference. The same action is a job with permission and a crime without it.",
+    },
+    {
+      text: "They mean well",
+      explanation:
+        "Good intentions don't count as permission. Testing someone's computer without asking is a crime in most countries, even if you only look.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+A <Term id="hacker">hacker</Term> is someone who understands computers well enough to make them do unexpected things. Some use that to steal, spy or cause harm. People call them <Term id="black-hat">black hats</Term>. Others use it to protect people, and only test what they've been asked to test. They're called <Term id="white-hat">white hats</Term>.
+
+Criminals only need to find one weak spot. Defenders have to find all of them. So organisations invite white-hat teams to look first, then fix what they find. That's the job your team, Candlewright Security, does.
+
+## How it actually works
+
+Every real job starts with <Term id="authorization">authorization</Term>: a signed letter from the owner saying who may test what, how, and until when. Anything not on that letter is off limits, however interesting it looks.
+
+When the test is done, the team writes a plain report: what they found, how serious it is, and how to fix it. Nothing found is kept, used or shared.
+
+## See it
+
+Your team keeps a practice scope letter on its practice computer. Read it: it's the most important file on any job.
+
+<MiniTerminal
+  scenario="range-network"
+  commands={["cat scope.txt"]}
+  task="Read the practice scope letter with `cat scope.txt`."
+  expect="cat"
+  success="You read a scope letter. It names exactly what the team may test, and who signed it."
+/>
+
+## In practice
+
+In your first mission, [Welcome to the team](/missions/intro-01), a teammate suggests taking a look at a client's computer before the letter is signed. You'll decide what to do. Every mission after that opens with its own signed letter in the briefing.
+
+## Common misconceptions
+
+- **"Hacking is always illegal."** Testing with the owner's written permission is a normal, well-paid job. Testing without it is the crime.
+- **"If I only look and don't change anything, it's fine."** Looking around a computer without permission is already breaking in, in most countries.
+- **"A computer anyone can reach is fair game."** Being able to reach something isn't the same as being allowed to test it. The letter decides, not the network.
+
+<Quiz
+  question="You spot a weak spot on a website that isn't on your scope letter. What do you do?"
+  options={[
+    {
+      text: "Test it quickly while nobody's looking",
+      explanation:
+        "It isn't on the letter, so it isn't yours to test. Doing it anyway is breaking in.",
+    },
+    {
+      text: "Write it down, don't touch it, and ask the owner",
+      correct: true,
+      explanation:
+        "That's what professionals do. The owner decides whether it gets added to the scope.",
+    },
+    {
+      text: "Post about it online so people are warned",
+      explanation:
+        "That hands criminals a map before the owner can fix it. Tell the owner privately first.",
+    },
+  ]}
+/>

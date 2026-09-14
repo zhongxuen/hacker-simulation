@@ -1,0 +1,108 @@
+---
+id: ethics-authorization
+title: Authorization, or why permission comes first
+topic: foundations
+level: 1
+readingMinutes: 4
+analogy: "Authorization is like a house key and a note from the owner: the same door is a visit with them, and a break-in without them."
+summary: Why a security test starts with the owner's written permission, and what that permission looks like.
+prerequisites: [start-ethical-hacking]
+relatedMissions: [intro-01]
+relatedCommands: []
+glossaryTerms: [authorization, ethical-hacking, penetration-test, rules-of-engagement]
+---
+
+## The one-sentence version
+
+<Term id="authorization">Authorization</Term> is clear permission, usually in writing, from the
+owner of a computer system to test it.
+
+Picture a locksmith opening a front door. With a note from the owner, that's a job. Without one, it's a break-in, even though the locksmith's hands do exactly the same thing. Security testing works the same way. Try this situation:
+
+<Quiz
+  question="A friend asks you to check whether their workplace's website is secure. They don't run the website, but they work there. Is that permission?"
+  options={[
+    {
+      text: "Yes, they work there, so they can say yes",
+      explanation:
+        "Working somewhere doesn't make you the owner of its computers. Only someone with the authority to agree for the organisation, like the person responsible for the website, can give permission.",
+    },
+    {
+      text: "No, permission has to come from someone who owns or is responsible for the website, in writing",
+      correct: true,
+      explanation:
+        "Right. Permission counts when it comes from someone who has the authority to give it, and says in writing what may be tested.",
+    },
+    {
+      text: "Yes, as long as you only look and don't change anything",
+      explanation:
+        "Looking around a computer system without permission can still be against the law in many countries. Whether you changed anything doesn't decide it. Permission does.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+An <Term id="ethical-hacking">ethical hacker</Term> and a criminal can type the same commands. Permission is the whole difference between them.
+
+Without it, testing someone else's computers is a crime in most countries. In the UK, the Computer Misuse Act makes accessing a computer without permission an offence. In the US, the Computer Fraud and Abuse Act does something similar. Other countries have their own laws, and they differ in the details. The outcome can include being prosecuted, even if you meant well.
+
+Permission also protects the owner. A test can slow a website down or set off alarms. When the owner has agreed in writing, they know it's coming, and they know who to call.
+
+## How it actually works
+
+Before a professional test, often called a <Term id="penetration-test">penetration test</Term>, the testing team and the owner agree on paper:
+
+- **Who** is testing, and who at the organisation signed.
+- **What** may be tested: which computers, websites or accounts.
+- **How**: which kinds of tests are allowed, and which aren't.
+- **When**: the dates and hours.
+- **What happens if something goes wrong**, and who to phone.
+
+Those ground rules are called the <Term id="rules-of-engagement">rules of engagement</Term>. The signature has to come from someone who has the authority to agree for the organisation. A receptionist, a friend who works there, or a stranger online can't give it.
+
+## See it
+
+Here's a practice letter like the one on your desk in your first mission. Pick each note to see what it's for.
+
+<Annotated
+  title="A scope letter, part by part"
+  code={`CANDLEWRIGHT SECURITY - SCOPE LETTER (practice)
+Who may test:  our new recruit, using the account "recruit"
+What:          every computer on the Range, 192.168.60.0/24
+When:          your first week, during office hours
+Not in scope:  anything else
+Signed: Theo Ashgrove, team lead, Candlewright Security`}
+  notes={[
+    { line: 2, label: "Who", text: "The person allowed to test, and the account they'll use." },
+    {
+      line: 3,
+      label: "What",
+      text: "The exact computers. The Range is the team's own practice lab, so the team can agree to it.",
+    },
+    { line: 4, label: "When", text: "Permission has a start and an end. After that, it's gone." },
+    {
+      line: 5,
+      label: "Everything else",
+      text: "Anything not listed is off limits, however interesting it looks.",
+    },
+    {
+      line: 6,
+      label: "The signature",
+      text: "Someone with the authority to agree. For the Range, that's the team lead.",
+    },
+  ]}
+/>
+
+## In practice
+
+In [Welcome to the team](/missions/intro-01), your teammate Kit suggests looking at a bakery's server before its owner, Roz, has signed her letter. You get to choose what happens next, and Theo explains what the choice would mean in the real world.
+
+<TryIt mission="intro-01" />
+
+## Common misconceptions
+
+- **"If a website is on the internet, anyone may test it."** Being able to reach something isn't the same as being allowed to test it. A shop's door being on the street doesn't mean you may try its locks.
+- **"I only looked, I didn't change anything."** In many countries, getting into a computer without permission is an offence on its own, even if you only read.
+- **"My intentions were good, so it's legal."** Good intentions don't replace permission. Plenty of people who meant to help have still faced charges.
+- **"A verbal yes is enough."** Professionals get it in writing, from someone with the authority to agree, because memories and phone calls don't hold up when something goes wrong.

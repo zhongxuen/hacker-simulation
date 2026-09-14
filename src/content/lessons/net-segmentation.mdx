@@ -1,0 +1,149 @@
+---
+id: net-segmentation
+title: Network segmentation
+topic: networking
+level: 1
+readingMinutes: 5
+analogy: "Segmentation is like the doors inside a restaurant: customers sit in the dining room, and only staff go through to the kitchen."
+summary: Splitting a network into zones, so guests' devices can't reach the computers that matter.
+prerequisites: [net-ports]
+relatedMissions: [net-01]
+relatedCommands: [netscan, ifconfig]
+glossaryTerms: [network-segmentation, subnet, router, firewall, asset-inventory]
+---
+
+## The one-sentence version
+
+Instead of one big network where every device can reach every other, you split it into separate zones with rules between them. That's <Term id="network-segmentation">network segmentation</Term>.
+
+Think of a restaurant. Customers sit in the dining room, staff work in the kitchen, and the safe is in a locked office. Everyone is in the same building, but a customer can't wander into the kitchen. Pick each zone of a small bakery's network to see who belongs where:
+
+<PacketDiagram
+  title="A bakery's network, split into zones"
+  fields={[
+    {
+      label: "Customer wifi",
+      value: "192.168.77.0/24",
+      size: 3,
+      note: "Customers' phones and laptops. They should reach the internet and nothing else: not the till, not the servers.",
+    },
+    {
+      label: "Rules",
+      value: "firewall",
+      note: "A checkpoint between zones. It decides, rule by rule, which messages may cross.",
+    },
+    {
+      label: "Staff network",
+      value: "10.40.1.0/24",
+      size: 3,
+      note: "The till, the staff laptops, the printer. Staff need to reach the order website, so a rule lets them.",
+    },
+    {
+      label: "Rules",
+      value: "firewall",
+      note: "Another checkpoint. Only the doors staff need, like the order website's, are let through.",
+    },
+    {
+      label: "Servers",
+      value: "10.40.2.0/24",
+      size: 3,
+      note: "The order server and the backups: the things that matter most, reachable by the fewest devices.",
+    },
+  ]}
+  caption="The ranges match Tumbleloaf Bakery in the missions. Real networks often have more zones than this."
+/>
+
+## Why it matters in security
+
+On a flat network, where everything can reach everything, one weak device is a way in to all of them. A guest's infected laptop on the wifi can knock on the doors of the order server. Segmentation means that when something goes wrong in one zone, and eventually something will, the damage stays there.
+
+It also makes trouble stand out. If the rules say customer wifi never talks to the servers, then any attempt to do it is worth an alert.
+
+## How it actually works
+
+Zones are usually separate <Term id="subnet">subnets</Term>: different streets of addresses. Messages between streets pass through a <Term id="router">router</Term>, the device that forwards messages from one network to another, like a sorting office. That's the natural place to check them.
+
+The checking is done by a <Term id="firewall">firewall</Term>: a list of rules saying who may talk to whom, and on which ports. Rules are read top to bottom, and the last one usually says "everything else is blocked".
+
+<Annotated
+  title="Example firewall rules for the bakery"
+  code={`FROM            TO              PORT   DECISION
+staff network   servers         443    allow   (the order website)
+staff network   servers         22     allow   (remote fixes, staff only)
+customer wifi   the internet    any    allow
+customer wifi   servers         any    block
+anyone          anywhere else   any    block`}
+  notes={[
+    {
+      line: 2,
+      label: "Only the door that's needed",
+      text: "Staff reach the order website on port 443, and nothing else on the servers unless another rule says so.",
+    },
+    {
+      line: 4,
+      label: "Guests get the internet",
+      text: "Customers came for wifi, so they get it. That's all they get.",
+    },
+    {
+      line: 5,
+      label: "The rule that protects the servers",
+      text: "Nothing from the customer wifi crosses to the servers, on any port.",
+    },
+    {
+      line: 6,
+      label: "Block by default",
+      text: "Anything the rules above don't allow is blocked. New devices are safe until someone decides otherwise.",
+    },
+  ]}
+/>
+
+You can only write good rules if you know what's on the network, which is why segmentation starts with an <Term id="asset-inventory">asset inventory</Term>: a list of every device, and which zone it belongs in.
+
+Where the restaurant analogy breaks down: anyone can see a kitchen door, but network zones are invisible. A single wrong rule can quietly join two zones back together, and nobody notices until someone scans.
+
+## See it
+
+The Range, the team's practice lab, is one flat network on purpose, so you can practise on everything. Scan it and see how much one computer can reach:
+
+<MiniTerminal
+  scenario="range-network"
+  commands={["netscan 192.168.60.0/24", "ifconfig"]}
+  task="Scan the Range with `netscan 192.168.60.0/24` and count the computers your laptop can reach."
+  expect="netscan"
+  success="From one computer you reached every other one. That's a flat network: fine for a practice lab, risky for a business."
+/>
+
+<Quiz
+  question="A hotel puts guest wifi, the front desk computers and the room-key system on one flat network. What does segmentation change?"
+  options={[
+    {
+      text: "Guests' devices can no longer reach the front desk or the room-key system",
+      correct: true,
+      explanation:
+        "Right. Each group gets its own zone, and the rules between zones only let through what's needed.",
+    },
+    {
+      text: "Guests can't use the wifi any more",
+      explanation:
+        "Guests still get wifi and the internet. They lose access to things they never needed, like the room-key system.",
+    },
+    {
+      text: "Nothing, as long as every device has a password",
+      explanation:
+        "Passwords help, but they get guessed, reused and stolen. Segmentation means a guest's device can't even knock on the door.",
+    },
+  ]}
+/>
+
+## In practice
+
+In [Mapping the network](/missions/net-01), you'll find out how someone reached Tumbleloaf Bakery's order server from the customer wifi. The fix you recommend closes an old door and puts a wall between the customer wifi and the servers: segmentation, in one line of a report.
+
+<TryIt mission="net-01" />
+
+## Common misconceptions
+
+- **"A firewall makes you safe."** A firewall is only as good as its rules. A rule that allows everything, or one left over from years ago, lets trouble straight through.
+- **"Segmentation is only for big companies."** A bakery with customer wifi needs it as much as a bank. Many home and shop routers can make a separate guest network with one setting.
+- **"Guests on the wifi can't see anything anyway."** On a flat network they can knock on every door, the same as a staff laptop. A scan from the wifi would list the till and the servers.
+- **"Once the network is split, the job's done."** New devices arrive, rules pile up, and zones drift together. Teams check the rules and rescan regularly.

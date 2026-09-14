@@ -11,7 +11,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "mission:new": "tsx scripts/mission-new.ts",
+    "mission:validate": "tsx scripts/mission-validate.ts",
+    "mission:play": "tsx scripts/mission-play.ts"
   },
   "dependencies": {
     "@mdx-js/mdx": "^3.1.1",
@@ -41,6 +44,7 @@
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5",
     "vitest": "^5.0.0"
   },

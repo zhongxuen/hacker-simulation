@@ -1,0 +1,261 @@
+# Chapter 1, "First shift", episode 1 (md-files/story-bible.md). The onboarding mission: the
+# landing page's Start button and the app's "Start here" land here. First tick in under a minute
+# (whoami, with the terminal tour pointing at the prompt), then two choices about permission and
+# scope, told through the cast. Everything happens on the Range, the team's practice lab.
+id: intro-01
+slug: intro-01
+version: 1
+title: Welcome to the team
+difficulty: intro
+estimatedMinutes: 8
+skills: [linux]
+hook: "First day. Your mentor's waiting, and so is your first choice."
+learningGoals:
+  - Why a security tester needs written permission before testing anything
+  - What a scope letter says, and where your permission ends
+  - "How to type your first commands: `whoami`, `ls` and `cat`"
+  - What the SIMULATED badge means
+concepts: [start-ethical-hacking, start-terminal, ethics-authorization, ethics-scope]
+briefing:
+  scenario: >-
+    Noor Halvorsen, your mentor, is showing you round on your first day at Candlewright Security:
+    a small team of good-guy hackers that organisations ask to find their weak spots before anyone
+    else does.
+  role: "You're the team's newest recruit, signed in as `recruit` on your practice computer, `range-ws-01`."
+  authorization: >-
+    You're on the Range, Candlewright's practice lab. Every machine here belongs to the team and
+    exists for training. Signed: Theo Ashgrove, team lead.
+story:
+  - on: start
+    speaker: mentor-noor
+    text: >-
+      Welcome to Candlewright! I'm Noor, your mentor. We find weak spots in computers before the
+      bad guys do, but only when the owner asks us to. Let's start with your own computer.
+  - on: { objective: look-around }
+    speaker: mentor-noor
+    text: >-
+      Everything on the Range is a practice copy that resets, so nothing you type can break
+      anything real. That SIMULATED badge at the top of the screen says the same thing. Now, one
+      of those files is a letter for you.
+  - on: { objective: read-the-letter }
+    speaker: teammate-theo
+    text: >-
+      I'm Theo, the team lead. That letter says exactly what we may test. No letter, no test. The
+      Range is on it. Nothing else is, yet.
+  - on: { objective: read-the-letter }
+    speaker: client-roz
+    text: >-
+      Hello? Roz here, I own Tumbleloaf Bakery. Orders keep vanishing from our website and nobody
+      knows why. Theo says there's a letter on its way for me to sign.
+  - on: { objective: read-the-letter }
+    speaker: teammate-kit
+    text: >-
+      I'm Kit! Hey, the bakery's order server is right there. It'd take two minutes to look before
+      the letter arrives. Nobody would notice... What do you think?
+  - on: { objective: kit-choice }
+    speaker: teammate-kit
+    text: "Yep. That was me getting ahead of myself. We wait for the signature."
+  - on: { objective: scope-check }
+    speaker: teammate-theo
+    text: >-
+      Spot on. And there's the email: Roz has signed. Tomorrow, her order server joins the list.
+  - on: { event: help.viewed, match: { command: ls } }
+    speaker: teammate-kit
+    text: "Reading the manual on day one? I once typed `ls` into the coffee machine. It's called coffee-01 now."
+  - on: complete
+    speaker: mentor-noor
+    text: >-
+      A few commands and two good calls on day one. You're already doing what analysts do every
+      morning.
+scenario:
+  seed: 20260901
+  startTime: "2026-03-02T09:00:00Z"
+  network:
+    subnets:
+      - { cidr: 192.168.60.0/24, name: The Range }
+    hosts:
+      - id: range-ws-01
+        hostname: range-ws-01.range.candlewright.example
+        interfaces:
+          - { ip: 192.168.60.10, subnet: 192.168.60.0/24 }
+        os: { family: linux, name: Linux, version: "6.8" }
+        users:
+          - { name: recruit, uid: 1000 }
+        fs:
+          entries:
+            - path: /etc/motd
+              content: "Welcome to range-ws-01, a practice computer on the Range. It resets.\n"
+            - path: /home/recruit/welcome.txt
+              content: |
+                Welcome to Candlewright, recruit!
+
+                This is range-ws-01, your practice computer on the Range.
+                Everything here is a practice copy that resets, so try anything.
+
+                Start with your scope letter: scope-letter.txt
+
+                P.S. Some files like to hide. Their names start with a dot,
+                and a plain ls leaves them out.
+            - path: /home/recruit/scope-letter.txt
+              content: |
+                CANDLEWRIGHT SECURITY - SCOPE LETTER (practice)
+
+                Who may test:  our new recruit, using the account "recruit"
+                What:          every computer on the Range, 192.168.60.0/24
+                When:          your first week, during office hours
+                Not in scope:  anything else. Tumbleloaf Bakery joins this
+                               list only once its owner signs her own letter.
+
+                Find something outside this list? Stop, write it down,
+                and ask Theo.
+
+                Signed: Theo Ashgrove, team lead, Candlewright Security
+            - path: /home/recruit/notes/team.txt
+              content: |
+                The team
+                Noor Halvorsen   your mentor. Ask her anything.
+                Theo Ashgrove    team lead. Signs every scope letter.
+                Kit Nakashima-Reyes   analyst. Labels everything "-01".
+                Idris Fenwick    defender. Reads the logs, drinks the tea.
+            - path: /home/recruit/.welcome-note
+              mode: "600"
+              content: |
+                You found the hidden note!
+                Names that start with a dot don't show up in a plain ls.
+                ls -a shows them.
+
+                Welcome to the team. - Noor
+  session: { host: range-ws-01, user: recruit }
+objectives:
+  - id: whoami
+    description: Find out which account you're using, with `whoami`
+    why: Everything you do on a computer happens as some account, so it's the first thing to check.
+    success: You're `recruit`! Every account on a computer has a name, and this one's yours.
+    check:
+      kind: commandRun
+      pattern: "^whoami\\b"
+  - id: look-around
+    description: See what's in your home folder with `ls`
+    why: Looking before you touch anything is how every investigation starts.
+    success: Those are your files. `ls` is the command analysts type more than any other.
+    check:
+      kind: event
+      event: command.run
+      match: { command: ls, exitCode: 0 }
+  - id: read-the-letter
+    description: Read the scope letter in your home folder
+    why: The letter says what the team may test. Every job starts by reading it.
+    success: You read your first scope letter. It's the most important file on any job.
+    check:
+      kind: event
+      event: file.read
+      match: { path: /home/recruit/scope-letter.txt }
+  - id: kit-choice
+    description: Decide what to do about Kit's idea
+    why: Permission is what separates a security tester from a criminal, even when they type the same commands.
+    success: You waited for permission. That's the call a professional makes.
+    check:
+      kind: answer
+      accept: ["Wait for Roz to sign the letter", "Ask Theo what he thinks"]
+      choices:
+        - text: Take a look at the bakery's server now
+          reply:
+            speaker: teammate-theo
+            text: >-
+              Without Roz's signature, that server isn't ours to touch. Looking now would be
+              breaking into someone else's computer, and in most countries that's a crime even if
+              you mean well. It could slow down her real orders, too. Pick again.
+        - text: Wait for Roz to sign the letter
+        - text: Ask Theo what he thinks
+          reply:
+            speaker: teammate-theo
+            text: >-
+              Glad you asked. We wait for the letter. It's how every job starts, and it protects
+              Roz as much as it protects us.
+  - id: scope-check
+    description: Choose which computers the letter lets you test today
+    why: Knowing exactly where your permission ends keeps you, and the client, safe.
+    success: "Right: only the Range, for now. When Roz signs, her servers join the list."
+    check:
+      kind: answer
+      accept: ["Every computer on the Range, `192.168.60.0/24`"]
+      choices:
+        - text: "Every computer on the Range, `192.168.60.0/24`"
+        - text: The Range and the bakery's order server
+          reply:
+            speaker: teammate-theo
+            text: >-
+              Not yet. The bakery joins the list when Roz signs. Until then, her server is off
+              limits, however close it is.
+        - text: Anything I can reach from this computer
+          reply:
+            speaker: mentor-noor
+            text: >-
+              Being able to reach a computer isn't the same as being allowed to test it. The letter
+              decides, not the network. Have another look at it with `cat scope-letter.txt`.
+  - id: read-the-manual
+    name: Curious Cat
+    description: Read the manual page for `ls`
+    why: Every command comes with instructions, and reading them is a real skill.
+    success: You read the manual for `ls`. Every command here has one, and `man` opens it.
+    optional: true
+    check:
+      kind: event
+      event: help.viewed
+      match: { command: ls }
+  - id: look-closer
+    name: Look Closer
+    description: Find the hidden welcome note on the Range
+    why: Files whose names start with a dot don't show up in a plain `ls`.
+    success: You found the hidden note! `ls -a` shows the files a plain `ls` leaves out.
+    hidden: true
+    check:
+      kind: event
+      event: file.read
+      match: { path: /home/recruit/.welcome-note }
+hints:
+  whoami:
+    - There's a command that asks the computer which account you're using. The tour card is pointing at where to type it.
+    - "Commands are words you type at the prompt, then press Enter. This one is three words stuck together: who, am, i."
+    - Type `whoami` and press Enter.
+  look-around:
+    - You're in your home folder. What's in it?
+    - "`ls` lists the files and folders where you are. It's short for list."
+    - Type `ls` and press Enter.
+  read-the-letter:
+    - One of the files in your home folder is a letter. Its name has the word scope in it.
+    - "`cat` shows what's inside a file. Type it, a space, then the file's name. Tab finishes names for you."
+    - Type `cat scope-letter.txt` and press Enter.
+  kit-choice:
+    - Think about what Theo said the letter is for.
+    - A security test is only OK when the owner has agreed to it in writing. Roz hasn't signed yet.
+    - Pick "Wait for Roz to sign the letter" or "Ask Theo what he thinks".
+  scope-check:
+    - The scope letter lists what you may test. Have another look at it with `cat`.
+    - Scope means the exact computers the owner has agreed to. Anything not on the list is off limits.
+    - "The letter names one network: the Range, `192.168.60.0/24`."
+  read-the-manual:
+    - Commands can explain themselves.
+    - "`man` opens a command's manual page. Put the command's name after it."
+    - Type `man ls`, or `ls --help`.
+debrief:
+  summary: >-
+    You met the team, ran your first commands on the Range, read your first scope letter, and
+    turned down a shortcut that would have been a crime.
+  whatYouLearned:
+    - A security test needs the owner's written permission first. Without it, it's a crime.
+    - A scope letter lists exactly what you may test, and everything else is off limits.
+    - "`whoami` names your account, `ls` lists files, and `cat` shows what's inside one."
+    - "SIMULATED means a practice setup: nothing you do here reaches a real computer."
+  ethicsNote: >-
+    Looking around a computer you don't have permission to test is breaking in, in most countries,
+    even if you only look and even if you mean well. It can also disrupt the people who rely on it,
+    like Roz's customers placing orders. Professional testers start every job with a signed letter
+    from the owner, and your team does too.
+  defensiveTakeaway: >-
+    Owners protect themselves by writing down exactly who may test what and when, and by
+    keeping a record of who connects to their computers, so anyone outside the agreement stands
+    out.
+  nextTease: "Roz's letter is signed. Something on her order server doesn't look right."
+  furtherReading: [ethics-authorization, ethics-scope, start-terminal]
+guidedTour: true

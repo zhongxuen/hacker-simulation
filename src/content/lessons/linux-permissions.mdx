@@ -1,0 +1,140 @@
+---
+id: linux-permissions
+title: File permissions
+topic: linux
+level: 1
+readingMinutes: 5
+analogy: "Every file has a lock with three keyholes: one for its owner, one for its group, and one for everyone else. Each keyhole opens some mix of read, change and run."
+summary: The lock on every Linux file, how to read it with ls -l, and how to change it with chmod.
+prerequisites: [linux-filesystem]
+relatedMissions: [linux-01]
+relatedCommands: [ls, chmod, stat, sudo]
+glossaryTerms: [permissions, root, least-privilege, sudo]
+---
+
+## The one-sentence version
+
+Every Linux file carries <Term id="permissions">permissions</Term>: rules that say who may read it, change it, or run it, set separately for the file's owner, its group, and everyone else.
+
+Think of a lock with three keyholes. The owner's key, the group's key and everyone else's key can each open a different mix of doors. `ls -l` shows you the lock:
+
+<Annotated
+  title="ls -l on a practice computer"
+  code={`total 12
+-rw------- 1 recruit recruit 65 Mar  2 09:00 diary.txt
+-rw-r--r-- 1 recruit recruit 36 Mar  2 09:00 practice-password.txt
+-rw-r--r-- 1 recruit recruit 34 Mar  2 09:00 shopping-list.txt`}
+  notes={[
+    {
+      line: 2,
+      label: "Locked to the owner",
+      text: "`-rw-------`: the owner may read and change it, and nobody else may do anything. Good for a diary.",
+    },
+    {
+      line: 3,
+      label: "A leak",
+      text: "`-rw-r--r--`: everyone else may read it. For a file with a password inside, that's a problem.",
+    },
+    {
+      line: 4,
+      label: "Fine as it is",
+      text: "The same lock is fine for a shopping list. The right lock depends on what's inside.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+A password in a file that every account can read isn't a secret any more. Loose permissions are one of the most common weak spots found on real servers, and one of the cheapest to fix.
+
+The idea behind the fix has a name: <Term id="least-privilege">least privilege</Term>. Give each file the tightest lock that still lets the right people do their work. A shopping list can be open. A password file should be locked to its owner.
+
+## How it actually works
+
+Look at `-rw-r--r--` one piece at a time:
+
+<PacketDiagram
+  title="The ten characters of a permission string"
+  fields={[
+    { label: "Type", value: "-", note: "`-` means a regular file. A `d` here means a folder." },
+    {
+      label: "Owner",
+      value: "rw-",
+      size: 2,
+      note: "What the owner may do: read (r) and write, meaning change (w). The dash means no x: they can't run it as a program.",
+    },
+    {
+      label: "Group",
+      value: "r--",
+      size: 2,
+      note: "What members of the file's group may do: read only.",
+    },
+    {
+      label: "Everyone else",
+      value: "r--",
+      size: 2,
+      note: "What every other account may do: read. This is the set to check first when a file holds a secret.",
+    },
+  ]}
+/>
+
+Each set can also be written as one number, adding read (4), write (2) and run (1). So `rw-` is 6, `r--` is 4, and `---` is 0. That makes `-rw-r--r--` the same as 644, and `-rw-------` the same as 600. A few numbers come up again and again:
+
+| Number | Letters     | Means                                             |
+| ------ | ----------- | ------------------------------------------------- |
+| `644`  | `rw-r--r--` | Owner changes it, everyone reads it               |
+| `640`  | `rw-r-----` | Owner changes it, the group reads it, nobody else |
+| `600`  | `rw-------` | Only the owner, for anything                      |
+| `755`  | `rwxr-xr-x` | A folder or program everyone may open or run      |
+
+`chmod` changes the lock. You can give it a number, like `chmod 600 notes.txt`, or letters, like `chmod o-r notes.txt`, which takes read (r) away from others (o).
+
+Only a file's owner may change its lock, plus the admin account, called <Term id="root">root</Term>, which can open every lock on the computer. If a file isn't yours, <Term id="sudo">sudo</Term> runs one command as root, but only for accounts the computer trusts.
+
+## Try it
+
+On this practice computer, `practice-password.txt` has the leaky lock. Check it with `ls -l`, lock it, then check again.
+
+<MiniTerminal
+  scenario="range-permissions"
+  commands={["ls -l", "chmod 600 practice-password.txt", "cat /home/kit/plans.txt"]}
+  task="Lock `practice-password.txt` so only you can read it, with `chmod 600 practice-password.txt`."
+  expect="chmod"
+  success="You locked it. Run `ls -l` again: it now reads `-rw-------`, and nobody else can open it."
+/>
+
+While you're there, try `cat /home/kit/plans.txt`. Kit locked that one, so you'll get "Permission denied". That's the lock doing its job, not a mistake on your part.
+
+<Quiz
+  question="A file's lock is `-rw-r-----`. Who can read it?"
+  options={[
+    {
+      text: "Its owner and members of its group",
+      correct: true,
+      explanation:
+        "The owner set is `rw-` and the group set is `r--`, so both can read. The last set is `---`: everyone else gets nothing.",
+    },
+    {
+      text: "Only its owner",
+      explanation: "Look at the middle three letters: `r--`. The group can read it too.",
+    },
+    {
+      text: "Every account on the computer",
+      explanation:
+        "The last three letters are `---`, so accounts outside the owner and group can't read it.",
+    },
+  ]}
+/>
+
+## In practice
+
+In the mission [Reading the machine](/missions/linux-01), you find the bakery's database password in a settings file with the lock `-rw-r--r--`. You work out who can read it, then fix it with `sudo chmod 640`, because the file belongs to the website's own account, not yours.
+
+<TryIt mission="linux-01" />
+
+## Common misconceptions
+
+- **"`chmod 777` fixes permission problems."** It makes the error go away by letting every account read, change and run the file. Anyone could then rewrite it. Find the one permission that's missing and add only that.
+- **"Hiding a file protects it."** A name starting with a dot only keeps it out of a plain `ls`. The lock is what decides who can open it.
+- **"Root has to follow the lock too."** Root can read and change any file, whatever its lock says. That's why the admin account is the prize in most attacks, and why sudo is handed out carefully.
+- **"Only the owner's letters matter."** The group and everyone-else sets are where most leaks hide. When a file holds a secret, read the last three letters first.

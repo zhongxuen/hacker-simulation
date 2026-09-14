@@ -1,0 +1,139 @@
+---
+id: sec-threat-modelling
+title: Threat modelling
+topic: foundations
+level: 2
+readingMinutes: 6
+analogy: "Threat modelling is like planning how to protect your home before a holiday: what's worth protecting, who might come for it, how they'd get in, and what you'll do about each."
+summary: Four questions that help a team decide what to protect first, before anything goes wrong.
+prerequisites: [sec-cia-triad]
+relatedMissions: [net-01]
+glossaryTerms: [threat-modelling, threat, risk, attack-surface, asset-inventory]
+---
+
+## The one-sentence version
+
+<Term id="threat-modelling">Threat modelling</Term> means sitting down before anything goes wrong
+and asking what you're protecting, what could go wrong, and what you'll do about it.
+
+It's like planning for a holiday. What's worth protecting at home? Who might come for it? How would they get in? And what will you do about each door and window?
+
+<Quiz
+  question="What's the first question in a threat model?"
+  options={[
+    {
+      text: "Which hacking tools should we buy?",
+      explanation:
+        "Tools come much later, if at all. You can't pick defences before you know what you're defending.",
+    },
+    {
+      text: "What are we working on, and what's worth protecting?",
+      correct: true,
+      explanation:
+        "Everything else hangs off this. You can't guess what could go wrong with something you haven't described.",
+    },
+    {
+      text: "Who exactly is going to attack us?",
+      explanation:
+        "Useful to think about, but nobody can predict that exactly. Threat modelling starts from what you have, not from guessing names.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+No team has time to defend everything equally. Threat modelling points the effort at what matters most: the things that are both likely to go wrong and harmful when they do. That combination is called <Term id="risk">risk</Term>.
+
+It's also far cheaper to fix a hole in a plan than in a finished building. Teams that ask "what could go wrong?" early spend less time cleaning up later.
+
+## How it actually works
+
+A widely used version is four plain questions:
+
+1. **What are we working on?** Draw it: the computers, the people, the data, and how they connect. An <Term id="asset-inventory">asset inventory</Term>, a list of every device and program you own, is the starting point.
+2. **What can go wrong?** For each part, think of a <Term id="threat">threat</Term>: anyone or anything that could harm it. The CIA triad helps here: could someone read it, change it, or stop it working? Every place someone could try to get in adds to the <Term id="attack-surface">attack surface</Term>.
+3. **What are we going to do about it?** For each threat: fix it, reduce it, watch for it, or knowingly accept it.
+4. **Did we do a good job?** Check the answers later, and do it again when things change.
+
+Where the holiday analogy breaks down: a house changes slowly. Computer systems change every week, so a threat model is never finished. It's updated.
+
+## See it
+
+Here's the start of a threat model for Tumbleloaf Bakery, the client in Chapter 1, the way Idris might sketch it on the team whiteboard:
+
+<Annotated
+  title="Tumbleloaf Bakery: first threat model"
+  code={`WORKING ON:  order website, order server, till, staff laptops, customer wifi
+WORTH MOST:  customer orders and card payments, the website being up at 7am
+CAN GO WRONG:
+  - someone reads the order database           (confidentiality)
+  - someone changes orders or prices           (integrity)
+  - the website is down at breakfast time      (availability)
+  - a customer's laptop on the wifi reaches the servers
+DOING ABOUT IT:
+  - lock settings files, change exposed passwords
+  - keep the customer wifi away from the servers
+  - keep a list of every computer, and check it monthly`}
+  notes={[
+    {
+      line: 1,
+      label: "What are we working on?",
+      text: "Everything the bakery runs, including the customer wifi. You can't protect what isn't on the list.",
+    },
+    {
+      line: 2,
+      label: "What's worth protecting?",
+      text: "Plain business words, not computer words. The owner has to agree with this line.",
+    },
+    {
+      line: 3,
+      label: "What can go wrong?",
+      text: "Each threat is tagged with what it would hurt: read, changed, or stopped.",
+    },
+    {
+      line: 7,
+      label: "The one Chapter 1 is about",
+      text: "A device on the customer wifi reaching the servers. You map exactly this in the mission Mapping the network.",
+    },
+    {
+      line: 8,
+      label: "What are we doing about it?",
+      text: "Each line answers a threat above. The last one keeps the whole model honest over time.",
+    },
+  ]}
+/>
+
+<Quiz
+  question="The bakery's oven controller has a status page anyone on the staff network can see. What's a sensible threat-model answer?"
+  options={[
+    {
+      text: "Ignore it: ovens aren't computers",
+      explanation:
+        "It has an address and a web page, so it's a computer as far as the network is concerned. It belongs on the list.",
+    },
+    {
+      text: "Add it to the list, ask what could go wrong, and decide",
+      correct: true,
+      explanation:
+        'Maybe the answer is "change its default password and keep it off the customer wifi". Maybe it\'s "low risk, accept it". Either way, it was a decision, not an accident.',
+    },
+    {
+      text: "Unplug every oven to be safe",
+      explanation:
+        "That protects the ovens and stops the bakery baking. A threat model balances risk against what the business needs to do.",
+    },
+  ]}
+/>
+
+## In practice
+
+Candlewright sketches a threat model at the start of each engagement, from the client's point of view, so the testing aims at what the client cares about. In the mission [Mapping the network](/missions/net-01), you'll build the "what are we working on?" part by scanning the bakery's network, and the finding you report comes straight from "what can go wrong?".
+
+Some teams use checklists to prompt question 2, like STRIDE, whose letters stand for six kinds of trouble: pretending to be someone else, tampering, denying you did something, leaking information, stopping a service, and gaining powers you shouldn't have.
+
+## Common misconceptions
+
+- **"Threat modelling is only for big companies."** A bakery's version fits on a whiteboard. The four questions work at any size.
+- **"It means predicting exactly who will attack."** It's about what you have and where it's weak. Attackers change; your weak spots are what you can work on.
+- **"You do it once."** Every new computer, website or supplier changes the answers. The fourth question exists to bring you back round.
+- **"The goal is zero risk."** There's always some risk left. The goal is to know what it is, and to have chosen it on purpose.

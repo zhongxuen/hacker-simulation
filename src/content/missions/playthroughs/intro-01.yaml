@@ -1,0 +1,34 @@
+# The way a first-time learner plays Welcome to the team: the tour's first commands, a wrong turn
+# at each choice (a character explains, and the learner picks again), then the bonus and the
+# secret. Run it with `pnpm mission:play intro-01`.
+mission: intro-01
+description: First commands, a wrong turn at each choice, then the bonus objective and the secret.
+steps:
+  - run: whoami
+    ticks: [whoami]
+  - run: ls
+    ticks: [look-around]
+  - run: cat welcome.txt
+  - run: cat scope-letter.txt
+    ticks: [read-the-letter]
+  - answer: Take a look at the bakery's server now
+    objective: kit-choice
+    accepted: false
+  - answer: Wait for Roz to sign the letter
+    objective: kit-choice
+    ticks: [kit-choice]
+  - answer: Anything I can reach from this computer
+    objective: scope-check
+    accepted: false
+  - answer: "Every computer on the Range, `192.168.60.0/24`"
+    objective: scope-check
+    ticks: [scope-check]
+  - run: man ls
+    ticks: [read-the-manual]
+  - run: ls -a
+  - run: cat .welcome-note
+    ticks: [look-closer]
+expect:
+  complete: true
+  objectives:
+    [whoami, look-around, read-the-letter, kit-choice, scope-check, read-the-manual, look-closer]

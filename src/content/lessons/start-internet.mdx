@@ -1,0 +1,77 @@
+---
+id: start-internet
+title: The internet vs. a network
+topic: foundations
+level: 0
+readingMinutes: 3
+analogy: "A network is one street of houses. The internet is every street in the world joined up by roads, so a note can travel from any house to any other."
+summary: Why the internet is a network of networks, and why this app never touches it.
+prerequisites: [start-network]
+relatedMissions: [net-01]
+relatedCommands: [netscan]
+glossaryTerms: [internet, network, router]
+---
+
+## The one-sentence version
+
+The <Term id="internet">internet</Term> is millions of <Term id="network">networks</Term> joined together, so a message can travel from any one of them to any other.
+
+If a network is one street of houses passing notes, the internet is every street in the world, joined up by roads.
+
+<Quiz
+  question="Your laptop and printer at home can talk to each other with the internet switched off. Why?"
+  options={[
+    {
+      text: "The printer has a secret internet connection",
+      explanation:
+        "It doesn't need one. They're talking over your home network, which works on its own.",
+    },
+    {
+      text: "They're on the same network, and a network doesn't need the internet",
+      correct: true,
+      explanation:
+        "Right. Your home network is its own street. The internet is only needed to reach streets further away.",
+    },
+    {
+      text: "They aren't really talking",
+      explanation:
+        "They are: when you print, the laptop sends the printer messages across your home network.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+The internet joins your network to everyone else's, including people you'd never let in the door. That's why organisations put guards where their network meets the internet, and why attackers from anywhere in the world can knock on a computer that's reachable from it.
+
+It's also why this app is careful. Scanning or testing a real computer on the internet without its owner's permission is a crime. So nothing in Hacker Simulation ever touches the real internet.
+
+## How it actually works
+
+Every home and office network has a <Term id="router">router</Term>: the box that joins it to the roads outside. When a message is for a computer on your own street, it stays at home. When it's for somewhere else, the router hands it on, and routers all over the world pass it along until it arrives.
+
+Some addresses are kept aside for private networks and can never be reached across the internet: every address starting `10.` or `192.168.` is one of them. Names ending in `.example` are kept aside too, and never lead to a real website. Every network, address and name in this app uses those.
+
+## See it
+
+Every tool in this app says it's simulated. Scan the practice network below and look at the first line of the answer.
+
+<MiniTerminal
+  scenario="range-network"
+  commands={["netscan 192.168.60.0/24"]}
+  task="Scan the practice network with `netscan 192.168.60.0/24`."
+  expect="netscan"
+  success="You scanned a network, and nothing left this page. The first line says `(simulated)`, and every address starts `192.168.60.`"
+/>
+
+The SIMULATED badge at the top of every terminal says the same thing. The computers you meet here exist only inside the app, in your browser.
+
+## In practice
+
+In the mission [Mapping the network](/missions/net-01), you'll map a bakery's networks. They look real, but every address is a private one and every computer lives inside the simulation.
+
+## Common misconceptions
+
+- **"The internet and the web are the same thing."** The web, with its websites and browsers, is one of many things that travel over the internet. Email and video calls use it too.
+- **"Anything I can reach on the internet is public, so I may test it."** Being able to reach a computer isn't permission to test it. Its owner decides.
+- **"Private addresses are secret."** They're not hidden, they're only local: millions of homes use `192.168.` addresses on their own street, and none of them can be reached from outside.

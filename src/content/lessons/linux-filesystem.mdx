@@ -1,0 +1,112 @@
+---
+id: linux-filesystem
+title: Finding your way around the file system
+topic: linux
+level: 1
+readingMinutes: 5
+analogy: "A Linux computer's files are like a big building with one front door. Folders are floors and rooms, and a path is the directions from the front door to one cupboard."
+summary: How Linux keeps every file in one tree of folders, and how paths, cd and ls get you around it.
+prerequisites: [start-terminal]
+relatedMissions: [linux-01]
+relatedCommands: [pwd, cd, ls, tree, cat]
+glossaryTerms: [file-system, directory, root-directory, path, home-directory, hidden-file]
+---
+
+## The one-sentence version
+
+A Linux <Term id="file-system">file system</Term> keeps every file in one big tree of folders, also called <Term id="directory">directories</Term>, that all grow from a single top folder called the <Term id="root-directory">root directory</Term>, written `/`.
+
+Picture a building with one front door. Every floor, room and cupboard is somewhere inside, and you can always give directions from the front door to any of them. Those directions are a <Term id="path">path</Term>.
+
+<Quiz
+  question="Which of these is a full path to a file?"
+  options={[
+    {
+      text: "`/home/recruit/todo.txt`",
+      correct: true,
+      explanation:
+        "It starts at the front door, `/`, and names every folder on the way: home, then recruit, then the file todo.txt.",
+    },
+    {
+      text: "`todo.txt`",
+      explanation:
+        "That's the file's name. It only finds the file if you're already standing in the right folder.",
+    },
+    {
+      text: "`home > recruit > todo.txt`",
+      explanation:
+        "That's how a file browser might show it. Linux joins the folders with a forward slash, `/`, and starts from the top.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+Knowing where things live is half of any investigation. Linux computers put the same kinds of files in the same places, so a defender, or an attacker, knows where to look first:
+
+| Folder     | What usually lives there                                        |
+| ---------- | --------------------------------------------------------------- |
+| `/etc`     | Settings for the whole computer, including the list of accounts |
+| `/home`    | One folder per person, full of their own files                  |
+| `/var/log` | Logs: the computer's diary of what happened                     |
+| `/tmp`     | Scratch space that any account can write to                     |
+| `/srv`     | Files for the services the computer offers, like a website      |
+
+That last pair matters. Because anyone can write to `/tmp`, intruders often leave tools and notes there. And settings files under `/etc` or `/srv` sometimes hold passwords that shouldn't be there.
+
+## How it actually works
+
+A path that starts with `/` is a **full path**: directions from the front door. `/home/recruit/notes` means "go into home, then recruit, then notes".
+
+A path that doesn't start with `/` is a **relative path**: directions from where you're standing. If you're in `/home/recruit`, then `notes` means the same folder as `/home/recruit/notes`.
+
+A few shortcuts save typing:
+
+- `~` is your <Term id="home-directory">home directory</Term>, your own folder. For the account `recruit`, that's `/home/recruit`.
+- `..` means "the folder above this one", and `.` means "this folder".
+
+Three commands do most of the walking. `pwd` prints where you are, `ls` lists what's here, and `cd` moves you somewhere else. `tree` draws a folder and everything inside it:
+
+<Annotated
+  title="tree, from the practice computer's home folder"
+  code={`.
+├── notes
+│   └── day-one.txt
+├── todo.txt
+└── welcome.txt
+
+1 directory, 3 files`}
+  notes={[
+    { line: 1, label: "Where you started", text: "The dot means this folder: here, your home folder." },
+    { line: 2, label: "A folder", text: "`notes`is a folder inside your home folder. The lines show what's inside what." },
+    { line: 3, label: "A file inside it", text: "Its full path is`/home/recruit/notes/day-one.txt`." },
+{ line: 7, label: "The count", text: "One folder and three files, not counting where you started." },
+]}
+/>
+
+Some names start with a dot, like `.bashrc`. They're <Term id="hidden-file">hidden files</Term>: a plain `ls` leaves them out to keep things tidy, and `ls -a` shows them.
+
+## Try it
+
+This is a practice computer with a small home folder. Walk to the very top of the tree and look around, then come home again with `cd ~`. Watch the prompt: it changes to show where you are.
+
+<MiniTerminal
+  scenario="range-home"
+  commands={["pwd", "cd notes", "cd /", "ls", "cd ~"]}
+  task="Move to the top folder with `cd /`, then list it with `ls`."
+  expect="cd"
+  success="You moved! `cd` prints nothing when it works. The prompt changed to show your new place in the tree."
+/>
+
+## In practice
+
+In the mission [Reading the machine](/missions/linux-01), a note in your home folder tells you the bakery's ordering website lives in `/srv/orders`. You'll walk there with `cd`, look around with `ls`, and read a settings file with `cat`, which is exactly where the trouble is hiding.
+
+<TryIt mission="linux-01" />
+
+## Common misconceptions
+
+- **"Linux has drives like C: and D:."** It has one tree. Extra disks, even a USB stick, show up as folders somewhere inside it.
+- **"`cd` didn't do anything, so it didn't work."** Most commands that move or change things print nothing when they work. The prompt is your proof: it now shows the new folder.
+- **"Two folders with the same name are the same folder."** `/home/recruit/notes` and `/srv/notes` are different places. A name is only unique inside its own folder, which is why full paths matter.
+- **"A hidden file is secret."** The dot only keeps it out of a plain listing. Anyone allowed to read the folder can see it with `ls -a` and open it. Protecting a file is the job of its permissions.

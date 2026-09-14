@@ -18,6 +18,8 @@ export interface LessonAnalysis {
   readonly toc: TocEntry[];
   /** Glossary ids used by <Term id="…">, in order, repeats included. */
   readonly termIds: string[];
+  /** Mission ids used by <TryIt mission="…">, in order, repeats included. */
+  readonly missionIds: string[];
 }
 
 /** The part of an MDX JSX node this plugin reads (from mdast-util-mdx-jsx). */
@@ -29,6 +31,13 @@ interface MdxJsxElement {
 
 function isJsxElement(node: { type: string }): node is MdxJsxElement {
   return node.type === "mdxJsxFlowElement" || node.type === "mdxJsxTextElement";
+}
+
+/** An attribute's value as written: a string for `name="…"`, something else for `name={…}`. */
+function attributeValue(node: MdxJsxElement, name: string): unknown {
+  return node.attributes.find(
+    (attribute) => attribute.type === "mdxJsxAttribute" && attribute.name === name,
+  )?.value;
 }
 
 function fail(node: object, message: string): never {
@@ -43,8 +52,9 @@ function fail(node: object, message: string): never {
  *   error: the page renders the title from the frontmatter.
  * - `import` and `export` are errors: lessons use only the components the Learning Center
  *   provides, so every lesson stays data.
- * - Every <Term id="…"> is collected in `analysis.termIds`, for the dead-reference check. An id
- *   that isn't a plain string is an error.
+ * - Every <Term id="…"> is collected in `analysis.termIds`, and every <TryIt mission="…"> in
+ *   `analysis.missionIds`, for the dead-reference check. An id that isn't a plain string is an
+ *   error, and so is a <MiniTerminal> whose scenario isn't one.
  * - A code fence must use one of `languages` (from highlight.ts), or none for plain text.
  */
 export function remarkLesson(analysis: LessonAnalysis, languages: ReadonlySet<string>) {
@@ -80,13 +90,25 @@ export function remarkLesson(analysis: LessonAnalysis, languages: ReadonlySet<st
       }
 
       if (isJsxElement(node) && node.name === "Term") {
-        const id = node.attributes.find(
-          (attribute) => attribute.type === "mdxJsxAttribute" && attribute.name === "id",
-        )?.value;
+        const id = attributeValue(node, "id");
         if (typeof id !== "string") {
           fail(node, 'Give <Term> a plain id, like <Term id="port">ports</Term>.');
         }
         analysis.termIds.push(id);
+      }
+
+      if (isJsxElement(node) && node.name === "TryIt") {
+        const mission = attributeValue(node, "mission");
+        if (typeof mission !== "string") {
+          fail(node, 'Give <TryIt> a plain mission id, like <TryIt mission="net-01" />.');
+        }
+        analysis.missionIds.push(mission);
+      }
+
+      if (isJsxElement(node) && node.name === "MiniTerminal") {
+        if (typeof attributeValue(node, "scenario") !== "string") {
+          fail(node, 'Give <MiniTerminal> a plain scenario id, like scenario="range-home".');
+        }
       }
     });
   };

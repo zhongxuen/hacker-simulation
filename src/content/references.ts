@@ -2,7 +2,8 @@
  * Cross-reference checking for learning content (md-files/09-learning-center.md, "Content model").
  *
  * Dead links are the standard failure mode of a docs system, so CI catches them rather than a
- * reader: every lesson prerequisite, related mission, related command and glossary term, every
+ * reader: every lesson prerequisite, related mission (in frontmatter or <TryIt>), related command
+ * and glossary term, every
  * glossary cross-link, and every mission `concepts` entry must point at something that exists.
  *
  * This is a pure function over plain lists, so the test that runs it decides where each catalog
@@ -18,6 +19,8 @@ export interface LessonReferences {
   readonly glossaryTerms: readonly string[];
   /** Glossary ids used by <Term id="…"> in the lesson's body. */
   readonly termsInBody?: readonly string[];
+  /** Mission ids used by <TryIt mission="…"> in the lesson's body. */
+  readonly missionsInBody?: readonly string[];
 }
 
 export interface GlossaryReferences {
@@ -80,6 +83,7 @@ export function findDeadReferences(catalog: ContentCatalog): DeadReference[] {
     check(source, "relatedCommands", "command", lesson.relatedCommands);
     check(source, "glossaryTerms", "glossary term", lesson.glossaryTerms);
     check(source, "<Term> in body", "glossary term", [...new Set(lesson.termsInBody ?? [])]);
+    check(source, "<TryIt> in body", "mission", [...new Set(lesson.missionsInBody ?? [])]);
   }
   for (const entry of catalog.glossary) {
     const source = `glossary ${entry.id}`;

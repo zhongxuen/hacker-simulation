@@ -40,15 +40,21 @@ const deadFurtherReading = (missions: readonly Mission[], lessonIds: ReadonlySet
 
 const MISSIONS = loadMissionCatalog().missions;
 
+/**
+ * The real glossary without its links to lessons, for checking the fixture lessons: those links
+ * point at the real lessons, and are checked against them in "the real content".
+ */
+const GLOSSARY_TERMS_ONLY = GLOSSARY.map((entry) => ({ ...entry, relatedLessons: [] }));
+
 /** Every command a learner can type: the simulated tools and the Linux command set (ls, cd, …). */
 const COMMANDS: readonly string[] = listTools().map((tool) => tool.name);
 
 async function lessonReferences(catalog: LessonCatalog): Promise<LessonReferences[]> {
   return Promise.all(
-    catalog.lessons.map(async (lesson) => ({
-      ...lesson,
-      termsInBody: (await compileLessonBody(lesson.body, lesson.id)).termIds,
-    })),
+    catalog.lessons.map(async (lesson) => {
+      const compiled = await compileLessonBody(lesson.body, lesson.id);
+      return { ...lesson, termsInBody: compiled.termIds, missionsInBody: compiled.missionIds };
+    }),
   );
 }
 
@@ -107,7 +113,7 @@ describe("the fixture lessons", () => {
     ]);
     const dead = findDeadReferences({
       lessons,
-      glossary: GLOSSARY,
+      glossary: GLOSSARY_TERMS_ONLY,
       missions: [],
       commands: COMMANDS,
     });
@@ -123,7 +129,7 @@ describe("the fixture missions", () => {
     ).missions;
     const dead = findDeadReferences({
       lessons: await lessonReferences(lessons),
-      glossary: GLOSSARY,
+      glossary: GLOSSARY_TERMS_ONLY,
       missions: missionReferences(missions),
       commands: COMMANDS,
     });

@@ -1,0 +1,103 @@
+---
+id: web-cookies-sessions
+title: Cookies and sessions
+topic: web
+level: 1
+readingMinutes: 5
+analogy: "A session cookie is like a cloakroom ticket: the website keeps your coat, hands you a numbered ticket, and anyone holding that ticket can collect the coat."
+summary: How a website remembers you're signed in, and why the little ticket it gives you is worth protecting.
+prerequisites: [web-http]
+relatedCommands: [webprobe]
+glossaryTerms: [cookie, session, authentication, http, two-factor-authentication]
+---
+
+## The one-sentence version
+
+A website has a terrible memory: every request arrives as if from a stranger. So when you sign in, it gives your browser a small note to show on every visit after that. The note is a <Term id="cookie">cookie</Term>, and the time you stay signed in is a <Term id="session">session</Term>.
+
+It's like a cloakroom ticket. You hand over your coat once, get a numbered ticket, and show the ticket to collect it. Here's a practice sign-in page handing out its ticket:
+
+<Annotated
+  title="webprobe range-shop-01/login, the important lines"
+  code={`HTTP/1.1 200 OK
+  Server: httpd/2.4.58
+  X-Powered-By: PageForge/3.1
+  Set-Cookie: session=practice-4f2a; HttpOnly; Secure
+
+Page title: Sign in`}
+  notes={[
+    { line: 1, label: "The page is there", text: "`200 OK`: the sign-in page loaded." },
+    { line: 4, label: "Here's your ticket", text: "`Set-Cookie`tells the browser to keep`session=practice-4f2a` and send it back on every visit. That random-looking value is the ticket number." },
+]}
+/>
+
+## Why it matters in security
+
+Once you've signed in, the session cookie is what proves it's you. The website doesn't ask for your password again: it checks the ticket. So anyone who copies your ticket can walk up to the cloakroom as you, without ever knowing your password.
+
+That's why attackers try to steal session cookies, and why defenders go to a lot of trouble to protect them.
+
+## How it actually works
+
+1. You sign in with your password. Proving who you are like this is called <Term id="authentication">authentication</Term>.
+2. The website creates a session on its side, gives it a long random number, and sends that number back in a `Set-Cookie` header.
+3. Your browser stores the cookie and sends it with every request to that website, in a `Cookie` header.
+4. The website looks the number up and knows it's you, until you sign out or the session runs out.
+
+<Term id="http">HTTP</Term> itself forgets everything between requests, so this ticket is how almost
+every website keeps you signed in.
+
+The extra words after the cookie are rules for the browser:
+
+| Rule       | What it tells the browser                                                                |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| `HttpOnly` | Don't let scripts on the page read this cookie. That blocks a common way of stealing it. |
+| `Secure`   | Only send it over HTTPS, the scrambled version of HTTP, never as readable text.          |
+| `SameSite` | Don't send it when another website makes the request.                                    |
+| `Expires`  | Throw it away after this date. Without it, the cookie goes when the browser closes.      |
+
+Where the cloakroom analogy breaks down: a good website can notice odd use of a ticket, like one number suddenly appearing from another country, and cancel it.
+
+## Try it
+
+Ask the practice shop's sign-in page for a ticket, and find the `Set-Cookie` line in the answer.
+
+<MiniTerminal
+  scenario="range-web"
+  commands={["webprobe range-shop-01/login", "webprobe range-shop-01"]}
+  task="Look at the sign-in page with `webprobe range-shop-01/login`."
+  expect="webprobe"
+  success="You found the `Set-Cookie` header. That's the website handing your browser its ticket."
+/>
+
+<Quiz
+  question="Someone copies your session cookie while you're signed in to a shop. What can they do?"
+  options={[
+    {
+      text: "Nothing, because they don't know your password",
+      explanation:
+        "The cookie is the proof now. The shop checks the ticket, not the password, so the copy works without it.",
+    },
+    {
+      text: "Use the shop as you, until the session ends",
+      correct: true,
+      explanation:
+        "That's why cookies get rules like `HttpOnly` and `Secure`, and why signing out, which ends the session, matters on shared computers.",
+    },
+    {
+      text: "Read every password saved in your browser",
+      explanation:
+        "A cookie belongs to one website and holds only what that site put in it. It's not a key to the rest of your browser.",
+    },
+  ]}
+/>
+
+## In practice
+
+When you probe a sign-in page with `webprobe`, check the `Set-Cookie` line: are `HttpOnly` and `Secure` there? A session cookie without them is a finding worth a line in a report. On the defending side, <Term id="two-factor-authentication">two-factor authentication</Term> makes stolen passwords far less useful, and short sessions make stolen tickets expire quickly.
+
+## Common misconceptions
+
+- **"Cookies are viruses."** A cookie is a small piece of text a website asks your browser to keep. It can't run or spread. The worry with cookies is privacy and stolen sessions, not infection.
+- **"Deleting cookies makes me invisible."** It signs you out and forgets preferences, but websites can still see your address and other details of each request.
+- **"The cookie holds my password."** A well-built site never puts the password in a cookie. It stores a random ticket number, which is useless once the session ends.

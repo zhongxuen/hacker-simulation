@@ -7,7 +7,7 @@
 export { compileLessonBody, type CompiledLesson } from "./lessons/compile";
 export { LESSON_CODE_LANGUAGES } from "./lessons/highlight";
 export { LessonSourceError, parseLessonSource, type LessonSource } from "./lessons/frontmatter";
-export { LessonArticle } from "./lessons/lesson-article";
+export { LessonArticle, type LessonTrackPosition } from "./lessons/lesson-article";
 export {
   getLesson,
   getLessonCatalog,

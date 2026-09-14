@@ -1,0 +1,327 @@
+# Chapter 1, "First shift", episode 3: the payoff (md-files/story-bible.md). The learner maps the
+# bakery's staff and server networks from a borrowed staff laptop, and the fog-of-war map fills in
+# as they go. Ideas arrive one objective at a time: an address, a range, a port. The finding is a
+# forgotten backup computer with telnet open to everyone, customer wifi included, and the fix is to
+# close it and wall the customer wifi off from the servers. The customer wifi is always out of scope.
+id: net-01
+slug: net-01
+version: 1
+title: Mapping the network
+difficulty: easy
+estimatedMinutes: 15
+skills: [networking, blue-team]
+prerequisites: [linux-01]
+hook: "The bakery's network is dark. Light it up, one computer at a time."
+learningGoals:
+  - What an IP address is, and how to find your own
+  - How a scan finds the computers on a network, and the doors (ports) open on each
+  - How to turn what you found into a finding and a fix
+concepts: [net-ip-basics, net-ports, net-segmentation, ethics-scope]
+briefing:
+  scenario: >-
+    Idris Fenwick, Candlewright's defender, is working this one with you. Roz Kowalczyk, who owns
+    Tumbleloaf Bakery, asked the team to find out how someone reached her order server from the
+    bakery's customer wifi.
+  role: "You're Candlewright's newest recruit, working from the staff laptop Roz lent you, `laptop-03`."
+  authorization: >-
+    Tumbleloaf Bakery asked Candlewright to map its staff and server networks, `10.40.1.0/24` and
+    `10.40.2.0/24`, from the staff laptop Roz lent you. The customer wifi is out of scope: those
+    devices belong to customers. Signed: Roz Kowalczyk and Theo Ashgrove.
+story:
+  - on: start
+    speaker: teammate-idris
+    text: >-
+      I'm Idris, I look after the defensive side at Candlewright. Someone reached the order server
+      from the customer wifi last week. Let's find out what else is out there, one computer at a
+      time.
+  - on: start
+    speaker: mentor-noor
+    text: >-
+      Noor here. Every computer on a network has an address, like a house on a street. It's called
+      an IP address. Let's find your laptop's first.
+  - on: { objective: find-yourself }
+    speaker: mentor-noor
+    text: >-
+      Your address starts `10.40.1.`, and so does every address on the staff network.
+      `10.40.1.0/24` is shorthand for all 256 of them, from `.0` to `.255`. `netscan` can knock on
+      every one and see who answers.
+  - on: { objective: map-staff }
+    speaker: teammate-kit
+    text: "Look at that map light up! The oven has its own address? I love this job."
+  - on: { objective: map-staff }
+    speaker: mentor-noor
+    text: >-
+      The servers live next door, in `10.40.2.0/24`. Your laptop isn't in that network, but Roz's
+      letter covers it, so it's ours to map too.
+  - on: { event: host.discovered, match: { hostId: backup-01 } }
+    speaker: client-roz
+    text: "Wait. We have a backup computer?"
+  - on: { objective: map-servers }
+    speaker: mentor-noor
+    text: >-
+      Every computer also has numbered doors for different jobs, called ports. A program waiting
+      behind a door is a service. Add `--ports` to `netscan` and it checks which doors are open.
+  - on: { event: service.discovered, match: { hostId: backup-01, port: 23 } }
+    speaker: teammate-idris
+    text: >-
+      Port 23. That's telnet, a very old way to log in from far away. It sends passwords without
+      scrambling them, and this one answers anyone who asks, customer wifi included.
+  - on: { objective: write-finding }
+    speaker: teammate-theo
+    text: "Good finding. Now, what do we tell Roz to do about it?"
+  - on: { event: web.probed, match: { hostId: oven-ctl-01 } }
+    speaker: teammate-kit
+    text: "Sourdough, twelve minutes left. Best status page on the whole network."
+  - on: complete
+    speaker: teammate-theo
+    text: "One line in your report, and the door's shut. That's the whole job, done well."
+scenario:
+  seed: 20260903
+  startTime: "2026-03-16T08:30:00Z"
+  network:
+    subnets:
+      - { cidr: 10.40.1.0/24, name: Staff network }
+      - { cidr: 10.40.2.0/24, name: Servers }
+      - { cidr: 192.168.77.0/24, name: Customer wifi }
+    hosts:
+      - id: laptop-03
+        hostname: laptop-03.tumbleloaf.example
+        interfaces:
+          - { ip: 10.40.1.23, subnet: 10.40.1.0/24 }
+        os: { family: linux, name: Linux, version: "6.8" }
+        users:
+          - { name: recruit, uid: 1000 }
+        fs:
+          entries:
+            - path: /home/recruit/scope.txt
+              content: |
+                SCOPE LETTER - Tumbleloaf Bakery
+
+                May be mapped:  the staff network, 10.40.1.0/24
+                                the server network, 10.40.2.0/24
+                From:           laptop-03, lent by Roz
+                Not in scope:   the customer wifi, 192.168.77.0/24.
+                                Those phones and laptops belong to customers.
+
+                Signed: Roz Kowalczyk, owner, Tumbleloaf Bakery
+                        Theo Ashgrove, team lead, Candlewright Security
+            - path: /home/recruit/from-idris.txt
+              content: |
+                What we know so far:
+                - The order server is orders-01, at 10.40.2.15.
+                - Someone signed in to its database from 192.168.77.23,
+                  an address on the customer wifi.
+                - Nobody at the bakery has a list of its computers.
+
+                So let's make one. - Idris
+      - id: pos-01
+        hostname: pos-01.tumbleloaf.example
+        interfaces:
+          - { ip: 10.40.1.10, subnet: 10.40.1.0/24 }
+        os: { family: embedded, name: Till firmware, version: "4.2" }
+        services:
+          - { port: 8443, protocol: tcp, name: https, product: tillsrv, version: "4.2" }
+      - id: printer-01
+        hostname: printer-01.tumbleloaf.example
+        interfaces:
+          - { ip: 10.40.1.30, subnet: 10.40.1.0/24 }
+        os: { family: embedded, name: Printer firmware, version: "2.1" }
+        respondsToPing: false
+        services:
+          - { port: 9100, protocol: tcp, name: printer, product: printd, version: "2.1" }
+      - id: oven-ctl-01
+        hostname: oven-ctl-01.tumbleloaf.example
+        interfaces:
+          - { ip: 10.40.1.40, subnet: 10.40.1.0/24 }
+        os: { family: embedded, name: Oven controller firmware, version: "1.0" }
+        services:
+          - port: 80
+            protocol: tcp
+            name: http
+            product: ovenweb
+            version: "1.0"
+            http:
+              pages:
+                "/":
+                  status: 200
+                  title: "Oven 1 status"
+                  body: "<html><head><title>Oven 1 status</title></head><body><h1>Oven 1: 220C</h1><p>Sourdough, 12 minutes left.</p><!-- remember to change the default password (it's still oven123) --></body></html>"
+      - id: orders-01
+        hostname: orders-01.tumbleloaf.example
+        interfaces:
+          - { ip: 10.40.2.15, subnet: 10.40.2.0/24 }
+        os: { family: linux, name: Linux, version: "5.15" }
+        # The weak spot: the customer wifi can reach the servers.
+        reachableFrom: [10.40.1.0/24, 10.40.2.0/24, 192.168.77.0/24]
+        services:
+          - {
+              port: 22,
+              protocol: tcp,
+              name: ssh,
+              product: sshd,
+              version: "8.9",
+              reachableFrom: [10.40.1.0/24, 10.40.2.0/24],
+            }
+          - {
+              port: 443,
+              protocol: tcp,
+              name: https,
+              product: httpd,
+              version: "2.4.52",
+              reachableFrom: ["*"],
+            }
+      - id: backup-01
+        hostname: backup-01.tumbleloaf.example
+        interfaces:
+          - { ip: 10.40.2.30, subnet: 10.40.2.0/24 }
+        os: { family: linux, name: Linux, version: "3.2" }
+        reachableFrom: ["*"]
+        services:
+          - port: 23
+            protocol: tcp
+            name: telnet
+            product: telnetd
+            version: "0.17"
+            banner: "backup-01 login:"
+  session: { host: laptop-03, user: recruit }
+  knownHosts: [orders-01]
+objectives:
+  - id: find-yourself
+    description: "Find your laptop's own address with `ifconfig`"
+    why: Knowing your own address tells you which network you're standing in.
+    success: "You're `10.40.1.23`, on the staff network. Every address starting `10.40.1.` is a neighbour."
+    check:
+      kind: commandRun
+      pattern: "^ifconfig\\b"
+  - id: map-staff
+    description: "Find the computers switched on in the staff network, `10.40.1.0/24`"
+    why: You can only protect the computers you know about.
+    success: The staff network is on your map, the till and the oven controller included.
+    check:
+      kind: all
+      of:
+        - { kind: event, event: host.discovered, match: { hostId: pos-01 } }
+        - { kind: event, event: host.discovered, match: { hostId: oven-ctl-01 } }
+  - id: map-servers
+    description: "Find the computers in the server network, `10.40.2.0/24`"
+    why: Servers hold what matters most, so every one of them should be on the list.
+    success: You found `backup-01`, a computer nobody mentioned.
+    check:
+      kind: event
+      event: host.discovered
+      match: { hostId: backup-01 }
+  - id: check-doors
+    description: "Check which doors (ports) are open on `backup-01`"
+    why: Each open port is a door with a program behind it. Forgotten doors are how intruders get in.
+    success: "You found an open door on `backup-01`: port 23. It's on your map now."
+    check:
+      kind: event
+      event: service.discovered
+      match: { hostId: backup-01, port: 23 }
+  - id: write-finding
+    description: "Type the number of the port on `backup-01` that shouldn't be open, for your report"
+    why: A finding is one clear line the client can act on. That line is what gets the door shut.
+    success: "That's the finding: telnet on port 23, open to everyone, customer wifi included."
+    check:
+      kind: answer
+      accept:
+        - "23"
+        - port 23
+        - 23/tcp
+        - telnet
+        - telnet port 23
+        - telnet on port 23
+        - port 23 telnet
+        - port 23 (telnet)
+        - telnet (port 23)
+        - telnet (23)
+  - id: recommend-fix
+    description: Choose the fix to recommend to Roz
+    why: A fix has to close the door without stopping the bakery from working.
+    success: >-
+      That's the fix: close the old door, and wall the servers off from the customer wifi. Splitting
+      a network like that is called segmentation.
+    check:
+      kind: answer
+      accept: ["Switch off telnet on `backup-01`, and stop the customer wifi reaching the servers"]
+      choices:
+        - text: "Switch off telnet on `backup-01`, and stop the customer wifi reaching the servers"
+        - text: Unplug every computer until it's sorted
+          reply:
+            speaker: client-roz
+            text: "Then nobody gets any bread. Is there a fix that keeps the ovens on?"
+        - text: Scan the customers' phones to find out who did it
+          reply:
+            speaker: teammate-theo
+            text: >-
+              The customer wifi is out of scope: those phones belong to customers, not to Roz.
+              Scanning them would be testing other people's devices without permission. Finding
+              who did it is a job for the police, if Roz decides to report it.
+  - id: knock-knock
+    name: Knock Knock
+    description: 'Find the printer''s open port. It ignores the usual "are you there?" check.'
+    why: Devices that hide from a normal scan still count. Printers are often forgotten.
+    success: "You found port 9100 on `printer-01`, where it takes print jobs. The mission never mentioned it."
+    optional: true
+    check:
+      kind: event
+      event: service.discovered
+      match: { hostId: printer-01, port: 9100 }
+  - id: somethings-baking
+    name: Something's Baking
+    description: "Check the oven controller's status page with `webprobe`"
+    why: Everyday devices have web pages too, and sometimes they say more than they should.
+    success: "You read the oven's status page. Sourdough, twelve minutes left, and a default password in the page source."
+    hidden: true
+    check:
+      kind: event
+      event: web.probed
+      match: { hostId: oven-ctl-01 }
+hints:
+  find-yourself:
+    - Before you look at other computers, find out where your own laptop is.
+    - "`ifconfig` shows this computer's network connections, and its address on each."
+    - Type `ifconfig` and look for the address that starts with `10.40.1.`.
+  map-staff:
+    - Which tool knocks on addresses to see who answers?
+    - "`netscan` checks a range of addresses. `10.40.1.0/24` means every address from `10.40.1.0` to `10.40.1.255`."
+    - Type `netscan 10.40.1.0/24`.
+  map-servers:
+    - The servers are in a different network from your laptop.
+    - Scan the server network's range the same way you scanned the staff network.
+    - Type `netscan 10.40.2.0/24`.
+  check-doors:
+    - A normal scan finds computers. You need one that also checks their doors.
+    - "`netscan` with `--ports common` checks the most popular ports on a computer."
+    - Type `netscan backup-01 --ports common`.
+  write-finding:
+    - Look at the open port your scan found on `backup-01`.
+    - The finding is the door that shouldn't be open. Its number is in the PORT column, before `/tcp`.
+    - It's a two-digit number, the port telnet uses.
+  recommend-fix:
+    - "Think about the two problems: the old door, and who can reach it."
+    - A good fix closes what nobody needs and keeps customers' devices away from the bakery's servers, without stopping the bakery working.
+    - Pick the answer that switches off telnet and separates the customer wifi from the servers.
+  knock-knock:
+    - One device on the staff network ignores "are you there?" messages, so a normal scan skips it.
+    - "`netscan` has an option that checks ports even on computers that ignore pings. `netscan --help` lists it."
+    - Type `netscan 10.40.1.0/24 --ports common --no-ping`.
+debrief:
+  summary: >-
+    You mapped the bakery's network, found a forgotten backup computer with an old telnet door open
+    to everyone, and wrote the finding and the fix that shut it.
+  whatYouLearned:
+    - "An IP address says where a computer is on a network, and `ifconfig` shows yours."
+    - "`netscan` finds the computers that answer, and `--ports` shows which doors are open on each."
+    - A good finding is one clear line, and a good fix closes the door without stopping the business.
+  ethicsNote: >-
+    Scanning a network you don't own can look like the start of an attack, and without permission
+    it's a crime in many countries. Roz signed a letter covering her staff and server networks. The
+    customer wifi stayed off limits the whole time, because those phones and laptops belong to her
+    customers, and only they could agree to a test.
+  defensiveTakeaway: >-
+    Keep a list of every device on the network (an asset inventory), switch off services nobody
+    uses, and split the network so guests' devices can't reach the servers. That split is called
+    network segmentation.
+  nextTease: "Idris has found another note signed `- HL`. This one is on a community theatre's box office computer, two streets away."
+  furtherReading: [net-ports, net-segmentation, ethics-responsible-disclosure]

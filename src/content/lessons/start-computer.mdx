@@ -1,0 +1,79 @@
+---
+id: start-computer
+title: What is a computer, really?
+topic: foundations
+level: 0
+readingMinutes: 3
+analogy: "A computer is like an office building: rooms full of filing cabinets, staff who do the work, and a key card for everyone that opens some doors and not others."
+summary: Files, programs, accounts, and why "who can do what" matters.
+prerequisites: [start-ethical-hacking]
+relatedMissions: [linux-01]
+relatedCommands: [whoami, ls, cat, id]
+glossaryTerms: [file, directory, operating-system, user-account, permissions]
+---
+
+## The one-sentence version
+
+A computer is a machine that keeps <Term id="file">files</Term>, runs programs that work on them, and decides which person is allowed to do what.
+
+Think of an office building. The filing cabinets are the files. The staff doing the work are the programs. Everyone who comes in gets a key card, and each card opens some doors and not others.
+
+<Quiz
+  question="In the office building picture, what's the key card?"
+  options={[
+    {
+      text: "A file",
+      explanation: "Files are what's kept in the cabinets. The key card decides who may open them.",
+    },
+    {
+      text: "Your account, and what it's allowed to open",
+      correct: true,
+      explanation:
+        "Right. Every person uses the computer through an account, and each account may open some things and not others.",
+    },
+    {
+      text: "The computer's screen",
+      explanation:
+        "The screen shows you what's happening. It doesn't decide what you're allowed to do.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+Almost every attack is about getting into a room you shouldn't be in: reading a file that holds passwords, or running a program with more power than you're meant to have. Almost every defence is about the key cards: making sure each person, and each program, can open only the doors they need.
+
+So the question security people ask again and again is: who can do what here?
+
+## How it actually works
+
+A computer has four parts worth knowing:
+
+- **Files** hold everything: letters, photos, settings, passwords. They sit in <Term id="directory">folders</Term>, and folders sit inside other folders.
+- **Programs** are files that do things when they run, like a web browser or a calculator.
+- The <Term id="operating-system">operating system</Term> is the program in charge of all the others. Windows, macOS and Linux are operating systems.
+- A <Term id="user-account">user account</Term> is your key card. Every file has <Term id="permissions">permissions</Term> that say which accounts may read it, change it, or run it.
+
+## Try it
+
+On this practice computer you're the account `recruit`. Ask which account you are, then list your files with their permissions. The letters at the start of each line, like `-rw-r--r--`, are the lock on that file.
+
+<MiniTerminal
+  scenario="range-permissions"
+  commands={["whoami", "ls -l", "cat diary.txt", "cat /home/kit/plans.txt"]}
+  task="List your files and their locks with `ls -l`."
+  expect="ls"
+  success="Every file has an owner and a lock. `diary.txt` shows `-rw-------`: only its owner, you, can read it."
+/>
+
+Now try `cat /home/kit/plans.txt`. The computer refuses: that file belongs to Kit, and its lock lets nobody else in. That refusal isn't a mistake. It's the protection working.
+
+## In practice
+
+In the mission [Reading the machine](/missions/linux-01), you'll find a password in a file whose lock lets every account read it, and you'll fix the lock.
+
+## Common misconceptions
+
+- **"If it's on my computer, I can see all of it."** Even on your own laptop, some files belong to the operating system and your everyday account can't change them. That keeps a mistake, or a bad program, from breaking everything.
+- **"Folders and files are different things."** A folder is a special kind of file that holds a list of other files.
+- **"Only people have accounts."** Programs often run under their own accounts too, so a program that goes wrong can only reach what its account can.

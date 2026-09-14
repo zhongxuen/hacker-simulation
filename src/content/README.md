@@ -2,7 +2,9 @@
 
 Declarative learning content: missions, lessons, and campaigns as data, validated by schemas. Adding a mission should need no new React code.
 
-- `lessons/` — Learning Center lessons as MDX (see its README). `missions/` — one YAML file per mission (see its README). `campaigns/` arrives in phase 08.
+- `lessons/` — Learning Center lessons as MDX (see its README). `missions/` — one YAML file per mission, plus `missions/playthroughs/` (see its README). `campaigns/` arrives in phase 08.
+- `mini-terminals.ts` — the tiny practice machines behind a lesson's `<MiniTerminal scenario="…">`: real engine scenarios on the Range.
+- `tracks.ts` — ordered lesson tracks, starting with the six-lesson Start Here track. A recommendation, never a gate.
 - `sandbox/` — the sandbox's practice machines on the Range: engine scenarios with a title, a beginner description and a few commands to try (see its README).
 - `schemas/` — the Zod schemas, including `mission.ts`.
 - `cast.ts` — the story's speakers from `md-files/story-bible.md` (id, name, pronouns, role, initials, speech-bubble tone). Mission story beats may only use these ids.

@@ -336,6 +336,26 @@ describe("the schema rejects, with a readable problem", () => {
       "objectives[look-closer].optional: Hidden objectives are always optional.",
     ],
     [
+      "a secret without a playful name",
+      (data) => delete at(data, "objectives", 6).name,
+      'objectives[look-closer].name: Missing: add a playful name, 1 to 3 words, like "Curious Cat". Every secret has one.',
+    ],
+    [
+      "a bonus objective without a playful name",
+      (data) => delete at(data, "objectives", 5).name,
+      'objectives[read-the-manual].name: Missing: add a playful name, 1 to 3 words, like "Curious Cat". Every bonus objective has one.',
+    ],
+    [
+      "a name on a main objective",
+      (data) => (at(data, "objectives", 1).name = "Bookworm"),
+      "objectives[read-welcome].name: Only bonus objectives and secrets have a name.",
+    ],
+    [
+      "a name longer than three words",
+      (data) => (at(data, "objectives", 6).name = "The Very Curious Cat"),
+      "objectives[look-closer].name: Keep the name to 1 to 3 words",
+    ],
+    [
       "two objectives with the same id",
       (data) => (at(data, "objectives", 3).id = "scan-range"),
       'objectives[scan-range].id: Two objectives have the id "scan-range".',

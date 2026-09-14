@@ -647,6 +647,18 @@ const CheckGroupSchema = strict(
 const ObjectiveSchema = strict(
   {
     id: ContentIdSchema,
+    /**
+     * A playful name, 1 to 3 words, for bonus objectives and secrets: "Curious Cat", "Look
+     * Closer" (md-files/voice-and-tone.md, "Bonus objective or secret name"). Shown on the
+     * checklist, the secret-found toast and the debrief. Main objectives don't have one.
+     */
+    name: oneLine("a playful name, 1 to 3 words")
+      .max(30, "Keep the name to 30 characters or fewer.")
+      .refine(
+        (name) => name.split(/\s+/).length <= 3,
+        "Keep the name to 1 to 3 words, like Curious Cat.",
+      )
+      .optional(),
     description: text("what to do, starting with a verb"),
     why: text("one line on why this step matters"),
     success: text("the celebration line shown when it's done"),
@@ -662,6 +674,22 @@ const ObjectiveSchema = strict(
         code: "custom",
         path: ["optional"],
         message: "Hidden objectives are always optional. Remove optional: false.",
+      });
+    }
+    const bonus = objective.hidden || objective.optional === true;
+    if (bonus && objective.name === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["name"],
+        message: `Missing: add a playful name, 1 to 3 words, like "Curious Cat". Every ${objective.hidden ? "secret" : "bonus objective"} has one.`,
+      });
+    }
+    if (!bonus && objective.name !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["name"],
+        message:
+          "Only bonus objectives and secrets have a name. Remove it, or mark the objective optional.",
       });
     }
   })

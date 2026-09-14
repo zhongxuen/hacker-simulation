@@ -3,7 +3,7 @@
 Design-system primitives, one component per file, named exports only. Every one is on `/styleguide` (in `pnpm dev`) in each of its states, with the reason for any state it doesn't have.
 
 - **Basics:** `Button` / `ButtonLink`, `Badge`, `Card`, `Panel`, `Tabs`, `Dialog`, `Tooltip`, `ProgressBar`, `ProgressRing`, `StatTile`, `CodeBlock`, `EmptyState`, `Toast` / `ToastViewport`, `Spinner`, and `SimulatedBadge` (the non-dismissible SIMULATED marker every terminal and tool view carries).
-- **Beginner and celebration:** `Callout` (tip / concept / warning), `CoachMark` (guided-tour pointer), `ObjectiveTick`, `SecretFoundToast`, `MissionComplete`, `CharacterMessage` (story and mentor speech bubble). The reward colour is for these alone.
+- **Beginner and celebration:** `Callout` (tip / concept / warning), `CoachMark` (guided-tour pointer), `ObjectiveTick` (with an optional `details` slot), `SecretFoundToast`, `MissionComplete`, `CharacterMessage` (story and mentor speech bubble). The reward colour is for these alone.
 - **Shared:** `icons.tsx` (decorative line icons), `focus-ring.ts` (`FOCUS_RING`, the one keyboard focus style).
 
 Rules:

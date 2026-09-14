@@ -1,0 +1,43 @@
+# Mapping the network, played end to end: find your address, scan both networks, check
+# backup-01's doors, write the finding, pick the fix, then the printer that hides from pings and
+# the oven's status page. Run it with `pnpm mission:play net-01`.
+mission: net-01
+description: Map both networks, find telnet on backup-01, report it, then the bonus port and the secret.
+steps:
+  - run: ifconfig
+    ticks: [find-yourself]
+  - run: netscan 10.40.1.0/24
+    ticks: [map-staff]
+  - run: netscan 10.40.2.0/24
+    ticks: [map-servers]
+  - run: netscan backup-01 --ports common
+    ticks: [check-doors]
+  - answer: "443"
+    objective: write-finding
+    accepted: false
+  - answer: Telnet on port 23
+    objective: write-finding
+    ticks: [write-finding]
+  - answer: Scan the customers' phones to find out who did it
+    objective: recommend-fix
+    accepted: false
+  - answer: "Switch off telnet on `backup-01`, and stop the customer wifi reaching the servers"
+    objective: recommend-fix
+    ticks: [recommend-fix]
+  - run: netscan 10.40.1.0/24 --ports common --no-ping
+    ticks: [knock-knock]
+  - run: webprobe oven-ctl-01
+    ticks: [somethings-baking]
+expect:
+  complete: true
+  objectives:
+    [
+      find-yourself,
+      map-staff,
+      map-servers,
+      check-doors,
+      write-finding,
+      recommend-fix,
+      knock-knock,
+      somethings-baking,
+    ]

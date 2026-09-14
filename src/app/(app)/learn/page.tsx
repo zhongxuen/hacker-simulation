@@ -6,7 +6,8 @@ import { ArrowRightIcon, BookOpenIcon } from "@/components/ui/icons";
 import { ButtonLink } from "@/components/ui/button";
 import { GLOSSARY } from "@/content/glossary";
 import { LESSON_LEVEL_LABELS, LESSON_TOPIC_IDS, LESSON_TOPICS } from "@/content/topics";
-import { listLessons } from "@/features/learning/server";
+import { START_HERE } from "@/content/tracks";
+import { getLesson, listLessons } from "@/features/learning/server";
 import { getAppSection } from "@/lib/app-sections";
 import { FIRST_STEP } from "@/lib/next-step";
 
@@ -14,6 +15,10 @@ export const metadata: Metadata = { title: getAppSection("learn").label };
 
 export default function LearnPage() {
   const lessons = listLessons();
+  const track = START_HERE.lessons.flatMap((id) => {
+    const lesson = getLesson(id);
+    return lesson ? [lesson] : [];
+  });
   const topics = LESSON_TOPIC_IDS.map((id) => ({
     ...LESSON_TOPICS[id],
     lessons: lessons.filter((lesson) => lesson.topic === id),
@@ -30,7 +35,41 @@ export default function LearnPage() {
         uses one you don&apos;t know.
       </p>
 
-      <Card href="/learn/glossary" className="mt-8 flex items-start gap-4">
+      {track.length > 0 && (
+        <section aria-labelledby="start-here-track" className="mt-10">
+          <h2 id="start-here-track" className="text-2xl font-semibold tracking-tight">
+            {START_HERE.title}
+          </h2>
+          <p className="mt-1 leading-7 text-secondary">{START_HERE.description}</p>
+          <ol className="mt-4 space-y-3">
+            {track.map((lesson, index) => (
+              <li key={lesson.id}>
+                <Card href={`/learn/${lesson.id}`} className="flex items-start gap-4">
+                  <span
+                    aria-hidden="true"
+                    className="grid size-8 shrink-0 place-items-center rounded-full bg-accent-subtle font-mono text-sm font-semibold text-accent"
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-lg font-semibold">{lesson.title}</span>
+                    {(lesson.summary ?? lesson.analogy) !== undefined && (
+                      <span className="mt-1 block leading-7 text-secondary">
+                        {lesson.summary ?? lesson.analogy}
+                      </span>
+                    )}
+                    <span className="mt-2 block text-sm text-secondary">
+                      About {lesson.readingMinutes} min
+                    </span>
+                  </span>
+                </Card>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      <Card href="/learn/glossary" className="mt-10 flex items-start gap-4">
         <span
           aria-hidden="true"
           className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-overlay text-accent [&_svg]:size-5"

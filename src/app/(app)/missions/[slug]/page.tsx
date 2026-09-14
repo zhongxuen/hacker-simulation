@@ -1,58 +1,71 @@
 import type { Metadata } from "next";
-import { SectionPlaceholder } from "@/components/shell/section-placeholder";
-import { getMission, listMissions } from "@/features/missions/server";
-import { FIRST_STEP } from "@/lib/next-step";
-
-/**
- * Where "Start here" points (FIRST_STEP.href). It gets a page even before its mission file exists,
- * so the button never leads to a 404.
- */
-const FIRST_MISSION_SLUG = "intro-01";
+import { notFound } from "next/navigation";
+import type { Mission } from "@/content/schemas/mission";
+import { getLesson } from "@/features/learning/server";
+import type { LessonLink, MissionLink, MissionLinks } from "@/features/missions";
+import {
+  getMission,
+  getMissionById,
+  getMissionGraph,
+  listMissions,
+} from "@/features/missions/server";
+import { MissionScreen } from "./mission-screen";
 
 // Every mission page is built ahead of time from src/content/missions, so a malformed mission
 // fails `next build`. Any other slug is a 404.
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  const slugs = new Set([...listMissions().map((mission) => mission.slug), FIRST_MISSION_SLUG]);
-  return [...slugs].map((slug) => ({ slug }));
+  return listMissions().map((mission) => ({ slug: mission.slug }));
 }
 
 export async function generateMetadata({
   params,
 }: PageProps<"/missions/[slug]">): Promise<Metadata> {
   const mission = getMission((await params).slug);
-  return mission
-    ? { title: mission.title, description: mission.hook }
-    : { title: FIRST_STEP.title };
+  return mission ? { title: mission.title, description: mission.hook } : {};
 }
 
-// The mission runner (briefing, terminal, objectives, debrief) arrives in prompt 06.4. Until then,
-// a loaded mission shows its title and hook.
+const missionLink = (mission: Mission): MissionLink => ({
+  slug: mission.slug,
+  title: mission.title,
+});
+
+const lessonLinks = (ids: readonly string[]): LessonLink[] =>
+  ids.flatMap((id) => {
+    const lesson = getLesson(id);
+    return lesson ? [{ id: lesson.id, title: lesson.title }] : [];
+  });
+
+/**
+ * The mission to suggest next: the first one that lists this mission as its prerequisite, or
+ * else the next one in catalog order. Phase 08's campaign will replace this with chapter order.
+ */
+function nextMission(mission: Mission): Mission | undefined {
+  const [dependent] = getMissionGraph().dependentsOf(mission.id);
+  if (dependent) return getMissionById(dependent);
+  const missions = listMissions();
+  return missions[missions.findIndex((candidate) => candidate.id === mission.id) + 1];
+}
+
+/**
+ * A mission: the page resolves everything the runner links to (Best after, lessons, the next
+ * mission) from the mission's own data, and the runner does the rest in the browser.
+ */
 export default async function MissionPage({ params }: PageProps<"/missions/[slug]">) {
   const mission = getMission((await params).slug);
+  if (!mission) notFound();
 
-  if (mission) {
-    return (
-      <SectionPlaceholder
-        headline={mission.title}
-        status="We're still building the mission screen. Check back soon to play it."
-      >
-        <p>{mission.hook}</p>
-        <p>It takes about {mission.estimatedMinutes} minutes.</p>
-      </SectionPlaceholder>
-    );
-  }
+  const next = nextMission(mission);
+  const links: MissionLinks = {
+    bestAfter: mission.prerequisites.flatMap((id) => {
+      const prerequisite = getMissionById(id);
+      return prerequisite ? [missionLink(prerequisite)] : [];
+    }),
+    concepts: lessonLinks(mission.concepts),
+    furtherReading: lessonLinks(mission.debrief.furtherReading),
+    next: next ? missionLink(next) : null,
+  };
 
-  return (
-    <SectionPlaceholder
-      headline={FIRST_STEP.title}
-      status="We're still building this mission. Check back soon to play it."
-    >
-      <p>
-        Your first mission. You&apos;ll meet the team, learn the rules every good-guy hacker
-        follows, and find out what you&apos;ll be working on. It takes about 8 minutes.
-      </p>
-    </SectionPlaceholder>
-  );
+  return <MissionScreen mission={mission} links={links} />;
 }

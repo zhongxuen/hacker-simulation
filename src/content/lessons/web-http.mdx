@@ -1,0 +1,149 @@
+---
+id: web-http
+title: How a web page gets to you
+topic: web
+level: 1
+readingMinutes: 5
+analogy: "Loading a web page is like ordering at a counter: you ask for one thing by name, and the person behind the counter hands it over with a short note about how it went."
+summary: The request your browser sends, the response a website sends back, and what both give away.
+prerequisites: [start-internet, net-ports]
+relatedCommands: [webprobe]
+glossaryTerms: [http, https, http-request, http-response, status-code, url, browser, web-server]
+---
+
+## The one-sentence version
+
+When you open a web page, your <Term id="browser">browser</Term> asks a computer for it, and that computer sends it back. The language they use for asking and answering is called <Term id="http">HTTP</Term>, short for HyperText Transfer Protocol.
+
+It works like ordering at a counter. You ask for one thing by name, and you get it back with a short note about how it went. Here's what the asking looks like. Pick each part to see what it's for.
+
+<PacketDiagram
+  title="An HTTP request: asking for a page"
+  fields={[
+    {
+      label: "Method",
+      value: "GET",
+      note: 'What you want to do. `GET` means "send me this". Sending a form usually uses `POST` instead.',
+    },
+    {
+      label: "Path",
+      value: "/menu",
+      size: 2,
+      note: "Which page you want, on that website. `/` on its own means the home page.",
+    },
+    {
+      label: "Version",
+      value: "HTTP/1.1",
+      note: "Which version of the language the browser is speaking.",
+    },
+    {
+      label: "Host",
+      value: "shop.example",
+      size: 2,
+      note: "Which website you mean. One computer can host many websites, so the browser says which one.",
+    },
+    {
+      label: "Other headers",
+      value: "User-Agent, Cookie…",
+      size: 3,
+      note: "Extra lines of detail: which browser you're using, which language you prefer, and any cookies the site gave you earlier.",
+    },
+  ]}
+  caption="Everything here is plain text. Your browser writes it for you every time you click a link."
+/>
+
+## Why it matters in security
+
+Almost every attack on a website travels inside an HTTP message, and so does almost every defence. If you can read requests and responses, you can see what a website accepts, what it refuses, and what it gives away without meaning to.
+
+Websites often say more than they should: the name and version of their software, notes a developer forgot to delete, pages that were meant to be private. Testers read those details, and so do attackers. Defenders read them first and tidy them up.
+
+## How it actually works
+
+The page's address, its <Term id="url">URL</Term> (Uniform Resource Locator), tells your browser which computer to ask and which page to ask for. The browser sends an <Term id="http-request">HTTP request</Term> to that computer's <Term id="web-server">web server</Term>, usually on port 80.
+
+The web server sends back an <Term id="http-response">HTTP response</Term>. The first line holds a <Term id="status-code">status code</Term>, a three-digit number that says how it went:
+
+| Code  | Means            | Like the counter saying…                |
+| ----- | ---------------- | --------------------------------------- |
+| `200` | OK               | "Here you go."                          |
+| `301` | Moved            | "That's over there now."                |
+| `401` | Sign in required | "Staff only. Show me your badge first." |
+| `403` | Forbidden        | "Even with a badge, not you."           |
+| `404` | Not found        | "We don't have that."                   |
+| `500` | Server error     | "Something went wrong back here."       |
+
+Then come headers, lines of detail about the answer, and then the page itself.
+
+<Term id="https">HTTPS</Term> is the same conversation with an S for secure: everything is scrambled
+on its way across the network, usually on port 443. That's what the padlock in your browser means.
+Where the counter analogy breaks down: at a real counter everyone nearby can hear you. With HTTPS,
+only you and the website can read what you said.
+
+## See it
+
+`webprobe` asks a practice website for one page and shows you the response. Try the shop's home page, then its admin page.
+
+<MiniTerminal
+  scenario="range-web"
+  commands={[
+    "webprobe range-shop-01",
+    "webprobe range-shop-01/admin",
+    "webprobe range-shop-01/login",
+  ]}
+  task="Ask the practice shop for its home page with `webprobe range-shop-01`."
+  expect="webprobe"
+  success="You read a real HTTP response. The `200 OK` at the top is its status code."
+/>
+
+<Annotated
+  title="webprobe range-shop-01, line by line"
+  code={`webprobe (simulated) · http://range-shop-01/ · range-shop-01.range.candlewright.example (192.168.60.25)
+
+HTTP/1.1 200 OK
+Server: httpd/2.4.58
+X-Powered-By: PageForge/3.1
+
+Page title: Practice cake shop
+HTML comments (notes left in the page source):
+
+  <!-- TODO: remove the test page at /test before launch -->`}
+
+notes={[
+{ line: 1, label: "What was asked", text: "The URL webprobe asked for, and the computer that answered." },
+{ line: 3, label: "The status code", text: "`200 OK`: the page exists and here it is." },
+{ line: 4, label: "The web server's name", text: "The software and its exact version. Handy for the owner, and handy for anyone looking for an old version with known weak spots." },
+{ line: 5, label: "More software, named", text: "Another header that says what the site is built with. Many sites switch headers like this off." },
+{ line: 9, label: "A forgotten note", text: "A developer's comment left in the page. Browsers don't show it, but anyone who reads the source can." },
+]}
+/>
+
+<Quiz
+  question="You ask a website for `/admin` and the response starts with `401`. What happened?"
+  options={[
+    {
+      text: "The page doesn't exist",
+      explanation: "That would be `404`. A `401` means the page is there.",
+    },
+    {
+      text: "The website wants you to sign in first",
+      correct: true,
+      explanation:
+        '`401` means "sign in required". The admin page exists, and it\'s asking for proof of who you are before it shows anything.',
+    },
+    {
+      text: "The website is broken",
+      explanation: "Broken would be a `500`. A `401` is the website working as designed.",
+    },
+  ]}
+/>
+
+## In practice
+
+In missions, `webprobe` is how you look at a website without a browser: the status, the headers, the title and any notes left in the source. In the [sandbox](/sandbox), the small network has a practice web server to try it on.
+
+## Common misconceptions
+
+- **"The padlock means the website is safe."** HTTPS protects the conversation on its way, so nobody in between can read it. It says nothing about whether the site itself is honest. A fake shop can have a padlock too.
+- **"A web page is one file."** Most pages are dozens of requests: the page, then its pictures, styles and scripts, each fetched with its own request.
+- **"Only browsers speak HTTP."** Phone apps, smart ovens and tools like `webprobe` speak it too. A web server answers whoever asks, so it can't trust that a person with a browser is on the other end.

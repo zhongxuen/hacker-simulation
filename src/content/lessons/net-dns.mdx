@@ -1,0 +1,137 @@
+---
+id: net-dns
+title: Names and DNS
+topic: networking
+level: 1
+readingMinutes: 5
+analogy: "DNS is like your phone's contacts list: you tap a name, and the phone looks up the number for you."
+summary: How computers turn names like orders-01.tumbleloaf.example into addresses.
+prerequisites: [net-ip-basics]
+relatedMissions: [net-01]
+relatedCommands: [ping, netscan, hostname]
+glossaryTerms: [domain-name, dns, ip-address]
+---
+
+## The one-sentence version
+
+People remember names and computers need numbers, so every network has a way to turn a name like `orders-01.tumbleloaf.example` into an address like `10.40.2.15`. On the internet, that name is a <Term id="domain-name">domain name</Term>, and the system that looks it up is <Term id="dns">DNS</Term> (the Domain Name System).
+
+It's your phone's contacts list: you tap "Roz", and the phone dials the number. Try it with a name on the Range:
+
+<MiniTerminal
+  scenario="range-network"
+  commands={["ping -c 2 range-web-01", "ping -c 1 range-files-01", "hostname"]}
+  task="Type `ping -c 2 range-web-01`. Look at the number in brackets on the first line."
+  expect="ping"
+  success="You gave a name, and the computer found its address: `192.168.60.20`. That lookup happens before almost every message you send."
+/>
+
+Your own computer has a name too: type `hostname` to see it.
+
+## Why it matters in security
+
+If someone can change the answer to "what's the address for this name?", they can send people to the wrong place without them noticing. The name in the address bar looks right, but the computer behind it is someone else's. That's why DNS settings are guarded closely, and why security teams watch for lookups of strange names.
+
+Names also leak information. A computer called `backup-01` or `payroll-db` tells an outsider exactly what it's for, before they've knocked on a single door.
+
+## How it actually works
+
+An <Term id="ip-address">IP address</Term> is what messages actually travel to. A name is a label for people. When you type a name, your computer asks a DNS server "what's the address for this?", gets a number back, and then sends its message to that number. Answers are remembered for a while, so the next lookup is instant.
+
+Names are read from right to left, from the biggest group to the smallest, like a postal address written backwards:
+
+<PacketDiagram
+  title="Reading orders-01.tumbleloaf.example"
+  fields={[
+    {
+      label: "Computer",
+      value: "orders-01",
+      size: 2,
+      note: "The individual computer: Tumbleloaf Bakery's order server. Many organisations name computers by job and number.",
+    },
+    {
+      label: "Organisation",
+      value: "tumbleloaf",
+      size: 2,
+      note: "Whose computers these are. Roz's bakery owns everything under `tumbleloaf.example`.",
+    },
+    {
+      label: "Top level",
+      value: "example",
+      size: 2,
+      note: "The biggest group. `.example` is set aside for practice and examples, so it can never point at a real website.",
+    },
+  ]}
+  caption="Real names end in groups like .com or .org. Every name in this app ends in .example on purpose."
+/>
+
+Where the contacts-list analogy breaks down: your contacts belong to you, but DNS answers come from servers you don't control, run by other people. You're trusting them to tell the truth, which is exactly what makes a false answer dangerous.
+
+## See it
+
+Here's what that ping showed you, piece by piece. On this practice network there's no separate DNS server to ask: the simulated network knows every computer's name, and fills in the address the same way a real lookup would.
+
+<Annotated
+  title="A name turned into an address"
+  code={`recruit@range-ws-01:~$ ping -c 1 range-web-01.range.candlewright.example
+PING range-web-01.range.candlewright.example (192.168.60.20) 56(84) bytes of data.
+64 bytes from 192.168.60.20: icmp_seq=1 ttl=64 time=1.65 ms
+recruit@range-ws-01:~$ ping -c 1 range-cake-01
+ping: range-cake-01: Name or service not known`}
+  notes={[
+    {
+      line: 1,
+      label: "The full name",
+      text: "The computer's own name, then the Range's, then the team's, then `.example`.",
+    },
+    {
+      line: 2,
+      label: "The lookup worked",
+      text: "The address in brackets is the answer: the name `range-web-01...` means `192.168.60.20`.",
+    },
+    {
+      line: 3,
+      label: "The reply came from the address",
+      text: "From here on, only the number matters. The name was only for you.",
+    },
+    {
+      line: 5,
+      label: "No such name",
+      text: "Nothing on this network is called `range-cake-01`, so there's no address to send to. Names have to match exactly.",
+    },
+  ]}
+/>
+
+<Quiz
+  question="You type `orders-01.tumbleloaf.example`. What does your computer do first?"
+  options={[
+    {
+      text: "Asks for the address that goes with that name",
+      correct: true,
+      explanation:
+        "Right. Messages travel to addresses, so the name has to become a number before anything else happens.",
+    },
+    {
+      text: "Sends the message to the name directly",
+      explanation:
+        "Networks deliver to addresses, not names. The name is a label for people, looked up first.",
+    },
+    {
+      text: "Searches the whole network for a computer with that name",
+      explanation:
+        "That would be slow. It asks a DNS server, which already has the answer written down.",
+    },
+  ]}
+/>
+
+## In practice
+
+In [Mapping the network](/missions/net-01), your scans show each computer at Tumbleloaf Bakery with both its address and its name. Names like `backup-01` and `oven-ctl-01` tell you what each computer does before you check a single door.
+
+<TryIt mission="net-01" />
+
+## Common misconceptions
+
+- **"DNS is the internet."** DNS is the phone book, not the phone network. If DNS breaks, the internet is still there, but people can't find anything by name. Typing an address directly still works.
+- **"A name can only point to one address."** A busy website's name can point to many addresses, and a name's address can change. That's why investigators write down both, with the time.
+- **"If the name looks right, it's the real site."** A name that looks right can still be pointed somewhere else, or be a lookalike with one letter changed. The padlock and the exact spelling both matter.

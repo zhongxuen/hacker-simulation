@@ -1,0 +1,291 @@
+# Chapter 1, "First shift", episode 2: the twist (md-files/story-bible.md). The learner finds the
+# order database's password in a settings file every account can read, works out why from
+# `ls -l`, and fixes it with chmod (through sudo, since the file belongs to the website's own
+# account). Offence comes with defence: the mission ends on the fix, then Idris's twist.
+id: linux-01
+slug: linux-01
+version: 1
+title: Reading the machine
+difficulty: easy
+estimatedMinutes: 15
+skills: [linux, blue-team]
+prerequisites: [intro-01]
+hook: "Someone left a password lying around on the bakery's server. Find it before anyone else does."
+learningGoals:
+  - How to move around a Linux computer's folders and read files
+  - "What file permissions are, and how to read them with `ls -l`"
+  - "How to lock a file with `chmod`, and why some changes need `sudo`"
+concepts: [linux-filesystem, linux-permissions, linux-users-groups]
+briefing:
+  scenario: >-
+    Noor Halvorsen, your mentor at Candlewright Security, is with you on this one. Roz Kowalczyk,
+    who owns Tumbleloaf Bakery, asked the team to check her order server: orders keep going missing
+    and nobody knows why.
+  role: "You're Candlewright's newest recruit, signed in to `orders-01` with the account Roz made for you, `recruit`."
+  authorization: >-
+    Tumbleloaf Bakery asked Candlewright to check its order server, `orders-01`, using the account
+    Roz created for you. Nothing else is in scope. Signed: Roz Kowalczyk, owner, and Theo Ashgrove,
+    Candlewright.
+story:
+  - on: start
+    speaker: client-roz
+    text: "Orders are going missing and nobody knows why. Please tell me it's not something I did."
+  - on: start
+    speaker: mentor-noor
+    text: >-
+      Noor here. Roz's letter is signed, so `orders-01` is ours to check. Let's start by looking
+      around your new account.
+  - on: { objective: look-around }
+    speaker: mentor-noor
+    text: >-
+      Files live in folders, and folders sit inside other folders. A path like `/srv/orders` is the
+      route from the very top folder down to one of them. `cd` takes you there, and `cat` reads
+      what you find.
+  - on: { objective: find-the-password }
+    speaker: teammate-kit
+    text: "That's the database password. In a file anyone on this computer can read? Let's check."
+  - on: { objective: find-the-password }
+    speaker: mentor-noor
+    text: >-
+      Think of every file as having a lock. The lock says who may read it, who may change it, and
+      who may run it, with separate rules for the file's owner, its group, and everyone else. Add
+      `-l` to `ls` and it shows you each lock.
+  - on: { objective: who-can-read }
+    speaker: mentor-noor
+    text: >-
+      To change a lock you have to be the file's owner, or the admin account, called root. This file
+      belongs to `orders`, the website's own account. Roz let your account use `sudo`, which runs
+      one command as root.
+  - on: { objective: lock-it }
+    speaker: mentor-noor
+    text: "You didn't only find it, you fixed it. Now only the website can read that password."
+  - on: { event: help.viewed, match: { command: chmod } }
+    speaker: teammate-kit
+    text: "The chmod manual! Those three numbers finally made sense to me on page two. Take your time."
+  - on: complete
+    speaker: teammate-idris
+    text: >-
+      Idris here, I read the logs. Someone signed in to the order database with that exact
+      password last Tuesday at 02:14, from 192.168.77.23. That's an address on the bakery's
+      customer wifi.
+  - on: complete
+    speaker: client-roz
+    text: "The customer wifi? The one with the password on the chalkboard by the till?"
+scenario:
+  seed: 20260902
+  startTime: "2026-03-09T10:00:00Z"
+  network:
+    subnets:
+      - { cidr: 10.40.2.0/24, name: Servers }
+    hosts:
+      - id: orders-01
+        hostname: orders-01.tumbleloaf.example
+        interfaces:
+          - { ip: 10.40.2.15, subnet: 10.40.2.0/24 }
+        os: { family: linux, name: Linux, version: "5.15" }
+        services:
+          - { port: 22, protocol: tcp, name: ssh, product: sshd, version: "8.9" }
+          - { port: 443, protocol: tcp, name: https, product: httpd, version: "2.4.52" }
+        users:
+          - { name: roz, uid: 1000 }
+          - { name: recruit, uid: 1001, groups: [sudo] }
+          - { name: kiosk, uid: 1002 }
+          - { name: orders, uid: 998, home: /srv/orders, shell: /usr/sbin/nologin }
+        groups:
+          - { name: orders }
+        fs:
+          entries:
+            - path: /etc/motd
+              content: "orders-01 - Tumbleloaf Bakery order server. Be nice to it, it's old.\n"
+            - path: /home/recruit/welcome-from-roz.txt
+              owner: recruit
+              content: |
+                Hello!
+
+                I made you this account so you can check the order server.
+                The ordering website lives in /srv/orders.
+
+                Anything you need, ring the bakery and ask for me.
+                - Roz
+            - path: /srv/orders
+              type: dir
+              owner: orders
+              group: orders
+              mode: "755"
+            - path: /srv/orders/README.txt
+              owner: orders
+              group: orders
+              content: |
+                Tumbleloaf ordering website
+
+                site/     the pages customers see
+                config/   settings, including how the website talks
+                          to the order database
+                logs/     what the website writes down
+
+                Set up by a friend of the family in 2021.
+            - path: /srv/orders/site/index.html
+              owner: orders
+              group: orders
+              content: "<h1>Tumbleloaf Bakery</h1>\n<p>Order your loaf by 3pm for tomorrow.</p>\n"
+            - path: /srv/orders/config
+              type: dir
+              owner: orders
+              group: orders
+              mode: "755"
+            - path: /srv/orders/config/site.conf
+              owner: orders
+              group: orders
+              mode: "644"
+              content: |
+                site_name = Tumbleloaf Bakery
+                opening_hours = 07:00-15:00
+                orders_close = 15:00
+            - path: /srv/orders/config/database.conf
+              owner: orders
+              group: orders
+              mode: "644"
+              content: |
+                # How the ordering website connects to the order database
+                db_host = localhost
+                db_name = orders
+                db_user = orders_app
+                db_password = Crumpet-Sunday-2021
+            - path: /srv/orders/logs/site.log
+              owner: orders
+              group: orders
+              mode: "640"
+              content: |
+                2026-03-03T01:58:12Z INFO orders[412]: 3 orders saved
+                2026-03-03T02:14:40Z WARN orders[412]: order 1187 changed outside the website
+            - path: /var/log/orders-db.log
+              group: adm
+              mode: "640"
+              content: |
+                2026-03-03T02:14:07Z INFO dbd[602]: login ok for orders_app from 192.168.77.23
+                2026-03-03T02:14:39Z INFO dbd[602]: order 1187 updated by orders_app
+            - path: /tmp/for-the-owner.txt
+              owner: orders
+              mode: "644"
+              content: |
+                The door was open.
+                - HL
+  session: { host: orders-01, user: recruit }
+objectives:
+  - id: look-around
+    description: Look around your home folder with `ls`
+    why: The first thing to do on any computer is see what's already there.
+    success: You're in! That note in your home folder is from Roz.
+    check:
+      kind: event
+      event: command.run
+      match: { command: ls, exitCode: 0 }
+  - id: read-the-notes
+    description: "Read the notes in the ordering website's folder, `/srv/orders`"
+    why: Notes left by whoever set up a computer tell you where the important things live.
+    success: You found the map of the ordering website. The settings live in `config`.
+    check:
+      kind: event
+      event: file.read
+      match: { path: /srv/orders/README.txt }
+  - id: find-the-password
+    description: "Read the database settings file in `/srv/orders/config`"
+    why: Settings files often hold passwords, so they're one of the first places to check.
+    success: You found a password, sitting in a settings file. Now find out who else can read it.
+    check:
+      kind: event
+      event: file.read
+      match: { path: /srv/orders/config/database.conf }
+  - id: who-can-read
+    description: "Work out who can read `database.conf`, with `ls -l`"
+    why: A file's permissions say who may read it. Reading them is how you spot a leak.
+    success: "Exactly: `r--` at the end means everyone else can read it. That's the leak."
+    check:
+      kind: answer
+      accept: [Every account on this computer]
+      choices:
+        - text: "Only its owner, `orders`"
+          reply:
+            speaker: mentor-noor
+            text: >-
+              Look at the last three letters of `-rw-r--r--`: `r--`. Those are the rules for
+              everyone else, and the `r` means they can read it.
+        - text: Its owner and its group
+          reply:
+            speaker: mentor-noor
+            text: >-
+              Close, and there's one more set. The last three letters, `r--`, are for everyone else,
+              and they can read it too.
+        - text: Every account on this computer
+  - id: lock-it
+    description: "Lock `database.conf` so only its owner and its group can read it"
+    why: Finding a leak is half the job. Fixing it is the half that protects Roz's customers.
+    success: You locked it! Now only `orders` and its group can read that password.
+    check:
+      kind: fileState
+      path: /srv/orders/config/database.conf
+      predicate: { modeExcludes: "007", readableBy: orders, notReadableBy: kiosk }
+  - id: read-the-label
+    name: Read the Label
+    description: Read the manual page for `chmod`
+    why: The manual explains every way to write a lock, including the numbers.
+    success: You read the manual for `chmod`. Now 640 and 600 aren't magic numbers.
+    optional: true
+    check:
+      kind: event
+      event: help.viewed
+      match: { command: chmod }
+  - id: calling-card
+    name: Calling Card
+    description: Find the note the intruder left behind
+    why: Attackers leave traces. Spotting them is how defenders learn what happened.
+    success: "You found a note in `/tmp`, signed `- HL`. Idris will want to see this."
+    hidden: true
+    check:
+      kind: event
+      event: file.read
+      match: { path: /tmp/for-the-owner.txt }
+hints:
+  look-around:
+    - Start by seeing what's in the folder you're in.
+    - "`ls` lists the files and folders where you are."
+    - Type `ls` and press Enter. Then read Roz's note with `cat welcome-from-roz.txt`.
+  read-the-notes:
+    - Roz's note says where the ordering website lives.
+    - "`cd` moves you into a folder: `cd /srv/orders`. Then `ls` shows what's there, and `cat` reads a file."
+    - Type `cat /srv/orders/README.txt`.
+  find-the-password:
+    - The notes mention a folder of settings.
+    - "Settings live in `/srv/orders/config`. List it with `ls`, then read the file about the database."
+    - Type `cat /srv/orders/config/database.conf`.
+  who-can-read:
+    - Every file has a lock that says who may read it. There's a way to make `ls` show it.
+    - "`ls -l` shows each file's permissions as letters, like `-rw-r--r--`. After the first character come three sets of three: the owner, the group, then everyone else."
+    - "Type `ls -l /srv/orders/config` and look at the last three letters for `database.conf`: `r--` means everyone else can read it."
+  lock-it:
+    - The lock needs changing so everyone else can't read the file. Which command changes permissions?
+    - "`chmod` changes a file's permissions. The number 640 means: the owner reads and writes, the group reads, everyone else gets nothing. It isn't your file, so put `sudo` in front."
+    - Type `sudo chmod 640 /srv/orders/config/database.conf`.
+  read-the-label:
+    - Every command here comes with instructions.
+    - "`man` shows a command's manual page."
+    - Type `man chmod`.
+debrief:
+  summary: >-
+    You found the order database's password in a file every account on `orders-01` could read, and
+    you locked it so only the website can.
+  whatYouLearned:
+    - "`cd`, `ls` and `cat` take you through folders and show what's inside files."
+    - "Every file has a lock for its owner, its group and everyone else, and `ls -l` shows it."
+    - "`chmod 640` stops everyone else reading a file, and `sudo` runs one command as the admin account."
+  ethicsNote: >-
+    On a real server, a password like this one is enough to get into the database behind it, and
+    using it without permission is a crime. Roz asked Candlewright to check this server and signed
+    a letter saying so. That's why you could read the file, and why you reported and fixed it
+    instead of using it.
+  defensiveTakeaway: >-
+    Keep passwords out of files everyone can read: lock settings files to their owner and group
+    (640, or 600), and change any password that was ever exposed, because someone may already have
+    copied it.
+  nextTease: "Why can a laptop on the customer wifi reach the order server at all? Time to draw a map."
+  furtherReading: [linux-permissions, sec-least-privilege, linux-logs]

@@ -1,0 +1,82 @@
+---
+id: sec-least-privilege
+title: Least privilege
+topic: foundations
+level: 1
+readingMinutes: 4
+analogy: "A hotel key card opens your room and the gym, not every room in the building. If you lose it, the damage stops at your door."
+summary: Give every account the smallest set of powers it needs, so a mistake or a break-in stays small.
+prerequisites: [sec-cia-triad]
+relatedMissions: [linux-01]
+relatedCommands: [ls, chmod, id, sudo]
+glossaryTerms: [least-privilege, permissions, root, sudo, user-account]
+---
+
+## The one-sentence version
+
+<Term id="least-privilege">Least privilege</Term> means giving every person, program and
+<Term id="user-account">account</Term> only the access it needs to do its job, and nothing more.
+
+It's like a hotel key card. Yours opens your room and the gym, not every room in the building. If you lose it, the damage stops at your door.
+
+<Quiz
+  question="A new staff member at the bakery only needs to take orders on the till. What access should their account get?"
+  options={[
+    {
+      text: "Everything, so they never get stuck",
+      explanation:
+        'Then a lost password, or one wrong click, can reach everything too. "Never get stuck" is how small problems become big ones.',
+    },
+    {
+      text: "The till, and nothing else",
+      correct: true,
+      explanation:
+        "That's least privilege. If they need more later, they can ask, and it's added on purpose.",
+    },
+    {
+      text: "The same as the owner, to keep things fair",
+      explanation:
+        "Access isn't a reward or a sign of trust. It's matched to the job, which protects the new staff member too.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+Attackers rarely break in as the most powerful account. They get in as whoever they can, then try to climb. Every extra power an account has is somewhere they can climb to. Keep each account small, and a break-in stays small.
+
+It helps with honest mistakes too. An account that can't delete the order database can't delete it by accident.
+
+## How it actually works
+
+On Linux, least privilege shows up in a few places:
+
+- **File <Term id="permissions">permissions</Term>.** Each file says who may read, change or run it. A secret gets `600`: its owner, nobody else.
+- **Separate accounts for separate jobs.** The bakery's website runs as its own account, `orders`, not as a person's. If the website is broken into, the intruder gets the website's powers, not everyone's.
+- **<Term id="root">Root</Term> for single commands only.** Root, the admin account, can do anything. Instead of signing in as root, admins use <Term id="sudo">sudo</Term> to run one command as root when they need to, and every use is written down.
+
+Where the key card analogy breaks down: hotels reset key cards every stay. On computers, access tends to pile up over the years unless someone checks it, so least privilege means reviewing access regularly, not only when it's handed out.
+
+## Try it
+
+This practice computer has one file that's readable by everyone when it shouldn't be. Look at the permissions with `ls -l`, then lock the password file so only you can read it.
+
+<MiniTerminal
+  scenario="range-permissions"
+  commands={["ls -l", "chmod 600 practice-password.txt", "id"]}
+  task="Lock `practice-password.txt` with `chmod 600 practice-password.txt`."
+  expect="chmod"
+  success="You locked it. `ls -l` now shows `-rw-------`: you can read and change it, and nobody else can do anything with it."
+/>
+
+Type `id` too: it shows which groups your account belongs to. Groups are how one file can be shared with a team, like the rota in `/srv/team`, without being shared with everyone.
+
+## In practice
+
+In the mission [Reading the machine](/missions/linux-01), a database password sat in a file every account could read. The fix was least privilege: lock the file to the website's own account and its group. Notice that the website had its own account in the first place. That was least privilege working.
+
+## Common misconceptions
+
+- **"Admins should always sign in as root, it's quicker."** It is quicker, including for mistakes and for anyone who takes over the session. Use your own account, and `sudo` for the moments that need it.
+- **"Least privilege means we don't trust our colleagues."** It protects colleagues: if their password leaks, the damage is limited, and nobody can blame them for what their account couldn't do.
+- **"Extra access in case someone needs it is harmless."** Unused access is still usable by an attacker. Add access when it's needed, and take it away when it isn't.

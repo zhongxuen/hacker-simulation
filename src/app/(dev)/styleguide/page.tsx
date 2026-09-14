@@ -8,6 +8,7 @@ import { customPropertiesIn } from "@/lib/css-custom-properties";
 import { cx } from "@/lib/cx";
 import { CelebrationsSection } from "./celebrations-section";
 import { ContrastSection } from "./contrast-section";
+import { LessonComponentsSection } from "./lesson-components-section";
 import { LessonSection } from "./lesson-section";
 import { MotionToggle } from "./motion-toggle";
 import { PrimitivesSection } from "./primitives-section";
@@ -25,6 +26,7 @@ const SECTIONS = [
   { id: "celebrations", label: "Beginner and celebration" },
   { id: "shell", label: "App shell" },
   { id: "lesson", label: "Lesson content" },
+  { id: "lesson-components", label: "Lesson components" },
   { id: "type-scale", label: "Type scale" },
   { id: "spacing-scale", label: "Spacing scale" },
   { id: "contrast", label: "Contrast audit" },
@@ -107,6 +109,7 @@ export default function StyleguidePage() {
         <CelebrationsSection id="celebrations" />
         <ShellSection id="shell" />
         <LessonSection id="lesson" />
+        <LessonComponentsSection id="lesson-components" />
         <TypeScaleSection id="type-scale" theme={tailwindTheme} />
         <SpacingScaleSection id="spacing-scale" theme={tailwindTheme} />
         <ContrastSection id="contrast" groups={audit} />

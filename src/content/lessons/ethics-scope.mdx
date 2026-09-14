@@ -1,0 +1,112 @@
+---
+id: ethics-scope
+title: Scope, or where your permission ends
+topic: foundations
+level: 1
+readingMinutes: 4
+analogy: "Scope is like the list a house-sitter gets: water the plants and feed the cat, but the locked study stays locked, even if the key is on the hook."
+summary: The exact list of what you may test, and what to do when something outside it looks interesting.
+prerequisites: [ethics-authorization]
+relatedMissions: [intro-01, net-01]
+relatedCommands: [netscan]
+glossaryTerms: [scope, authorization, rules-of-engagement]
+---
+
+## The one-sentence version
+
+<Term id="scope">Scope</Term> is the agreed list of which systems you may test, how, and when.
+Everything outside it is off limits.
+
+Here's the letter Tumbleloaf Bakery signed for your team. Pick each note to see what it means.
+
+<Annotated
+  title="Tumbleloaf Bakery's scope letter"
+  code={`May be mapped:  the staff network, 10.40.1.0/24
+                the server network, 10.40.2.0/24
+From:           laptop-03, lent by Roz
+Not in scope:   the customer wifi, 192.168.77.0/24.
+                Those phones and laptops belong to customers.
+Signed: Roz Kowalczyk, owner, Tumbleloaf Bakery`}
+  notes={[
+    {
+      line: 1,
+      label: "In scope",
+      text: "Two networks Roz owns and is allowed to agree to. A range like `10.40.1.0/24` means every address from `10.40.1.0` to `10.40.1.255`.",
+    },
+    {
+      line: 3,
+      label: "From where",
+      text: "Even the testing computer is agreed, so the bakery knows which machine to expect.",
+    },
+    {
+      line: 4,
+      label: "Out of scope",
+      text: "The customer wifi is in the same building, and still off limits.",
+    },
+    {
+      line: 5,
+      label: "The reason",
+      text: "Customers' devices belong to the customers. Roz can't give permission for things she doesn't own.",
+    },
+    {
+      line: 6,
+      label: "Signed by the owner",
+      text: "The person with the authority to agree for the bakery.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+<Term id="authorization">Authorization</Term> says you may test. Scope says exactly what. Step one
+inch outside it and you're testing without permission again, with all the legal trouble that brings.
+
+Scope also keeps a test safe. A client might leave out a fragile machine that can't handle a scan, or a system run by another company. Testing it anyway could break something the client depends on, or reach into someone else's property.
+
+## How it actually works
+
+Scope is written down before the test starts, as part of the <Term id="rules-of-engagement">rules of engagement</Term>. It usually names:
+
+- **The targets**: exact addresses, network ranges, website addresses or accounts.
+- **The exclusions**: things that are nearby but off limits, named so nobody wonders.
+- **The methods**: for example, scanning is allowed but trying passwords isn't.
+- **The dates and times**: permission starts and ends.
+
+When a tester finds something outside the scope, like an unexpected computer that belongs to another company, they stop. They write down what they saw, they don't touch it, and they ask the client. If the client wants it tested and can agree to it, the scope letter gets updated first.
+
+## See it
+
+<Quiz
+  question="While mapping the bakery's staff network, your scan shows the customer wifi can reach the servers. What do you do with the customer wifi?"
+  options={[
+    {
+      text: "Scan the customers' phones to see which one got in",
+      explanation:
+        "Those phones belong to customers, not to Roz, so she can't agree to them being tested. Scanning them would be testing other people's devices without permission.",
+    },
+    {
+      text: "Write down that the wifi can reach the servers, and recommend a fix, without testing any customer's device",
+      correct: true,
+      explanation:
+        "That's the professional move. The finding is about Roz's network, which is in scope. The customers' devices stay untouched.",
+    },
+    {
+      text: "Ignore it, because it's out of scope",
+      explanation:
+        "You don't test out-of-scope things, but you can still report what you saw from inside the scope. That the servers are reachable from the wifi is an important finding about Roz's own network.",
+    },
+  ]}
+/>
+
+## In practice
+
+In [Welcome to the team](/missions/intro-01), you read your first scope letter and choose which computers it lets you test. In [Mapping the network](/missions/net-01), you map the bakery's networks with `netscan`, and the customer wifi stays off limits the whole way through.
+
+<TryIt mission="net-01" />
+
+## Common misconceptions
+
+- **"If I can reach it from inside the scope, it's in scope."** Reaching something and being allowed to test it are different things. The letter decides, not the network.
+- **"It's in the same building, so the owner can agree to it."** Owners can only agree to what they own or control. Customers' phones, a neighbour's wifi or another company's server need their own permission.
+- **"A quick look outside the scope doesn't count."** Scanning or logging in to something outside the scope is testing it. If it's not on the letter, ask first.
+- **"Scope is paperwork, not security."** Scope is what keeps a test from breaking something the client needs, and it's what makes the test legal.

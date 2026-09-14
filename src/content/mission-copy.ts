@@ -29,6 +29,7 @@ export function missionCopy(mission: Mission): MissionCopy[] {
 
   for (const objective of mission.objectives) {
     const at = `objectives[${objective.id}]`;
+    if (objective.name !== undefined) add(`${at}.name`, objective.name);
     add(`${at}.description`, objective.description);
     add(`${at}.why`, objective.why);
     add(`${at}.success`, objective.success);

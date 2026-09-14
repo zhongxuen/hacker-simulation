@@ -3,11 +3,13 @@ import Link from "next/link";
 import type { ComponentPropsWithoutRef } from "react";
 import { FOCUS_RING } from "@/components/ui/focus-ring";
 import { cx } from "@/lib/cx";
+import { Annotated, MiniTerminal, PacketDiagram, Quiz, TryIt } from "../components/lesson-mdx";
 import { Term } from "../glossary/term";
 
 /**
  * How lesson MDX renders: prose styled with the design tokens, highlighted code blocks, and the
- * components a lesson may use (<Term> for now; prompt 09.2 adds Quiz, MiniTerminal and friends).
+ * components a lesson may use: <Term>, and the interactive ones from prompt 09.2 (<Quiz>,
+ * <MiniTerminal>, <PacketDiagram>, <Annotated>, <TryIt>).
  */
 
 /** How each highlighted language is labelled above its code block. */
@@ -163,4 +165,9 @@ export const LESSON_COMPONENTS: MDXComponents = {
   code: LessonCode,
   pre: LessonCodeBlock,
   Term,
+  Quiz,
+  MiniTerminal,
+  PacketDiagram,
+  Annotated,
+  TryIt,
 };

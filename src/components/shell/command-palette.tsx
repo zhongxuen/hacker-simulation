@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import {
   useEffect,
   useId,
@@ -16,6 +15,7 @@ import { PlayIcon, SearchIcon } from "@/components/ui/icons";
 import { APP_SECTIONS } from "@/lib/app-sections";
 import { searchCommands, type SearchableCommand } from "@/lib/command-search";
 import { cx } from "@/lib/cx";
+import { useGuardedNavigate } from "./leave-guard";
 import type { NextStep } from "@/lib/next-step";
 import { SECTION_ICONS } from "./icons";
 import { FOCUS_RING } from "./shell-styles";
@@ -87,7 +87,7 @@ interface CommandPaletteProps {
  * the terminal (phase 05) keeps Ctrl+K for "delete to end of line" by preventing it while focused.
  */
 export function CommandPalette({ nextStep, ref }: CommandPaletteProps) {
-  const router = useRouter();
+  const navigate = useGuardedNavigate();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
@@ -136,7 +136,8 @@ export function CommandPalette({ nextStep, ref }: CommandPaletteProps) {
     // Focus goes to the new page, not back to the button that opened the palette.
     returnFocusRef.current = null;
     close();
-    router.push(command.href);
+    // Inside a mission run this asks "Leave this mission?" first (leave-guard.tsx).
+    navigate(command.href);
   };
 
   const onInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {

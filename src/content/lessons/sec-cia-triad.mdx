@@ -1,0 +1,101 @@
+---
+id: sec-cia-triad
+title: "The three things security protects"
+topic: foundations
+level: 1
+readingMinutes: 4
+analogy: "Think of a diary: you want it private, you want nobody scribbling in it, and you want it there when you reach for it."
+summary: Keeping things secret, keeping them correct, and keeping them working, and why all three count.
+prerequisites: [start-ethical-hacking]
+relatedMissions: [linux-01]
+relatedCommands: [ls, chmod]
+glossaryTerms: [cia-triad, confidentiality, integrity, availability, ransomware, backup]
+---
+
+## The one-sentence version
+
+Almost everything in security protects one of three things: keeping information secret, keeping it correct, and keeping it available. Together they're called the <Term id="cia-triad">CIA triad</Term>, from their first letters. It has nothing to do with spies.
+
+Think of a diary. You want it private. You want nobody scribbling in it. And you want it there when you reach for it. Try sorting a real problem:
+
+<Quiz
+  question="A bakery's website goes down on its busiest morning, and nobody can order bread. Which of the three is hurt?"
+  options={[
+    {
+      text: "Keeping things secret",
+      explanation: "No information leaked here: nobody saw anything they shouldn't.",
+    },
+    {
+      text: "Keeping things correct",
+      explanation: "Nothing was changed. The orders and prices are still right, only out of reach.",
+    },
+    {
+      text: "Keeping things working when needed",
+      correct: true,
+      explanation:
+        "That's availability. A website that's down is a security problem too, because the people who rely on it can't use it.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+When something goes wrong, the first question is "what was hurt?" The answer decides what to do. A leaked password list needs every password changed. Tampered prices need the correct ones put back and a check of what else changed. A crashed server needs getting back up, fast.
+
+It also stops you guarding one thing and forgetting the others. A system that keeps secrets perfectly but falls over every Friday isn't secure.
+
+## How it actually works
+
+- <Term id="confidentiality">Confidentiality</Term>: only the right people can read it. File
+  permissions, passwords and scrambling protect it.
+- <Term id="integrity">Integrity</Term>: nobody can change it without it showing. Permissions on who
+  may write, logs of changes, and checks that data hasn't been altered protect it.
+- <Term id="availability">Availability</Term>: it works when people need it. Spare copies, a
+  <Term id="backup">backup</Term>, and systems that can take a knock protect it.
+
+Some attacks hit more than one. <Term id="ransomware">Ransomware</Term> locks up files, which hurts availability, and often copies them first to threaten a leak, which hurts confidentiality.
+
+Where the diary analogy breaks down: a diary is yours alone. A company's information is shared by many people, so each of the three becomes a question of who, exactly, should be able to read, change and use each thing.
+
+## See it
+
+In the mission Reading the machine, a password sat in a file everyone on the server could read. Here's the file's line from `ls -l`:
+
+<Annotated
+  title="One file, three questions"
+  code={`-rw-r--r-- 1 orders orders 150 Mar  9 10:00 database.conf`}
+  notes={[
+    {
+      line: 1,
+      label: "The r at the end: confidentiality",
+      text: "`r--` for everyone else means any account can read the password inside. Fixing that with `chmod 640` protects confidentiality. Only the owner has `w`, so integrity was fine, and the website can still read it, so availability stays fine too.",
+    },
+  ]}
+/>
+
+<Quiz
+  question="Someone quietly changes the price of every loaf on a shop's website to one penny. Which of the three is hurt?"
+  options={[
+    { text: "Confidentiality", explanation: "Prices are public, so nothing secret was exposed." },
+    {
+      text: "Integrity",
+      correct: true,
+      explanation:
+        "The information is still there and still public, but it's no longer correct. That's an integrity problem.",
+    },
+    {
+      text: "Availability",
+      explanation: "The website still works. It's working with the wrong numbers.",
+    },
+  ]}
+/>
+
+## In practice
+
+Every finding in a Candlewright report says what it puts at risk. "Anyone on this server can read the database password" is confidentiality. "A forgotten computer anyone can log in to" could be all three. You'll see it in the mission [Reading the machine](/missions/linux-01).
+
+## Common misconceptions
+
+- **"Security is only about keeping secrets."** Secrets are one third. A hospital system that's down, or medical records that are wrong, can hurt people more than a leak.
+- **"Availability is the IT team's problem, not security's."** Attacks that knock systems over, or lock files for ransom, are security incidents.
+- **"Scrambling data fixes everything."** Scrambling protects confidentiality. It doesn't stop someone deleting the files, or the server going down.

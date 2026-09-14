@@ -13,8 +13,8 @@ import type { GlossaryEntry, GlossaryEntryInput } from "./schemas/glossary";
  *   `10.x` and `192.168.x` addresses.
  * - Wrap commands, file names and addresses in backticks. They render in code font.
  *
- * `relatedLessons` stay empty until the lessons exist (prompt 09.4). The glossary test fails on a
- * lesson id that doesn't resolve.
+ * `relatedLessons` names up to three lessons that define the term, gentlest first. The
+ * cross-reference test fails on a lesson id that doesn't resolve.
  */
 const ENTRIES: readonly GlossaryEntryInput[] = [
   // Foundations: the basics, security fundamentals, ethics and law.
@@ -26,6 +26,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Someone who understands computers well enough to make them do unexpected things.",
     long: "The word started out meaning a curious tinkerer, and plenty of hackers use their skills to protect people. News stories tend to use it for criminals, which is why security people say white hat or black hat to make the difference clear.",
     relatedTerms: ["white-hat", "black-hat", "ethical-hacking"],
+    relatedLessons: ["start-ethical-hacking"],
   },
   {
     id: "ethical-hacking",
@@ -35,6 +36,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "Testing how well a computer system is protected, with the owner's permission, so weak spots get fixed before criminals find them.",
     long: "Ethical hackers use the same ideas as criminals, but they only work on systems they have written permission to test, and they report everything they find to the owner. That permission is the whole difference: the same action is a job with it and a crime without it.",
     relatedTerms: ["authorization", "scope", "penetration-test", "white-hat"],
+    relatedLessons: ["start-ethical-hacking", "start-how-to-learn", "ethics-authorization"],
   },
   {
     id: "white-hat",
@@ -44,6 +46,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "A hacker who works to protect people and only tests systems they have permission to test.",
     long: "The name comes from old cowboy films, where the heroes wore white hats. Your team in Hacker Simulation is a white-hat team: every job starts with the client's written permission.",
     relatedTerms: ["black-hat", "ethical-hacking", "hacker"],
+    relatedLessons: ["start-ethical-hacking", "ethics-unauthorized-testing"],
   },
   {
     id: "black-hat",
@@ -53,6 +56,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "A hacker who breaks into computers without permission, usually to steal, spy or cause harm.",
     long: "Black-hat hackers are criminals. Studying how they work is how defenders learn to stop them, which is why you'll see their tricks in missions, always practised on computers your team is allowed to test.",
     relatedTerms: ["white-hat", "hacker", "threat"],
+    relatedLessons: ["start-ethical-hacking", "ethics-unauthorized-testing"],
   },
   {
     id: "authorization",
@@ -61,6 +65,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Clear permission, usually in writing, from the owner of a system to test it.",
     long: "Before any security test, the owner signs a document saying who may test what, how, and when. Testing without it is a crime in most countries, even with good intentions. In other settings, authorization also means what an account is allowed to do once it has logged in.",
     relatedTerms: ["scope", "rules-of-engagement", "ethical-hacking", "authentication"],
+    relatedLessons: ["start-ethical-hacking", "ethics-authorization", "ethics-scope"],
   },
   {
     id: "scope",
@@ -69,6 +74,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "The agreed list of which systems you may test, how, and when.",
     long: "Anything outside the scope is off limits, even if it's on the same network and even if it looks weak. If you find something interesting outside the scope, you stop and ask the owner, and you don't test it.",
     relatedTerms: ["authorization", "rules-of-engagement"],
+    relatedLessons: ["ethics-scope"],
   },
   {
     id: "rules-of-engagement",
@@ -78,6 +84,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "The written ground rules for a security test: what's allowed, what's off limits, and who to call if something goes badly.",
     long: "Rules of engagement cover things like testing hours, which techniques are allowed, and how to report something urgent. Your first mission, Welcome to the Team, walks you through them.",
     relatedTerms: ["scope", "authorization", "penetration-test"],
+    relatedLessons: ["ethics-authorization", "ethics-scope"],
   },
   {
     id: "responsible-disclosure",
@@ -87,6 +94,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "Telling a system's owner privately about a weakness you found, and giving them time to fix it before anyone else hears about it.",
     long: "Announcing a weakness publicly before it's fixed hands criminals a map. Many organisations publish how they want to be told about problems, and some reward people who report them.",
     relatedTerms: ["vulnerability", "ethical-hacking"],
+    relatedLessons: ["ethics-responsible-disclosure"],
   },
   {
     id: "vulnerability",
@@ -96,6 +104,11 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "A weak spot in a computer system that someone could use to do something they shouldn't be able to.",
     long: "It could be a bug in a program, a setting left open, or a password that's too short. Finding vulnerabilities before criminals do, and getting them fixed, is most of what a security team does.",
     relatedTerms: ["exploit", "patch", "threat", "risk"],
+    relatedLessons: [
+      "ethics-responsible-disclosure",
+      "ethics-unauthorized-testing",
+      "web-owasp-top-10",
+    ],
   },
   {
     id: "exploit",
@@ -112,6 +125,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Anyone or anything that could harm a system or the people who rely on it.",
     long: "A threat can be a criminal group, an unhappy former employee, or even a flood in the server room. Security teams ask which threats are most likely, so they spend their effort where it matters.",
     relatedTerms: ["risk", "threat-modelling", "vulnerability"],
+    relatedLessons: ["sec-threat-modelling"],
   },
   {
     id: "risk",
@@ -120,6 +134,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "How likely something bad is to happen, combined with how much damage it would do.",
     long: "A weakness anyone can reach, guarding customer data, is a high risk. A weakness buried deep in a test machine with nothing on it is a low one. Teams fix the highest risks first.",
     relatedTerms: ["threat", "vulnerability"],
+    relatedLessons: ["sec-threat-modelling"],
   },
   {
     id: "attack-surface",
@@ -128,6 +143,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "All the places where an attacker could try to get into a system.",
     long: "Every open port, login page, email inbox and forgotten test server adds to the attack surface. Switching off what nobody uses is one of the cheapest defences there is, because it removes doors instead of guarding them.",
     relatedTerms: ["port", "hardening", "vulnerability"],
+    relatedLessons: ["sec-threat-modelling"],
   },
   {
     id: "cia-triad",
@@ -138,6 +154,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "The three things security protects: keeping secrets secret, keeping information accurate, and keeping systems working.",
     long: "The letters stand for confidentiality, integrity and availability. It has nothing to do with spies. When you judge how bad a problem is, ask which of the three it breaks.",
     relatedTerms: ["confidentiality", "integrity", "availability"],
+    relatedLessons: ["sec-cia-triad"],
   },
   {
     id: "confidentiality",
@@ -146,6 +163,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Making sure only the right people can see a piece of information.",
     long: "A leaked customer list breaks confidentiality. Passwords, encryption and file permissions all exist to protect it.",
     relatedTerms: ["cia-triad", "encryption", "permissions"],
+    relatedLessons: ["sec-cia-triad"],
   },
   {
     id: "integrity",
@@ -155,6 +173,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "Making sure information stays accurate, and that nobody can change it without it being noticed.",
     long: "Someone quietly changing the bank details on an invoice breaks integrity. Hashes are one way to check that a file hasn't been changed.",
     relatedTerms: ["cia-triad", "hash"],
+    relatedLessons: ["sec-cia-triad"],
   },
   {
     id: "availability",
@@ -164,6 +183,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "Making sure systems and information are there when the people who need them go to use them.",
     long: "A website knocked offline, or files locked by ransomware, breaks availability. Backups and spare equipment help protect it.",
     relatedTerms: ["cia-triad", "backup", "ransomware"],
+    relatedLessons: ["sec-cia-triad"],
   },
   {
     id: "least-privilege",
@@ -173,6 +193,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "Giving each person or program only the access it needs to do its job, and nothing more.",
     long: "If the account that runs a website can't read the payroll files, a break-in through the website can't reach the payroll either. It's why you don't use the root account for everyday work.",
     relatedTerms: ["permissions", "root", "defence-in-depth"],
+    relatedLessons: ["sec-least-privilege", "linux-permissions"],
   },
   {
     id: "defence-in-depth",
@@ -182,6 +203,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "Protecting something with several layers of security, so one failure doesn't let an attacker all the way in.",
     long: "Think of a castle: a moat, then a wall, then guards, then a locked vault. On a network the layers might be a firewall, strong passwords, careful permissions and someone watching the logs.",
     relatedTerms: ["firewall", "least-privilege", "network-segmentation"],
+    relatedLessons: ["sec-defence-in-depth"],
   },
   {
     id: "threat-modelling",
@@ -191,6 +213,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "Thinking through who might attack a system, what they'd want, and how they might try, so you know what to protect first.",
     long: "A threat model for a small bakery looks very different from one for a bank. The questions stay the same: what are we protecting, from whom, and what happens if we fail?",
     relatedTerms: ["threat", "risk", "attack-surface"],
+    relatedLessons: ["sec-threat-modelling"],
   },
   {
     id: "authentication",
@@ -199,6 +222,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Proving who you are to a computer, usually with a password.",
     long: 'Logging in is authentication. It answers the question "who are you?". What you\'re allowed to do afterwards is a separate question, called authorization. Adding a second kind of proof, like a code on your phone, makes authentication much stronger.',
     relatedTerms: ["password", "two-factor-authentication", "authorization"],
+    relatedLessons: ["web-cookies-sessions", "web-owasp-top-10"],
   },
   {
     id: "social-engineering",
@@ -234,6 +258,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "A hired, permitted attempt to break into a system to find weak spots before criminals do.",
     long: "A penetration test always starts with authorization and an agreed scope, and ends with a report that explains every weakness found and how to fix it. Most of your team's jobs in the story are penetration tests.",
     relatedTerms: ["ethical-hacking", "scope", "rules-of-engagement", "red-team"],
+    relatedLessons: ["ethics-authorization"],
   },
 
   // Linux: files, folders, users and commands.
@@ -246,6 +271,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "The main program that runs a computer and lets every other program use its screen, files and memory.",
     long: "Windows, macOS, Android and Linux are all operating systems. It decides which programs run, which files they can open, and which user is in charge.",
     relatedTerms: ["linux", "process"],
+    relatedLessons: ["start-computer"],
   },
   {
     id: "linux",
@@ -264,6 +290,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A window where you control a computer by typing commands instead of clicking.",
     long: "You type a command, press Enter, and the computer answers with text. It looks old-fashioned, but it's fast, precise and repeatable, which is why security people use it every day. The terminal in this app is simulated: nothing you type reaches a real computer.",
     relatedTerms: ["command", "shell"],
+    relatedLessons: ["start-terminal"],
   },
   {
     id: "command",
@@ -273,6 +300,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "An instruction you type to tell a computer to do something, like listing your files.",
     long: "A command starts with its name, like `ls`, often followed by options (`ls -a`) and things to work on (`ls notes`). Type `man` and a command's name to read its help page.",
     relatedTerms: ["terminal", "shell", "man-page"],
+    relatedLessons: ["start-terminal"],
   },
   {
     id: "shell",
@@ -290,6 +318,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A named piece of saved information, like a document, a picture or a program.",
     long: "On Linux, almost everything is a file, even settings and logs. Every file has an owner and permissions that decide who can read or change it.",
     relatedTerms: ["directory", "permissions", "hidden-file"],
+    relatedLessons: ["start-computer"],
   },
   {
     id: "directory",
@@ -298,6 +327,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Another name for a folder: a place that holds files and other folders.",
     long: "Type `ls` to list what's in the directory you're in, and `cd` followed by a name to move into another one. `cd ..` takes you up one level.",
     relatedTerms: ["file", "path", "file-system", "home-directory"],
+    relatedLessons: ["linux-filesystem", "start-computer"],
   },
   {
     id: "file-system",
@@ -307,6 +337,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "The way a computer organises all its files and folders into one big tree.",
     long: "On Linux the tree starts at the root directory, written `/`. Everything hangs off it: `/home` for people's own folders, `/etc` for settings, `/var/log` for logs.",
     relatedTerms: ["directory", "path", "root-directory"],
+    relatedLessons: ["linux-filesystem"],
   },
   {
     id: "path",
@@ -316,6 +347,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "The address of a file or folder, written as the folders you pass through to reach it, like `/home/ana/notes.txt`.",
     long: "A path that starts with `/` begins at the very top of the file system, and works from anywhere. A path without it starts from the folder you're in. `.` means the folder you're in and `..` means the one above it.",
     relatedTerms: ["directory", "file-system", "root-directory"],
+    relatedLessons: ["linux-filesystem"],
   },
   {
     id: "home-directory",
@@ -325,6 +357,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "Your own folder on a computer, where your files live and where you start when you log in.",
     long: "On Linux, home directories live under `/home`, so the user ana's is `/home/ana`. The shortcut `~` always means your own home directory.",
     relatedTerms: ["directory", "user-account", "path"],
+    relatedLessons: ["linux-filesystem"],
   },
   {
     id: "root-directory",
@@ -334,6 +367,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "The top folder that every other file and folder on the computer sits inside, written as a single slash.",
     long: "The root directory is `/`. Don't confuse it with the root user, the all-powerful account: they share a name because both sit at the top of something.",
     relatedTerms: ["file-system", "path", "root"],
+    relatedLessons: ["linux-filesystem"],
   },
   {
     id: "root",
@@ -344,6 +378,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "The all-powerful admin account on a computer, which can read, change or delete anything.",
     long: "Because root can do anything, a mistake or a break-in as root can do the most damage. Good practice is to work as a normal user and borrow root's powers only when needed, with `sudo`.",
     relatedTerms: ["sudo", "user-account", "least-privilege", "permissions"],
+    relatedLessons: ["linux-permissions", "linux-processes", "linux-users-groups"],
   },
   {
     id: "user-account",
@@ -352,6 +387,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A named identity on a computer, with its own password and its own files.",
     long: "Every program and every file belongs to some account. Type `whoami` to see which account you're using. Services often run as their own accounts, so a problem in one can't reach another's files.",
     relatedTerms: ["user-group", "root", "home-directory", "permissions"],
+    relatedLessons: ["linux-users-groups", "start-computer", "sec-least-privilege"],
   },
   {
     id: "user-group",
@@ -360,6 +396,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A named set of accounts on a computer that share the same access to some files.",
     long: "Instead of giving five people access to a folder one by one, you put them in a group and give the group access. Every file on Linux has an owning user and an owning group.",
     relatedTerms: ["user-account", "permissions"],
+    relatedLessons: ["linux-users-groups"],
   },
   {
     id: "permissions",
@@ -368,6 +405,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Rules attached to each file that say who may read it, change it or run it.",
     long: 'Linux sets permissions for three kinds of people: the file\'s owner, its group, and everyone else. `ls -l` shows them as letters, like `rw-r-----`: r is read, w is write, x is run. A "permission denied" message means the rules said no, which is often the protection working.',
     relatedTerms: ["user-account", "user-group", "root", "least-privilege"],
+    relatedLessons: ["linux-permissions", "start-computer", "sec-least-privilege"],
   },
   {
     id: "sudo",
@@ -377,6 +415,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "A command that runs one other command with admin powers, after checking you're allowed to.",
     long: "Typing `sudo` before a command asks to run it as root. The computer checks a list of who may do that, and usually asks for your password first. It keeps a record of every use, which investigators love.",
     relatedTerms: ["root", "least-privilege"],
+    relatedLessons: ["linux-permissions", "linux-users-groups", "sec-least-privilege"],
   },
   {
     id: "process",
@@ -385,6 +424,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A program that's running right now.",
     long: "Every process runs as some user account and has a number called its process id. Investigators look for processes that shouldn't be there, like an unfamiliar program running as root.",
     relatedTerms: ["operating-system", "user-account"],
+    relatedLessons: ["linux-processes"],
   },
   {
     id: "log-file",
@@ -393,6 +433,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A file where a computer or program writes down what happened and when, line by line.",
     long: "Logs record logins, errors, web requests and much more, usually under `/var/log` on Linux. They're often the first place an investigator looks. In missions, the simulated `logview` command searches them.",
     relatedTerms: ["timestamp", "digital-forensics", "alert"],
+    relatedLessons: ["linux-logs"],
   },
   {
     id: "hidden-file",
@@ -402,6 +443,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A file whose name starts with a dot, so it doesn't show up in a normal file listing.",
     long: "Type `ls -a` to see hidden files too. They're usually settings, not secrets: hiding them only keeps listings tidy. That's also why a real secret should never rely on being hidden.",
     relatedTerms: ["file", "directory"],
+    relatedLessons: ["linux-filesystem"],
   },
   {
     id: "man-page",
@@ -411,6 +453,28 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "The built-in help page for a command, opened by typing `man` and the command's name.",
     long: "`man ls` explains what `ls` does and lists every option it takes. Reading help pages is a real skill: professionals look things up all the time.",
     relatedTerms: ["command", "terminal"],
+    relatedLessons: ["start-how-to-learn"],
+  },
+  {
+    id: "prompt",
+    term: "Prompt",
+    topic: "linux",
+    short:
+      "The text at the start of the typing line that says the computer is ready for your next command.",
+    long: "In `recruit@range-ws-01:~$`, `recruit` is your account, `range-ws-01` is the computer, `~` is your home folder, and `$` means you're an ordinary account (root gets `#`). The prompt changes as you move between folders, so it always tells you where you are.",
+    relatedTerms: ["terminal", "home-directory", "root"],
+    relatedLessons: ["start-terminal"],
+  },
+  {
+    id: "command-option",
+    term: "Option",
+    aka: ["Flag"],
+    topic: "linux",
+    short:
+      "An extra setting you add after a command's name, usually starting with a dash, that changes what it does.",
+    long: "`ls` lists files, `ls -l` lists them with details, and `ls -a` includes hidden ones. Options can often be combined, like `ls -la`. A command's manual page lists every option it has.",
+    relatedTerms: ["command", "man-page"],
+    relatedLessons: ["start-terminal"],
   },
 
   // Networking: how computers find each other and pass messages.
@@ -422,6 +486,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Two or more computers connected so they can send each other messages.",
     long: "A network can be two laptops on a home wifi, or thousands of machines in an office. The internet is a network of networks.",
     relatedTerms: ["internet", "ip-address", "router"],
+    relatedLessons: ["start-internet", "start-network"],
   },
   {
     id: "internet",
@@ -431,6 +496,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "The worldwide network of networks that links computers everywhere.",
     long: "Your home network connects to the internet through a router. Hacker Simulation never touches the real internet: every network in it is simulated, with made-up addresses.",
     relatedTerms: ["network", "router", "dns"],
+    relatedLessons: ["start-internet"],
   },
   {
     id: "ip-address",
@@ -440,6 +506,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A number that identifies a computer on a network, like a street address for messages.",
     long: "Most IP addresses are written as four numbers from 0 to 255 separated by dots, like `10.0.0.12`. Some ranges, including `10.x.x.x` and `192.168.x.x`, are kept for private networks, which is why the missions use them.",
     relatedTerms: ["subnet", "network", "dns"],
+    relatedLessons: ["net-dns", "net-ip-basics", "start-network"],
   },
   {
     id: "subnet",
@@ -449,6 +516,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A smaller slice of a network, made of addresses that all start the same way.",
     long: "`10.0.0.0/24` means every address from `10.0.0.0` to `10.0.0.255`: the `/24` says the first three numbers stay fixed. Offices often put different teams or machines on different subnets, with firewalls between them.",
     relatedTerms: ["ip-address", "network-segmentation", "firewall"],
+    relatedLessons: ["net-ip-basics", "net-segmentation"],
   },
   {
     id: "port",
@@ -458,6 +526,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "A numbered door on a computer, where each kind of program waits for messages behind its own number.",
     long: "One computer can run a website on port 80 and remote logins on port 22 at the same time: the port number tells each message which program it's for. An open port is a door something is answering. A network scan checks which doors are open.",
     relatedTerms: ["service", "network-scan", "banner", "firewall"],
+    relatedLessons: ["net-ports", "linux-processes"],
   },
   {
     id: "service",
@@ -467,6 +536,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "A program on a computer that waits for messages from other computers and answers them, like a website or email.",
     long: "Each service listens on a port. Finding which services a computer runs, and which versions, tells you where its weak spots might be. The simulated `netscan` command lists them.",
     relatedTerms: ["port", "banner", "server"],
+    relatedLessons: ["net-ports", "linux-processes"],
   },
   {
     id: "banner",
@@ -476,6 +546,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "The short greeting a program sends when you connect, which often names its software and version.",
     long: "A banner like `FTP server 2.3.4 ready` tells a defender, or an attacker, exactly what's running. Old versions with known weaknesses stand out. Hiding version details in banners is a small but real defence.",
     relatedTerms: ["service", "port", "vulnerability"],
+    relatedLessons: ["net-ports"],
   },
   {
     id: "protocol",
@@ -484,6 +555,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "An agreed set of rules for how two computers talk, so each understands the other.",
     long: "Like a shared language with strict manners: who speaks first, what each message looks like, how to say goodbye. HTTP, TCP and DNS are all protocols.",
     relatedTerms: ["tcp", "udp", "http"],
+    relatedLessons: ["net-tcp-handshake"],
   },
   {
     id: "packet",
@@ -493,6 +565,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "A small chunk of data sent across a network, because big messages get split into many of them.",
     long: "Each packet carries a label with where it came from and where it's going, like an envelope. The receiving computer puts the pieces back together in order.",
     relatedTerms: ["tcp", "udp", "ip-address"],
+    relatedLessons: ["net-tcp-handshake", "start-network"],
   },
   {
     id: "tcp",
@@ -503,6 +576,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "A way of sending data that checks every piece arrives, in order, and sends again anything lost.",
     long: "Websites, email and remote logins use TCP because every byte matters. It starts each conversation with the three-way handshake.",
     relatedTerms: ["udp", "tcp-handshake", "protocol", "port"],
+    relatedLessons: ["net-tcp-handshake"],
   },
   {
     id: "udp",
@@ -512,6 +586,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A faster way of sending data that doesn't check whether each piece arrives.",
     long: "Video calls and online games often use UDP, because a late piece of data is useless anyway. DNS lookups use it too, since they're tiny and cheap to ask again.",
     relatedTerms: ["tcp", "protocol", "dns"],
+    relatedLessons: ["net-tcp-handshake"],
   },
   {
     id: "tcp-handshake",
@@ -521,6 +596,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "The three quick messages two computers swap to agree to start a conversation.",
     long: 'One side says "can we talk?" (called SYN), the other says "yes, can we?" (SYN-ACK), and the first says "yes" (ACK). If a port answers the first message, something is listening behind it.',
     relatedTerms: ["tcp", "port", "network-scan"],
+    relatedLessons: ["net-tcp-handshake"],
   },
   {
     id: "dns",
@@ -531,6 +607,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "The internet's address book, which turns names like `example.com` into the number addresses computers use.",
     long: "When you type a website's name, your computer asks a DNS server for its IP address first. Attackers sometimes fake DNS answers to send people to the wrong place.",
     relatedTerms: ["domain-name", "ip-address"],
+    relatedLessons: ["net-dns"],
   },
   {
     id: "domain-name",
@@ -539,6 +616,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A readable name for a place on the internet, like `example.com`.",
     long: "Names are easier to remember than numbers. DNS turns the name into an IP address. The story in Hacker Simulation uses made-up names ending in `.example`, which can never belong to a real website.",
     relatedTerms: ["dns", "url"],
+    relatedLessons: ["net-dns"],
   },
   {
     id: "router",
@@ -547,6 +625,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A box that passes messages between networks and sends each one the right way.",
     long: "Your home router links your devices to the internet. In an office, routers connect subnets to each other, and often have firewall rules built in.",
     relatedTerms: ["network", "firewall", "subnet"],
+    relatedLessons: ["net-segmentation", "start-internet"],
   },
   {
     id: "firewall",
@@ -555,6 +634,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A guard that sits between computers and decides which messages may pass.",
     long: 'A firewall follows rules like "let anyone reach the website on port 443, but only the office can reach port 22". In missions, some computers are behind firewalls, so a scan from outside can\'t see them.',
     relatedTerms: ["network-segmentation", "port", "router", "defence-in-depth"],
+    relatedLessons: ["net-segmentation", "sec-defence-in-depth"],
   },
   {
     id: "network-segmentation",
@@ -564,6 +644,28 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "Splitting a network into separate zones, so trouble in one zone can't spread to the others.",
     long: "A shop might keep its card machines on one subnet, staff laptops on another, and guest wifi on a third, with firewalls between them. Then a problem on the guest wifi can't reach the card machines.",
     relatedTerms: ["subnet", "firewall", "defence-in-depth"],
+    relatedLessons: ["net-segmentation", "sec-defence-in-depth"],
+  },
+  {
+    id: "ssh",
+    term: "SSH",
+    aka: ["Secure Shell"],
+    topic: "networking",
+    short:
+      "A way to control a computer from far away by typing commands, with everything scrambled so nobody in between can read it.",
+    long: "SSH usually answers on port 22. It replaced older ways of logging in from far away, like telnet, because it protects passwords on their way across the network. Most servers are looked after over SSH, so finding port 22 open isn't alarming on its own.",
+    relatedTerms: ["telnet", "port", "encryption"],
+    relatedLessons: ["net-ports"],
+  },
+  {
+    id: "telnet",
+    term: "Telnet",
+    topic: "networking",
+    short:
+      "An old way to control a computer from far away by typing, which sends everything, passwords included, as readable text.",
+    long: "Telnet usually answers on port 23. Anyone who can see the traffic between the two computers can read every word, which is why SSH replaced it decades ago. Telnet left open, especially to everyone, is a classic finding in a security test. You'll meet one in the mission Mapping the network.",
+    relatedTerms: ["ssh", "port", "plaintext"],
+    relatedLessons: ["net-ports"],
   },
   {
     id: "ping",
@@ -580,6 +682,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Any computer on a network, like a laptop, a server or a printer.",
     long: "Security people say host because the list includes things you might not call a computer: printers, cameras, even smart fridges. Your network map in Hacker Simulation shows each host as you discover it.",
     relatedTerms: ["network", "ip-address", "server"],
+    relatedLessons: ["net-ip-basics", "start-network"],
   },
   {
     id: "server",
@@ -608,6 +711,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "Checking a range of addresses to see which computers are switched on, and which of their doors are open.",
     long: "Scanning is how defenders take stock of their own network, and how testers map a client's. Scanning a network you don't have permission to test is against the law in many countries. In missions, the simulated `netscan` command does it.",
     relatedTerms: ["port", "ping", "service", "authorization"],
+    relatedLessons: ["net-ip-basics"],
   },
 
   // The web: how websites work, and how they're attacked and protected.
@@ -629,6 +733,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "The app you use to visit websites, like the one you're reading this in.",
     long: "Your browser sends HTTP requests, shows the pages that come back, and keeps cookies for the sites you visit. It also enforces safety rules, like the same-origin policy.",
     relatedTerms: ["http", "cookie", "same-origin-policy"],
+    relatedLessons: ["web-http", "web-same-origin"],
   },
   {
     id: "http",
@@ -638,6 +743,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "The set of rules browsers and websites use to ask for pages and send them back.",
     long: "Every page visit is an HTTP request and an HTTP response. Plain HTTP isn't scrambled, so anyone on the same network can read it. That's why sites use HTTPS.",
     relatedTerms: ["https", "http-request", "http-response", "status-code"],
+    relatedLessons: ["web-cookies-sessions", "web-http"],
   },
   {
     id: "https",
@@ -647,6 +753,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "The protected way browsers and websites talk, scrambled so nobody in between can read or change it.",
     long: "The S stands for secure. HTTPS uses encryption, and the padlock in your browser's address bar means it's on. It protects the conversation, not the website itself: a scam site can use HTTPS too.",
     relatedTerms: ["http", "encryption"],
+    relatedLessons: ["web-http"],
   },
   {
     id: "url",
@@ -656,6 +763,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "The full address of a page on the web, like `example.com/help`.",
     long: "A URL names the protocol (`https://`), the domain name (`example.com`) and the page (`/help`). Checking the domain name carefully is one of the best ways to spot a phishing link.",
     relatedTerms: ["domain-name", "http", "phishing"],
+    relatedLessons: ["web-http", "web-same-origin"],
   },
   {
     id: "http-request",
@@ -664,6 +772,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "The message your browser sends to a website asking for something, such as a page.",
     long: "A request names what it wants (`GET /index.html`) and carries extra lines called headers, including any cookies. Anything in a request can be changed by whoever sends it, so websites must never trust it blindly.",
     relatedTerms: ["http", "http-response", "cookie"],
+    relatedLessons: ["web-http"],
   },
   {
     id: "http-response",
@@ -673,6 +782,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "The message a website sends back, with the page you asked for or a note saying why not.",
     long: "Every response starts with a status code, like `200` (here it is) or `404` (not found), then headers, then the page itself. Headers often reveal what software the server runs.",
     relatedTerms: ["http", "http-request", "status-code"],
+    relatedLessons: ["web-http"],
   },
   {
     id: "status-code",
@@ -682,6 +792,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       'A three-digit number in a website\'s reply that says how things went, like 404 for "not found".',
     long: 'Codes in the 200s mean success, 300s mean "look elsewhere", 400s mean the request had a problem, and 500s mean the server did. A `403` means "you\'re not allowed", which tells you something is there.',
     relatedTerms: ["http-response", "http"],
+    relatedLessons: ["web-http"],
   },
   {
     id: "cookie",
@@ -691,6 +802,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "A small note a website asks your browser to keep and send back on each visit, so it remembers you.",
     long: "Cookies keep you logged in and remember what's in your basket. Because a login cookie proves who you are, stealing one can be as good as stealing a password. Hacker Simulation itself uses no cookies.",
     relatedTerms: ["session", "browser", "http-request"],
+    relatedLessons: ["web-cookies-sessions", "web-same-origin"],
   },
   {
     id: "session",
@@ -700,6 +812,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "The stretch of time a website remembers you're logged in, usually tracked with a small note your browser keeps.",
     long: "When you log in, the website gives your browser a session id in a cookie. Every later request carries it. Logging out, or waiting too long, ends the session.",
     relatedTerms: ["cookie", "authentication"],
+    relatedLessons: ["web-cookies-sessions"],
   },
   {
     id: "same-origin-policy",
@@ -709,6 +822,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "A browser rule that stops one website's code from reading another website's information.",
     long: "Without it, a page you visited could read your email in another tab. Two pages share an origin only if their protocol, domain name and port all match.",
     relatedTerms: ["browser", "cross-site-scripting"],
+    relatedLessons: ["web-same-origin"],
   },
   {
     id: "owasp-top-10",
@@ -717,6 +831,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A well-known list of the ten most common kinds of website security weak spots.",
     long: "It's published by the Open Worldwide Application Security Project, a non-profit group, and updated every few years. Web developers and testers use it as a checklist. Injection and broken access control are regulars on it.",
     relatedTerms: ["sql-injection", "cross-site-scripting", "vulnerability"],
+    relatedLessons: ["web-owasp-top-10"],
   },
   {
     id: "cross-site-scripting",
@@ -726,6 +841,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Sneaking harmful code into a web page so it runs in other visitors' browsers.",
     long: "It happens when a website shows something a user typed, like a comment, without making it safe first. The code then runs as if the website wrote it, and can read that visitor's cookies. Websites defend by treating everything users type as text, never as code.",
     relatedTerms: ["same-origin-policy", "cookie", "owasp-top-10"],
+    relatedLessons: ["web-owasp-top-10", "web-same-origin"],
   },
   {
     id: "sql-injection",
@@ -735,6 +851,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Typing database commands into a website's form so the website runs them by mistake.",
     long: "SQL is the language many databases speak. If a login form pastes what you type straight into a database command, a carefully written input can change the command's meaning. The fix is to keep user input and commands strictly apart.",
     relatedTerms: ["database", "owasp-top-10"],
+    relatedLessons: ["web-owasp-top-10"],
   },
   {
     id: "database",
@@ -744,6 +861,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "An organised store of information that a program can search and update quickly.",
     long: "Websites keep accounts, orders and messages in databases. That makes them a favourite target, which is why they usually sit behind a firewall where only the web server can reach them.",
     relatedTerms: ["sql-injection", "web-server"],
+    relatedLessons: ["web-owasp-top-10"],
   },
   {
     id: "web-server",
@@ -752,6 +870,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "A program, or the computer running it, that sends web pages to browsers.",
     long: "Web servers usually listen on port 80 for HTTP and 443 for HTTPS. Their banners and headers often name the software and version. In missions, the simulated `webprobe` command asks a web server what it is.",
     relatedTerms: ["server", "http", "banner", "port"],
+    relatedLessons: ["web-http"],
   },
 
   // Cryptography: how secrets are scrambled, stored and checked.
@@ -825,6 +944,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Trying every possible password, one after another, until one works.",
     long: "Short passwords fall fast: there are only so many combinations. Every extra character multiplies the work. Websites defend by slowing down or locking accounts after repeated failed logins, which also stand out in the logs.",
     relatedTerms: ["dictionary-attack", "password-cracking", "password"],
+    relatedLessons: ["linux-logs"],
   },
   {
     id: "dictionary-attack",
@@ -871,6 +991,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "The date and time recorded next to an event, like when a file was changed or someone logged in.",
     long: "Timestamps let you line up events from different places. Watch the time zone: one log in local time and another in UTC can make events look hours apart.",
     relatedTerms: ["timeline", "log-file", "metadata"],
+    relatedLessons: ["linux-logs"],
   },
   {
     id: "timeline",
@@ -978,6 +1099,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "An update that fixes a weak spot or a bug in software.",
     long: "Many break-ins use weaknesses that already had a patch, months earlier, that nobody installed. Keeping software up to date is one of the most effective defences there is.",
     relatedTerms: ["vulnerability", "hardening"],
+    relatedLessons: ["ethics-responsible-disclosure", "sec-defence-in-depth", "web-owasp-top-10"],
   },
   {
     id: "hardening",
@@ -989,6 +1111,15 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     relatedTerms: ["attack-surface", "patch", "least-privilege"],
   },
   {
+    id: "asset-inventory",
+    term: "Asset inventory",
+    topic: "blue-team",
+    short: "A list of every device and program an organisation owns, so nothing gets forgotten.",
+    long: "You can't protect what you don't know about. Forgotten computers, like an old backup machine nobody remembers setting up, are a favourite way in for attackers. Security teams build the list by asking around and by scanning their own networks.",
+    relatedTerms: ["network-scan", "attack-surface", "hardening"],
+    relatedLessons: ["net-segmentation", "sec-threat-modelling"],
+  },
+  {
     id: "two-factor-authentication",
     term: "Two-factor authentication",
     aka: ["2FA"],
@@ -996,6 +1127,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Logging in with two kinds of proof, such as a password plus a code on your phone.",
     long: "Even if someone steals your password, they still need the second factor. It stops most account break-ins, which is why security teams push everyone to turn it on.",
     relatedTerms: ["authentication", "password", "phishing"],
+    relatedLessons: ["sec-defence-in-depth", "web-cookies-sessions"],
   },
   {
     id: "backup",
@@ -1005,6 +1137,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
       "A spare copy of files kept somewhere else, so they can be restored if the originals are lost or locked.",
     long: "A backup only helps if it's kept apart from what it protects, and if someone has tested restoring from it. It's the best answer to ransomware.",
     relatedTerms: ["ransomware", "availability"],
+    relatedLessons: ["sec-cia-triad", "sec-defence-in-depth"],
   },
   {
     id: "ransomware",
@@ -1013,6 +1146,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short: "Harmful software that locks up files and demands payment to unlock them.",
     long: "Ransomware usually gets in through phishing or an unpatched weakness, then spreads across the network. Good backups, patching and network segmentation limit the damage.",
     relatedTerms: ["malware", "backup", "availability", "network-segmentation"],
+    relatedLessons: ["sec-cia-triad"],
   },
 ];
 

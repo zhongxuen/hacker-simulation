@@ -1,0 +1,142 @@
+---
+id: web-same-origin
+title: The same-origin policy
+topic: web
+level: 2
+readingMinutes: 6
+analogy: "Browser tabs are like flats in one building: each flat can read its own post, but a note slipped under your door can't open the flat next door's letters."
+summary: The browser rule that keeps one website from reading what another website shows you.
+prerequisites: [web-cookies-sessions]
+relatedCommands: [webprobe]
+glossaryTerms: [same-origin-policy, url, browser, cookie, cross-site-scripting]
+---
+
+## The one-sentence version
+
+Your <Term id="browser">browser</Term> has a rule that a web page may only read things from its own website, not from other websites you happen to have open. It's called the <Term id="same-origin-policy">same-origin policy</Term>, and it's one of the most important protections on the web.
+
+Think of tabs as flats in one building. Each flat reads its own post. A note someone slips under your door can't open your neighbour's letters.
+
+<Quiz
+  question="You have your bank open in one tab and a stranger's page in another. Can the stranger's page read your bank balance?"
+  options={[
+    {
+      text: "Yes, anything open in the browser is shared",
+      explanation:
+        "If that were true, every page you visited could read your email and bank. The same-origin policy is what stops it.",
+    },
+    {
+      text: "No, the browser keeps each website's pages apart",
+      correct: true,
+      explanation:
+        "The stranger's page can show you things, but the browser won't let it read what the bank's page shows.",
+    },
+    {
+      text: "Only if the bank uses HTTP instead of HTTPS",
+      explanation:
+        "HTTPS protects the conversation on the network. Keeping tabs apart is a separate job, done by the same-origin policy either way.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+Your browser is signed in to lots of things at once: email, shopping, work tools. Each of those sites trusts your browser because it carries your <Term id="cookie">cookies</Term>. Without a rule keeping sites apart, any page you opened could quietly ask your email for your messages, with your cookies attached, and read the answer.
+
+Many web attacks are attempts to get around this rule, and many web defences are about keeping it strong.
+
+## How it actually works
+
+An origin is three parts of a <Term id="url">URL</Term> (a web address) taken together. Pick each part:
+
+<PacketDiagram
+  title="The parts of a URL"
+  fields={[
+    {
+      label: "Scheme",
+      value: "https://",
+      size: 2,
+      note: "How to talk to the site: `http` or `https`. Part of the origin.",
+    },
+    {
+      label: "Host",
+      value: "shop.example",
+      size: 3,
+      note: "Which computer, by name. Part of the origin. `www.shop.example` and `shop.example` count as different hosts.",
+    },
+    {
+      label: "Port",
+      value: ":443",
+      note: "Which door on that computer. Part of the origin. When it's left out, it's 443 for https and 80 for http.",
+    },
+    {
+      label: "Path",
+      value: "/basket",
+      size: 2,
+      note: "Which page on the site. Not part of the origin: every page on a site shares one origin.",
+    },
+  ]}
+/>
+
+Two pages have the same origin only if scheme, host and port all match. When a page asks for something from a different origin, the browser still lets it send some requests, like loading a picture or submitting a form, but it won't let the page read the answer.
+
+A website that wants to share with other origins can say so, with a response header called CORS (Cross-Origin Resource Sharing). The browser relaxes the rule only as far as that header allows.
+
+Where the flats analogy breaks down: the rule is enforced by the browser, not the website. A program that isn't a browser, like `webprobe`, can ask any site for anything it's allowed to reach. The policy protects people browsing, not the website itself.
+
+## See it
+
+<Quiz
+  question="Which of these has the same origin as `https://shop.example/basket`?"
+  options={[
+    {
+      text: "`https://shop.example/checkout`",
+      correct: true,
+      explanation:
+        "Same scheme, same host, same port (443, left out). Only the path differs, and the path isn't part of the origin.",
+    },
+    {
+      text: "`http://shop.example/basket`",
+      explanation:
+        "The scheme is `http`, not `https`, and that also changes the port from 443 to 80. Different origin.",
+    },
+    {
+      text: "`https://pay.shop.example/basket`",
+      explanation:
+        "`pay.shop.example` is a different host from `shop.example`, even though it looks related. Different origin.",
+    },
+    {
+      text: "`https://shop.example:8443/basket`",
+      explanation:
+        "Port 8443 isn't the default 443, so it's a different door on the same computer. Different origin.",
+    },
+  ]}
+/>
+
+<Quiz
+  question="An attacker gets a shop's own page to run their script. Does the same-origin policy stop it reading the shopper's basket?"
+  options={[
+    {
+      text: "Yes, scripts from attackers are always blocked",
+      explanation:
+        "The browser can't tell who wrote a script. It only checks which origin the page belongs to.",
+    },
+    {
+      text: "No, the script now counts as the shop's own origin",
+      correct: true,
+      explanation:
+        "That's why cross-site scripting is so serious: it gets past the rule by running inside the website. Defenders stop it by treating everything visitors type as text, never as code.",
+    },
+  ]}
+/>
+
+## In practice
+
+When a tester finds a way to make a site show visitors text that their browser runs as code, called <Term id="cross-site-scripting">cross-site scripting</Term>, the report explains it in these terms: the attacker's code runs with the site's own origin, so the same-origin policy doesn't help. When you read `webprobe` output in a mission, response headers like `Set-Cookie` and any CORS headers are part of how a site draws its borders.
+
+## Common misconceptions
+
+- **"The same-origin policy stops all attacks between websites."** It stops a page reading another site's answers. It doesn't stop a page making some requests, which is why cookies also get the `SameSite` rule, and why forms that change things need extra checks.
+- **"Same domain name, same origin."** `http://` and `https://`, or two different ports, are different origins even on the same name.
+- **"It's a setting on the website."** It's built into every browser. Websites can only loosen it for themselves, with CORS headers, and getting those headers too loose is a common finding.
+- **"If a site is on HTTPS, the policy doesn't matter."** HTTPS and the same-origin policy do different jobs: one guards the network, the other guards the tabs from each other.

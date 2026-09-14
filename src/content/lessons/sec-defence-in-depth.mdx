@@ -1,0 +1,85 @@
+---
+id: sec-defence-in-depth
+title: Defence in depth
+topic: foundations
+level: 1
+readingMinutes: 4
+analogy: "A bakery doesn't rely on its front door alone: there's a lock, an alarm, a safe for the takings, and a camera. Each one catches what the others miss."
+summary: Why good security is layers, so one mistake never opens everything.
+prerequisites: [sec-cia-triad]
+relatedMissions: [net-01]
+relatedCommands: [cat, sudo, netscan]
+glossaryTerms:
+  [defence-in-depth, firewall, network-segmentation, patch, two-factor-authentication, backup]
+---
+
+## The one-sentence version
+
+<Term id="defence-in-depth">Defence in depth</Term> means protecting something with several layers,
+so that when one layer fails, and one always does eventually, the next one still holds.
+
+A bakery doesn't rely on its front door alone. There's a lock, an alarm, a safe for the takings, and a camera over the till. Each catches what the others miss.
+
+<Quiz
+  question="A shop has the strongest front door money can buy, and nothing else. What's the weak spot?"
+  options={[
+    {
+      text: "There isn't one: the door is the strongest there is",
+      explanation:
+        "Doors get left open, keys get copied, and windows exist. One layer, however strong, fails all at once.",
+    },
+    {
+      text: "Once anyone gets past the door, nothing else stops them",
+      correct: true,
+      explanation:
+        "That's the whole idea. An alarm, a safe or a camera would each give a second chance.",
+    },
+    {
+      text: "Strong doors attract burglars",
+      explanation:
+        "That's not how it works. The problem is what happens when the door is beaten, not the door itself.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+Every defence has gaps: a password gets guessed, a setting gets forgotten, an update gets skipped. Real attacks usually chain several small gaps together. Layers mean an attacker has to find a way past each one, and every extra step is another chance to be noticed and stopped.
+
+## How it actually works
+
+Layers on a computer network often look like this, from the outside in:
+
+| Layer                                                       | What it does                                                                                              | In the bakery                                          |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| <Term id="firewall">Firewall</Term>                         | Rules about which computers may talk to which.                                                            | Only the website is reachable from outside.            |
+| <Term id="network-segmentation">Network segmentation</Term> | Separate zones, so trouble in one can't spread.                                                           | Customer wifi can't reach the servers.                 |
+| Sign-in                                                     | Proof of who you are, ideally with <Term id="two-factor-authentication">two-factor authentication</Term>. | Staff need a password and a code.                      |
+| File permissions                                            | Each file readable only by those who need it.                                                             | The database password locked to the website's account. |
+| Updates                                                     | Each <Term id="patch">patch</Term> closes a known weak spot.                                              | The backup computer's old software replaced.           |
+| Logs and alerts                                             | Someone notices when something odd happens.                                                               | Idris reads the sign-in logs.                          |
+| <Term id="backup">Backup</Term>                             | A spare copy, kept apart, if all else fails.                                                              | Orders copied somewhere safe every night.              |
+
+Where the bakery analogy breaks down: a burglar has to be there in person. On a network, an attacker can try every layer from far away, over and over, without getting tired. That's why the layers need to be checked, not only built.
+
+## See it
+
+Here's a practice computer with two layers in the way. Try reading Kit's private file, then try again with `sudo`, which runs a command as the admin account.
+
+<MiniTerminal
+  scenario="range-permissions"
+  commands={["cat /home/kit/plans.txt", "sudo cat /home/kit/plans.txt", "ls -l /home/kit"]}
+  task="Try `cat /home/kit/plans.txt`, then `sudo cat /home/kit/plans.txt`."
+/>
+
+The file's permissions stopped the first try. The second try hit a different layer: your account isn't allowed to use `sudo`. Two separate locks, and either one alone would have kept the file private.
+
+## In practice
+
+In Chapter 1, the Hollow Latch got in because two layers failed at once: a password left in a file anyone could read, and customer wifi that could reach the servers. Fixing either one would have stopped them. In the mission [Mapping the network](/missions/net-01), your fix adds back the missing layer.
+
+## Common misconceptions
+
+- **"One strong wall is enough."** Every wall fails sometimes. Layers turn one failure into a near miss instead of a break-in.
+- **"With enough layers, updates don't matter."** Each layer is only as good as its upkeep. An unpatched layer is a gap in the wall.
+- **"More layers always means more secure."** Layers nobody checks, or that get in the way so badly people work around them, can make things worse. Good layers are ones people keep using.

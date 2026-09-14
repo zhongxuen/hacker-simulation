@@ -1,0 +1,82 @@
+---
+id: start-how-to-learn
+title: How to learn here
+topic: foundations
+level: 0
+readingMinutes: 3
+analogy: "Learning here is like joining a team on a real case: short jobs, a mentor who answers questions, and nobody keeping score."
+summary: Missions, free hints, your mentor, and why getting stuck is part of it.
+prerequisites: [start-internet]
+relatedMissions: [intro-01]
+relatedCommands: [help, man]
+glossaryTerms: [ethical-hacking, man-page]
+---
+
+## The one-sentence version
+
+You learn here by doing short missions with a team of good-guy hackers, looking things up in these lessons whenever you want, and asking for hints as often as you like.
+
+It's like joining a team on a real case: short jobs, a mentor who answers questions, and nobody keeping score.
+
+<Quiz
+  question="You're stuck on a step in a mission. What happens if you open a hint?"
+  options={[
+    {
+      text: "You lose points",
+      explanation: "There are no points to lose. Hints are free, every time.",
+    },
+    {
+      text: "Nothing, except you get a hint",
+      correct: true,
+      explanation: "Right. Hints never cost anything, and nothing about using them is recorded.",
+    },
+    {
+      text: "The mission ends",
+      explanation: "Nothing here ends a mission early. Take a hint, then keep going.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+Real security work is mostly being stuck, then working out the next small step. Professionals look things up all day. Getting comfortable with that is as useful as any command.
+
+And because this is <Term id="ethical-hacking">ethical hacking</Term>, every mission shows you both sides: how a weak spot is found, and how it's fixed.
+
+## How it actually works
+
+- **Missions** are short story episodes, 5 to 20 minutes long. Each one starts with a briefing and a signed letter saying what your team may test, then gives you small steps, one at a time.
+- **Hints** come in three for each step: a nudge, then the idea, then nearly the answer. Open as many as you need. Your mentor, Noor, is the face of those hints in the story.
+- **Lessons** like this one explain one idea at a time. Marked words open their meaning when you hover over, tap or focus them, and the glossary has them all.
+- **Mistakes are safe.** Every terminal has a Reset machine button that puts everything back.
+- **Nothing is saved.** There's no account and no score. Every mission is open from the start, and you can replay any of them to find the secrets you missed.
+
+## Try it
+
+When you don't know what a command does, the terminal can tell you. Its built-in instructions are called a <Term id="man-page">manual page</Term>.
+
+<MiniTerminal
+  scenario="range-home"
+  commands={["help", "man ls"]}
+  task="Open the manual for `ls` with `man ls`."
+  expect="man"
+  success="You read a manual page. Every command here has one, and reading it is a real skill, not a sign you're behind."
+/>
+
+Type `help` in any terminal to see every command, grouped by what it's for.
+
+## In practice
+
+Your first mission, [Welcome to the team](/missions/intro-01), takes about 8 minutes. A short tour points at where to type, and your first step ticks within a minute.
+
+## Common misconceptions
+
+- **"Using hints means I'm not good at this."** Hints are how everyone learns here. Nobody sees how many you used, including you.
+- **"I have to finish the lessons before the missions."** Start wherever you like. Missions explain what they need as you go, and link here for more.
+- **"If I close the tab, I'll lose my progress."** There's no progress to lose. A mission is short enough for one sitting, and you can start any of them again whenever you want.
+
+## You're ready
+
+You know what ethical hacking is, what a computer and a terminal are, and how networks join up. That's everything your first mission needs. Your team is waiting.
+
+<TryIt mission="intro-01" />

@@ -18,6 +18,19 @@ interface LessonArticleProps {
   prerequisites: readonly Lesson[];
   /** Lessons that build on this one. */
   readNext: readonly Lesson[];
+  /** Where this lesson sits in a track, like Start here, when it's in one. */
+  track?: LessonTrackPosition;
+  /** The related missions' names and addresses, by id. Without one, the id is shown. */
+  missionTitles?: Readonly<Record<string, { readonly slug: string; readonly title: string }>>;
+}
+
+/** A lesson's place in a track (src/content/tracks.ts): "Start here, 3 of 6". */
+export interface LessonTrackPosition {
+  readonly title: string;
+  readonly position: number;
+  readonly total: number;
+  readonly previous?: Lesson;
+  readonly next?: Lesson;
 }
 
 const LINK = cx("rounded-sm font-medium text-accent hover:underline", FOCUS_RING);
@@ -55,6 +68,8 @@ export function LessonArticle({
   toc,
   prerequisites,
   readNext,
+  track,
+  missionTitles = {},
 }: LessonArticleProps) {
   const topic = LESSON_TOPICS[lesson.topic];
   const hasRelated =
@@ -81,6 +96,11 @@ export function LessonArticle({
             <Badge tone="accent">{topic.label}</Badge>
             <Badge>{LESSON_LEVEL_LABELS[lesson.level]}</Badge>
             <span className="text-sm text-secondary">About {lesson.readingMinutes} min</span>
+            {track && (
+              <span className="text-sm text-secondary">
+                · {track.title}, {track.position} of {track.total}
+              </span>
+            )}
           </div>
           {prerequisites.length > 0 && (
             <div className="mt-6 rounded-lg border border-subtle bg-surface-raised px-4 py-3">
@@ -102,6 +122,30 @@ export function LessonArticle({
         )}
 
         <div className="mt-10">{content}</div>
+
+        {track && (track.previous || track.next) && (
+          <nav
+            aria-label={`${track.title} track`}
+            className="mt-12 flex flex-wrap justify-between gap-4 rounded-xl border border-subtle bg-surface-raised px-5 py-4"
+          >
+            {track.previous ? (
+              <Link href={`/learn/${track.previous.id}`} className={LINK}>
+                <span className="block text-sm font-normal text-secondary">Previous</span>
+                {track.previous.title}
+              </Link>
+            ) : (
+              <span />
+            )}
+            {track.next && (
+              <Link href={`/learn/${track.next.id}`} className={cx(LINK, "text-right")}>
+                <span className="block text-sm font-normal text-secondary">
+                  Next in {track.title.toLowerCase()}
+                </span>
+                {track.next.title}
+              </Link>
+            )}
+          </nav>
+        )}
 
         {hasRelated && (
           <footer className="mt-14 space-y-6 border-t border-subtle pt-8">
@@ -134,8 +178,8 @@ export function LessonArticle({
                 <ul className="flex flex-wrap gap-x-4 gap-y-1">
                   {lesson.relatedMissions.map((id) => (
                     <li key={id}>
-                      <Link href={`/missions/${id}`} className={LINK}>
-                        {id}
+                      <Link href={`/missions/${missionTitles[id]?.slug ?? id}`} className={LINK}>
+                        {missionTitles[id]?.title ?? id}
                       </Link>
                     </li>
                   ))}

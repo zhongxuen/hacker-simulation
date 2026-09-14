@@ -1,0 +1,106 @@
+---
+id: ethics-responsible-disclosure
+title: Responsible disclosure, or how to report a weak spot
+topic: foundations
+level: 1
+readingMinutes: 4
+analogy: "Responsible disclosure is like telling a neighbour quietly that their back door doesn't lock, instead of pinning a sign to the fence."
+summary: Telling the owner privately about a weakness, and giving them time to fix it before anyone else hears.
+prerequisites: [ethics-scope]
+relatedMissions: [linux-01, net-01]
+relatedCommands: []
+glossaryTerms: [responsible-disclosure, vulnerability, patch]
+---
+
+## The one-sentence version
+
+<Term id="responsible-disclosure">Responsible disclosure</Term> means telling a system's owner
+privately about a weakness you found, and giving them time to fix it before anyone else hears about
+it.
+
+A weak spot in a computer system is called a <Term id="vulnerability">vulnerability</Term>. What you do after finding one matters as much as finding it. Try this one:
+
+<Quiz
+  question="While testing Tumbleloaf Bakery's server with Roz's permission, you find its database password in a file anyone can read. What happens next?"
+  options={[
+    {
+      text: "Post about it online so other bakeries learn from it",
+      explanation:
+        "Posting it before it's fixed tells everyone, attackers included, exactly where to look. Lessons can be shared later, once it's fixed and with Roz's agreement.",
+    },
+    {
+      text: "Report it to Roz in plain words, with how to fix it",
+      correct: true,
+      explanation:
+        "Right. The owner hears first, privately, with enough detail to fix it. That's the whole point of the test.",
+    },
+    {
+      text: "Use the password to check how much it can reach",
+      explanation:
+        "That goes beyond finding the problem. Unless the agreement says you may use what you find, stop, report it, and let the client decide.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+A weakness that's public but not fixed is a map for attackers. Announcing it too early can hurt the owner, and it can hurt their customers, whose data sits behind that weak spot.
+
+Keeping it secret forever isn't right either. People deserve to have problems fixed. Responsible disclosure is the middle path: the owner gets a fair chance to fix it, and then, if everyone agrees, the lessons can be shared.
+
+## How it actually works
+
+Inside a paid test, like the ones your team does, the path is agreed in advance. Everything you find goes into a report for the client, and it stays between you and them.
+
+Outside a test, when someone stumbles on a weakness in a website they use, the usual steps look like this:
+
+1. **Stop.** Don't dig further or try to prove it by breaking in.
+2. **Find the right contact.** Many organisations publish how they want to hear about problems, sometimes in a file called `security.txt` on their website. Some run programmes that reward reports, often called bug bounties.
+3. **Report privately**, with what you saw and how to repeat it safely.
+4. **Give them time.** A common arrangement is around 90 days, agreed with the owner, to build and release a fix, called a <Term id="patch">patch</Term>.
+5. **Share later, if agreed.** After the fix, researchers sometimes publish what they learned so others can avoid the same mistake.
+
+Careful: finding something by accident doesn't give you permission to test it further. Stop at what you saw.
+
+## See it
+
+<Annotated
+  title="A finding in a report to a client"
+  code={`Finding 1: Database password readable by every account
+Where:     orders-01, /srv/orders/config/database.conf
+Risk:      anyone with an account on orders-01 can read it
+Fix:       sudo chmod 640 on the file, then change the password
+Status:    fixed during the test, password change pending`}
+  notes={[
+    { line: 1, label: "One clear line", text: "Say what's wrong in words the owner understands." },
+    { line: 2, label: "Where", text: "Exact enough that their team can find it without guessing." },
+    {
+      line: 3,
+      label: "Why it matters",
+      text: "What could go wrong, in plain words, without drama.",
+    },
+    {
+      line: 4,
+      label: "How to fix it",
+      text: "A finding with a fix gets acted on. A finding without one gets put off.",
+    },
+    {
+      line: 5,
+      label: "What's left",
+      text: "Changing the password matters too, because someone may already have copied it.",
+    },
+  ]}
+/>
+
+## In practice
+
+In [Reading the machine](/missions/linux-01), you find a password left in a file anyone on the bakery's server can read, and you fix it before reporting it. In [Mapping the network](/missions/net-01), you write a one-line finding and choose the fix to recommend to Roz.
+
+<TryIt mission="linux-01" />
+
+## Common misconceptions
+
+- **"Posting a bug publicly is the only way to make them fix it."** Most owners fix problems once they hear about them privately. Going public first puts their customers at risk while they scramble.
+- **"If I found it by accident, I'm allowed to keep testing it."** Stumbling on something doesn't grant permission. Report what you saw and stop there.
+- **"A reward programme means anything goes."** Bug bounty programmes have their own rules about what may be tested and how. Outside those rules, it's testing without permission.
+- **"Reporting a problem gets you in trouble."** Many organisations welcome reports and say so publicly. Following their published process, and not digging further, is what keeps a report on the right side of the line.

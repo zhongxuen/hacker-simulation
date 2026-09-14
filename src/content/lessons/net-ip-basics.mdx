@@ -1,0 +1,132 @@
+---
+id: net-ip-basics
+title: IP addresses and ranges
+topic: networking
+level: 1
+readingMinutes: 5
+analogy: "An IP address is like a house number on a street: it tells messages which door to go to."
+summary: Every computer on a network has an address, and a range like /24 is a whole street of them.
+prerequisites: [start-network]
+relatedMissions: [net-01]
+relatedCommands: [ifconfig, netscan, ping]
+glossaryTerms: [ip-address, host, subnet, network-scan]
+---
+
+## The one-sentence version
+
+Every computer on a network has an address, like a house on a street, so messages know where to go. That address is called its <Term id="ip-address">IP address</Term> (IP stands for Internet Protocol, the rules computers use to pass messages along).
+
+Your practice computer has one too. Ask it:
+
+<MiniTerminal
+  scenario="range-network"
+  commands={["ifconfig"]}
+  task="Type `ifconfig` and press Enter, then look for the address after the word `inet`."
+  expect="ifconfig"
+  success="Your practice computer's address is `192.168.60.10`. Every message meant for it carries that number."
+/>
+
+## Why it matters in security
+
+You can't protect a computer you don't know is there. The first thing a defender does on a network is find out which addresses are in use, and what's behind each one. Attackers do the same thing, which is why a forgotten computer with an address nobody remembers is such a good hiding place for trouble.
+
+Addresses also show up everywhere a security analyst looks: in logs ("someone signed in from `192.168.77.23`"), in firewall rules, and in scan results. Reading them quickly is a core skill.
+
+## How it actually works
+
+An IP address is four numbers from 0 to 255, separated by dots: `192.168.60.20`. Any computer with an address is called a <Term id="host">host</Term>.
+
+Computers that sit on the same network usually share the first part of their address, like houses on the same street share a street name. That group of neighbouring addresses is a <Term id="subnet">subnet</Term>.
+
+A range is written with a slash: `192.168.60.0/24`. The `/24` means "the first three numbers stay the same". So `192.168.60.0/24` is every address from `192.168.60.0` to `192.168.60.255`: 256 addresses, one street.
+
+<PacketDiagram
+  title="Reading the range 192.168.60.0/24"
+  fields={[
+    {
+      label: "First number",
+      value: "192",
+      note: "Fixed. The /24 says the first three numbers belong to the street's name.",
+    },
+    {
+      label: "Second number",
+      value: "168",
+      note: "Fixed. Together, `192.168` marks this as a private address: one that only works inside a building or lab, never on the open internet.",
+    },
+    {
+      label: "Third number",
+      value: "60",
+      note: "Fixed. On the Range, Candlewright's practice lab, every address starts `192.168.60.`.",
+    },
+    {
+      label: "Last number",
+      value: "0 to 255",
+      size: 2,
+      note: "This part changes: it's the house number. `.10` is your practice computer, `.20` is the web server.",
+    },
+  ]}
+  caption="The /24 counts bits: 24 of the address's 32 bits stay fixed, which is exactly the first three numbers."
+/>
+
+Where the house-number analogy breaks down: a computer can have more than one address (one for each network it's plugged into), and addresses can change when a computer reconnects. That's why analysts always note the time next to an address.
+
+## See it
+
+A <Term id="network-scan">network scan</Term> knocks on every address in a range and lists the computers that answer. Try it on the Range:
+
+<MiniTerminal
+  scenario="range-network"
+  commands={["netscan 192.168.60.0/24", "ifconfig"]}
+  task="Scan the whole Range with `netscan 192.168.60.0/24`."
+  expect="netscan"
+  success="You scanned 256 addresses and found every computer that's switched on. That list is the start of every network map."
+/>
+
+<Annotated
+  title="What that scan told you"
+  code={`ADDRESS        NAME                                       STATUS
+192.168.60.10  range-ws-01.range.candlewright.example     up (this computer)
+192.168.60.20  range-web-01.range.candlewright.example    up (replied in 1.8 ms)
+192.168.60.30  range-files-01.range.candlewright.example  up (replied in 1.4 ms)
+
+Done: 256 addresses checked · 3 hosts up · 2.44 s`}
+  notes={[
+    { line: 2, label: "You are here", text: "Your own computer answers too. `.10`is your house on the street." },
+    { line: 3, label: "A neighbour", text: "The web server lives at`.20`. The scan also shows the name it goes by." },
+{ line: 5, label: "The summary", text: "256 addresses checked, 3 answered. The other 253 are empty lots, or computers that are switched off." },
+]}
+/>
+
+<Quiz
+  question="Which of these addresses is inside the range `10.40.1.0/24`?"
+  options={[
+    {
+      text: "`10.40.1.23`",
+      correct: true,
+      explanation:
+        "The first three numbers, `10.40.1`, match. Only the last number changes inside a /24, so this one is on the street.",
+    },
+    {
+      text: "`10.40.2.15`",
+      explanation:
+        "Close, but the third number is 2, not 1. That's the next street over: the range `10.40.2.0/24`.",
+    },
+    {
+      text: "`192.168.1.40`",
+      explanation:
+        "Only the last number matches. The first three numbers are completely different, so it's a different network.",
+    },
+  ]}
+/>
+
+## In practice
+
+In [Mapping the network](/missions/net-01), you're on a staff laptop at Tumbleloaf Bakery. You'll find your own address with `ifconfig`, then scan two ranges: the staff network, `10.40.1.0/24`, and the server network, `10.40.2.0/24`. Each computer that answers lights up on your map.
+
+<TryIt mission="net-01" />
+
+## Common misconceptions
+
+- **"Private addresses like `192.168.x.x` are secret."** They're not secret, they're local. Thousands of homes and offices use the same `192.168.1.x` addresses inside their own walls. Knowing one tells an outsider almost nothing, and hiding it protects nothing.
+- **"An address belongs to a person."** An address belongs to a connection, and it can move. A laptop gets a different address at home, at the bakery, and on the customer wifi. That's why investigators pair an address with a time.
+- **"If a scan doesn't find a computer, it isn't there."** Some computers ignore scans, or sit behind rules that block you. A scan shows what answered you, not everything that exists.

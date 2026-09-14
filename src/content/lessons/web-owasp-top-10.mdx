@@ -1,0 +1,146 @@
+---
+id: web-owasp-top-10
+title: The OWASP Top 10
+topic: web
+level: 2
+readingMinutes: 7
+analogy: "The OWASP Top 10 is like a list of the ten most common reasons houses get broken into: not a burglar's manual, but a checklist of what to fix first."
+summary: The web's best-known list of common weak spots, what each one means in plain words, and how each gets fixed.
+prerequisites: [web-http]
+relatedCommands: [webprobe]
+glossaryTerms:
+  [
+    owasp-top-10,
+    vulnerability,
+    sql-injection,
+    cross-site-scripting,
+    authentication,
+    patch,
+    database,
+  ]
+---
+
+## The one-sentence version
+
+The <Term id="owasp-top-10">OWASP Top 10</Term> is a list of the ten kinds of weak spot that turn up most often in websites, written by OWASP (the Open Worldwide Application Security Project), a community of volunteers who share security knowledge for free.
+
+Think of it as a list of the ten most common reasons houses get broken into. It isn't a burglar's manual. It's a checklist that tells builders what to fix first.
+
+<Quiz
+  question="Who is the OWASP Top 10 mainly for?"
+  options={[
+    {
+      text: "Attackers looking for targets",
+      explanation:
+        "It names kinds of weak spot, not websites, and it's about fixing them. Attackers already know these; the list helps everyone else catch up.",
+    },
+    {
+      text: "People who build, test and protect websites",
+      correct: true,
+      explanation:
+        "Developers use it to avoid mistakes, testers use it to plan what to check, and managers use it to decide what to fix first.",
+    },
+    {
+      text: "Only very large companies",
+      explanation:
+        "A one-person bakery website can have every item on the list. The ideas apply at any size.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+Most websites aren't broken into with clever new tricks. They're broken into through the same handful of mistakes, made again and again. A shared list gives everyone the same words for them, so a tester can write "this is broken access control" and a developer on the other side of the world knows what to look for.
+
+## How it actually works
+
+The list is rebuilt every few years from data about real weak spots found in thousands of websites. Each <Term id="vulnerability">vulnerability</Term> gets filed into a category, and the most common and most harmful categories make the list. Newer editions reorder the list and rename a few entries, but the same ideas keep coming back. Here's the 2021 edition, in plain words:
+
+| #   | Category                                   | In plain words                                                                         | The usual fix                                                              |
+| --- | ------------------------------------------ | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| 1   | Broken access control                      | You can see or change things that aren't yours, like another customer's order.         | Check, on the server, that every request is allowed for this person.       |
+| 2   | Cryptographic failures                     | Secrets, like passwords or card numbers, are stored or sent without proper scrambling. | Scramble secrets properly, on the way and when stored.                     |
+| 3   | Injection                                  | The website mistakes something a visitor typed for part of its own instructions.       | Keep visitors' text and the site's instructions strictly apart.            |
+| 4   | Insecure design                            | The plan itself has a hole, however carefully it's built.                              | Think about what could go wrong before building.                           |
+| 5   | Security misconfiguration                  | Settings left open: default passwords, test pages, chatty error messages.              | Switch off what isn't needed, and check settings regularly.                |
+| 6   | Vulnerable and outdated components         | The site runs old software with known weak spots.                                      | Keep a list of what you run, and apply each <Term id="patch">patch</Term>. |
+| 7   | Identification and authentication failures | Signing in is weak: guessable passwords, sessions that never end.                      | Strong sign-in, limits on guessing, two-step sign-in.                      |
+| 8   | Software and data integrity failures       | The site trusts updates or data without checking where they came from.                 | Check that updates and data are genuine before using them.                 |
+| 9   | Security logging and monitoring failures   | Nobody writes down what happens, so nobody notices an attack.                          | Keep logs, and have someone watch for trouble.                             |
+| 10  | Server-side request forgery                | The site can be tricked into fetching things from places it shouldn't.                 | Only let the server fetch from an approved list of places.                 |
+
+Two names you'll hear a lot:
+
+- <Term id="sql-injection">SQL injection</Term> is the classic injection. SQL (Structured Query
+  Language) is how websites talk to their <Term id="database">database</Term>. If a site glues a
+  visitor's typing straight into its instructions, the visitor's text can change what the
+  instruction does. The fix is to pass the typing separately, as data, so it can never become an
+  instruction.
+- <Term id="cross-site-scripting">Cross-site scripting</Term>, or XSS, is when a site shows visitors
+  something another visitor typed, and browsers run it as code. The fix is to treat everything
+  visitors type as text when showing it.
+
+Number 7 covers <Term id="authentication">authentication</Term>: proving who you are when you sign in.
+
+## See it
+
+Weak spot number 5, misconfiguration, is the one you can often spot from outside, by reading what a site gives away. Ask the practice shop for its home page and look for anything that shouldn't be public.
+
+<MiniTerminal
+  scenario="range-web"
+  commands={["webprobe range-shop-01", "webprobe range-shop-01/admin"]}
+  task="Look at the shop's home page with `webprobe range-shop-01`."
+  expect="webprobe"
+  success="You spotted what the shop gives away: exact software versions and a developer's note about a test page."
+/>
+
+<Annotated
+  title="What the practice shop gives away"
+  code={`HTTP/1.1 200 OK
+  Server: httpd/2.4.58
+  X-Powered-By: PageForge/3.1
+
+Page title: Practice cake shop
+HTML comments (notes left in the page source):
+
+  <!-- TODO: remove the test page at /test before launch -->`}
+
+notes={[
+{ line: 2, label: "An exact version", text: "Anyone can look up whether httpd 2.4.58 has known weak spots. That's number 6's territory if it's old, and number 5 for announcing it." },
+{ line: 3, label: "More software, named", text: "A header nobody needs. Switching it off is a one-line settings change." },
+{ line: 7, label: "A note to self, in public", text: "Test pages left behind are classic misconfiguration. On this practice site, `/test` has already been removed, and the note wasn't." },
+]}
+/>
+
+<Quiz
+  question="A tester finds that changing the number in `/orders/1187` to `/orders/1188` shows another customer's order. Which item on the list is that?"
+  options={[
+    {
+      text: "Injection",
+      explanation:
+        "Nothing typed became an instruction here. The site did exactly what it was built to do, for someone it shouldn't have.",
+    },
+    {
+      text: "Broken access control",
+      correct: true,
+      explanation:
+        "The site never checked that order 1188 belongs to the person asking. It's number one on the list because it's so common.",
+    },
+    {
+      text: "Security logging and monitoring failures",
+      explanation:
+        "Missing logs would stop anyone noticing, but the weak spot itself is the missing check on who may see which order.",
+    },
+  ]}
+/>
+
+## In practice
+
+Security testers often use the Top 10 as a checklist when planning a website test, and reports use its names so developers know what they're dealing with. Every test still needs the owner's written permission first: the list tells you what to look for, the scope letter tells you where you may look.
+
+## Common misconceptions
+
+- **"If a site avoids these ten, it's secure."** The list covers the most common weak spots, not all of them. It's a starting point.
+- **"The Top 10 is a ranking of hacking techniques to learn."** It's a list of mistakes to prevent. Each entry comes with advice for builders.
+- **"Injection means someone hacked the database directly."** The website itself passes the harmful text along. That's why the fix belongs in the website's code.
+- **"Only big websites need to worry."** Small sites get found by automated tools that check every address they can reach. A forgotten test page is a forgotten test page, whoever owns it.

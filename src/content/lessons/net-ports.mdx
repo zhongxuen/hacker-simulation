@@ -1,0 +1,121 @@
+---
+id: net-ports
+title: Ports and services
+topic: networking
+level: 1
+readingMinutes: 5
+analogy: "A port is like a numbered door on a building; a service is whoever answers it."
+summary: Numbered doors on a computer, the programs that answer them, and why forgotten doors matter.
+prerequisites: [net-ip-basics]
+relatedMissions: [net-01]
+relatedCommands: [netscan, webprobe]
+glossaryTerms: [port, service, banner, ssh, telnet]
+---
+
+## The one-sentence version
+
+A computer's address gets a message to the right building, and a numbered door, called a <Term id="port">port</Term>, gets it to the right room. The program waiting behind a door to answer it is a <Term id="service">service</Term>.
+
+<Quiz
+  question="A computer runs a website and a way to log in from far away. How does a message know which one it's for?"
+  options={[
+    {
+      text: "It uses a different port number for each",
+      correct: true,
+      explanation:
+        "Right. The message carries a port number, like 80 for the website or 22 for logging in, and the computer hands it to the service behind that door.",
+    },
+    {
+      text: "It uses a different address for each",
+      explanation:
+        "One computer usually has one address for both. The address picks the computer; the port picks the program on it.",
+    },
+    {
+      text: "The computer guesses from the message",
+      explanation:
+        "Computers don't guess. The port number written on every message says exactly which door it's for.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+Every open port is a door someone could knock on. Most are meant to be open: a bakery's website needs its web door. The trouble is the doors nobody remembers opening, running old programs nobody updates.
+
+That's why the first question in most security checks is "which doors are open, and should they be?" Closing a door nobody uses is one of the cheapest fixes there is, because there's nothing left to attack.
+
+## How it actually works
+
+Port numbers go from 1 to 65535. Some numbers are customary, so the same door usually means the same job everywhere:
+
+| Port   | Usually runs                             | In plain words                                                                    |
+| ------ | ---------------------------------------- | --------------------------------------------------------------------------------- |
+| `22`   | <Term id="ssh">SSH</Term> (Secure Shell) | Typing commands on a computer from far away, with everything scrambled on the way |
+| `23`   | <Term id="telnet">Telnet</Term>          | The old way to do the same thing, with nothing scrambled, passwords included      |
+| `80`   | A website                                | Web pages, sent as readable text                                                  |
+| `443`  | A secure website                         | Web pages, scrambled on the way                                                   |
+| `9100` | A printer                                | Print jobs                                                                        |
+
+"Usually" matters. Any program can listen on any door, so a scan's guess is a starting point, not a fact. Some services also greet you with a line of text when you knock, called a <Term id="banner">banner</Term>, which can give away the program's name and version.
+
+Where the door analogy breaks down: a real door is either open or shut, but a port can also be open to some visitors and shut to others. A firewall rule might let the staff network in and turn everyone else away.
+
+## See it
+
+Knock on the doors of the Range's web server:
+
+<MiniTerminal
+  scenario="range-network"
+  commands={[
+    "netscan range-web-01 --ports common",
+    "netscan range-files-01 -p 22,445",
+    "webprobe range-web-01",
+  ]}
+  task="Check the most common doors on the web server with `netscan range-web-01 --ports common`."
+  expect="netscan"
+  success="You found which doors are open on range-web-01. That's called enumerating a computer's services."
+/>
+
+<Annotated
+  title="A port scan, line by line"
+  code={`192.168.60.20  range-web-01.range.candlewright.example  up (replied in 1.5 ms)
+  PORT    STATE  SERVICE
+  22/tcp  open   ssh
+  80/tcp  open   http
+  OS guess: Linux`}
+  notes={[
+    {
+      line: 1,
+      label: "The computer answered",
+      text: "Its address, its name, and how fast it replied.",
+    },
+    {
+      line: 3,
+      label: "Door 22 is open",
+      text: "SSH: a way for the people who look after this server to log in from far away. Normal for a server.",
+    },
+    {
+      line: 4,
+      label: "Door 80 is open",
+      text: "A website. `http` is the language web pages are sent in. Try `webprobe range-web-01` to ask it for its home page.",
+    },
+    {
+      line: 5,
+      label: "A guess, not a fact",
+      text: "The scan guesses the operating system from how the computer answers.",
+    },
+  ]}
+/>
+
+## In practice
+
+In [Mapping the network](/missions/net-01), you'll check the doors on a computer at Tumbleloaf Bakery that nobody knew was there. One of its doors is port 23, telnet: it sends passwords as readable text, and it answers anyone, the customer wifi included. That one line becomes your finding.
+
+<TryIt mission="net-01" />
+
+## Common misconceptions
+
+- **"An open port means the computer has been hacked."** An open port is a door someone opened on purpose, usually for a good reason. The questions are whether it should be open, to whom, and what's behind it.
+- **"Port 80 always means a website."** Usually, not always. Any program can listen on any number. Checking what actually answers, with a tool like `webprobe`, beats trusting the number.
+- **"Closing every port is the safest setup."** Then nothing works: no website, no email, no remote fixes. Good security keeps the doors people need, shuts the rest, and limits who can reach each one.
+- **"Telnet and SSH are the same thing."** Both let you type commands on a faraway computer, but SSH scrambles everything and telnet sends it as readable text. Anyone watching the network can read a telnet password.

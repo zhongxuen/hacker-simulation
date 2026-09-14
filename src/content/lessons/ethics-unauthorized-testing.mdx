@@ -1,0 +1,103 @@
+---
+id: ethics-unauthorized-testing
+title: Why testing without permission is a crime
+topic: foundations
+level: 1
+readingMinutes: 5
+analogy: "Testing without permission is like trying the handles on every car in a car park to check they're locked: kind in your head, alarming to everyone watching, and against the law."
+summary: What the law says about getting into computers without permission, and why good intentions don't change it.
+prerequisites: [ethics-authorization]
+relatedMissions: [intro-01]
+relatedCommands: [netscan]
+glossaryTerms: [white-hat, black-hat, authorization, vulnerability]
+---
+
+## The one-sentence version
+
+In most countries, getting into or testing a computer system without the owner's permission is a crime, whatever your reason.
+
+That can feel strange if you meant to help. Try this situation first:
+
+<Quiz
+  question="Kit wants to check a bakery's order server before the owner has signed the letter. Kit only wants to help, and plans to tell her afterwards. Is that OK?"
+  options={[
+    {
+      text: "Yes, because Kit means well",
+      explanation:
+        "The law in most countries looks at whether you had permission, not whether you meant well. Good intentions don't turn it into a test.",
+    },
+    {
+      text: "Yes, if Kit tells her afterwards",
+      explanation:
+        "Telling the owner afterwards doesn't give permission for what already happened. Permission has to come first.",
+    },
+    {
+      text: "No, it waits until the owner has signed",
+      correct: true,
+      explanation:
+        "Right. Without the owner's written permission, checking her server would be accessing someone else's computer without authorization. The letter comes first.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+The difference between a <Term id="white-hat">white hat</Term>, who protects people, and a <Term id="black-hat">black hat</Term>, who breaks in, isn't skill or tools. It's <Term id="authorization">authorization</Term>: the owner's permission.
+
+Laws in many countries make that line firm. The UK's Computer Misuse Act makes it an offence to access a computer without authorization. The US Computer Fraud and Abuse Act covers accessing computers without authorization, or going beyond what you're allowed. Many other countries have similar laws. The details differ from place to place, and this lesson isn't legal advice, but the direction is the same almost everywhere.
+
+The consequences can be serious. They include being prosecuted, fines, prison in some cases, and a record that makes it hard to work in security later. That's why every professional test starts with a signature.
+
+## How it actually works
+
+These laws usually care about a few questions:
+
+- **Did you have permission** from someone entitled to give it?
+- **Did you go beyond it**, for example by testing a system that wasn't on the letter?
+- **What did you do once in?** Reading, copying, changing or deleting data can each make things worse.
+
+Notice what's missing: "Did you mean well?" and "Was the door left open?" A weak spot, called a <Term id="vulnerability">vulnerability</Term>, being there doesn't give anyone permission to use it. An unlocked door still isn't an invitation.
+
+Real harm happens too. A test nobody expected can crash a website, lock people out of accounts, or send a security team into a panic at 2 in the morning. The people affected didn't agree to any of it.
+
+## See it
+
+Here's how the same action reads with and without permission.
+
+<Annotated
+  title="One command, two situations"
+  code={`$ netscan 10.40.2.0/24
+With a signed letter from Roz:  mapping her network, as agreed
+Without one:                    probing a stranger's network`}
+  notes={[
+    {
+      line: 1,
+      label: "The same command",
+      text: "Mapping a network is identical on the keyboard, whoever types it.",
+    },
+    {
+      line: 2,
+      label: "With permission",
+      text: "It's a job. Roz knows it's coming, and the results go to her.",
+    },
+    {
+      line: 3,
+      label: "Without permission",
+      text: "It's someone else's network, tested without asking. The owner can't tell a helper from an attacker, and neither can the law.",
+    },
+  ]}
+/>
+
+## In practice
+
+In [Welcome to the team](/missions/intro-01), Kit suggests exactly this shortcut before Roz's letter arrives. You get to decide, and Theo explains what the real-world consequences would be.
+
+<TryIt mission="intro-01" />
+
+## Common misconceptions
+
+- **"If it's publicly reachable, it's fair game."** A website being on the internet invites you to use it the way it's meant to be used. It doesn't invite you to test its defences.
+- **"Scanning isn't hacking."** Scanning someone else's network can look like the first step of an attack, and in some countries it can be an offence on its own. Professionals only scan networks they have permission for.
+- **"I only looked, I didn't change anything."** Getting in without permission can be a crime even if you don't touch a thing.
+- **"Hacking back at an attacker is self-defence."** Breaking into an attacker's computer is still breaking into a computer, and it could be a wrong address or someone else's machine they borrowed. Reporting it is the owner's call, and investigating is a job for the police.
+- **"Nobody would ever notice."** Security teams keep logs of who connects to what. Your team's defender, Idris, reads them for a living.

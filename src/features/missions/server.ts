@@ -17,3 +17,9 @@ export {
   type MissionFilter,
 } from "./loader/catalog";
 export { MISSION_FILE_EXTENSION, MissionSourceError, parseMissionSource } from "./loader/source";
+export {
+  loadPlaythrough,
+  loadPlaythroughs,
+  parsePlaythroughSource,
+  PLAYTHROUGHS_DIR,
+} from "./loader/playthroughs";

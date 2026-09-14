@@ -11,6 +11,8 @@ export interface CompiledLesson {
   readonly toc: readonly TocEntry[];
   /** Glossary ids used by <Term> in the body. */
   readonly termIds: readonly string[];
+  /** Mission ids used by <TryIt> in the body. */
+  readonly missionIds: readonly string[];
 }
 
 /**
@@ -21,7 +23,7 @@ export interface CompiledLesson {
  * lessons in this repo and never for anything a visitor wrote.
  */
 export async function compileLessonBody(body: string, label: string): Promise<CompiledLesson> {
-  const analysis: LessonAnalysis = { toc: [], termIds: [] };
+  const analysis: LessonAnalysis = { toc: [], termIds: [], missionIds: [] };
   const highlighting = await lessonHighlighting();
   try {
     const { default: Content } = await evaluate(body, {
@@ -30,7 +32,12 @@ export async function compileLessonBody(body: string, label: string): Promise<Co
       remarkPlugins: [remarkGfm, [remarkLesson, analysis, highlighting.languages]],
       rehypePlugins: [highlighting.plugin],
     });
-    return { Content, toc: analysis.toc, termIds: analysis.termIds };
+    return {
+      Content,
+      toc: analysis.toc,
+      termIds: analysis.termIds,
+      missionIds: analysis.missionIds,
+    };
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     throw new Error(`Couldn't build the lesson ${label}. ${reason}`, { cause: error });

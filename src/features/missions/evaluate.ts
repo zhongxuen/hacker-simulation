@@ -51,7 +51,9 @@ interface EvaluationContext {
 function holds(check: ObjectiveCheck, ctx: EvaluationContext): boolean {
   switch (check.kind) {
     case "event":
-      return ctx.events.some((event) => event.type === check.event && matches(event, check.match));
+      return ctx.events.some(
+        (event) => event.type === check.event && eventMatches(event, check.match),
+      );
     case "answer": {
       const accepted = new Set(check.accept.map(normalizeAnswer));
       return ctx.answers.some((answer) => accepted.has(normalizeAnswer(answer)));
@@ -75,7 +77,7 @@ function holds(check: ObjectiveCheck, ctx: EvaluationContext): boolean {
 }
 
 /** Every `match` field equals the event's field of the same name (strict equality). */
-function matches(
+export function eventMatches(
   event: SimEvent,
   match: Readonly<Record<string, string | number | boolean>> | undefined,
 ): boolean {

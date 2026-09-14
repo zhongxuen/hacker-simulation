@@ -1,0 +1,101 @@
+---
+id: start-network
+title: What is a network?
+topic: foundations
+level: 0
+readingMinutes: 3
+analogy: "A network is like a street of houses passing notes: every house has a number, and every note says which number it's from and which number it's for."
+summary: Addresses, messages, and how computers find each other.
+prerequisites: [start-terminal]
+relatedMissions: [net-01]
+relatedCommands: [ifconfig, ping, netscan]
+glossaryTerms: [network, ip-address, packet, host]
+---
+
+## The one-sentence version
+
+A <Term id="network">network</Term> is two or more computers that can pass each other messages.
+
+Picture a street of houses passing notes. Every house has a number, and every note says which number it's from and which number it's for. That's most of it.
+
+<PacketDiagram
+  title="A note passed across a network"
+  fields={[
+    {
+      label: "From",
+      value: "192.168.60.10",
+      size: 2,
+      note: "The sender's address, so the answer can find its way back.",
+    },
+    {
+      label: "To",
+      value: "192.168.60.20",
+      size: 2,
+      note: "The address of the computer the note is for.",
+    },
+    {
+      label: "Message",
+      value: "are you there?",
+      size: 3,
+      note: "What the note says. Here, a tiny check that the other computer is switched on.",
+    },
+  ]}
+  caption="Pick each part to see what it's for."
+/>
+
+## Why it matters in security
+
+Almost every attack today arrives over a network. And almost every defence starts with knowing what's on your own network: you can't protect a computer you don't know is there. Security teams draw maps of their networks for exactly that reason.
+
+## How it actually works
+
+Every computer on a network has an address, called an <Term id="ip-address">IP address</Term> (IP stands for Internet Protocol, the rules for addressing). It looks like four numbers with dots between them, such as `192.168.60.10`.
+
+Messages travel in small pieces called <Term id="packet">packets</Term>. Each packet carries the address it's from and the address it's for, like the note in the diagram. Computers along the way read the "to" address and pass the packet on, until it arrives.
+
+A computer on a network is often called a <Term id="host">host</Term>. When you want to know whether a host is switched on, you send it a tiny "are you there?" message and wait for the answer.
+
+## Try it
+
+This practice computer sits on the Range, your team's practice network. Find its address first, then ask the web server next door whether it's there.
+
+<MiniTerminal
+  scenario="range-network"
+  commands={["ifconfig", "ping range-web-01", "netscan 192.168.60.0/24"]}
+  task="Find this computer's own address with `ifconfig`. Look for the number after `inet`."
+  expect="ifconfig"
+  success="Your practice computer is `192.168.60.10`. Every computer on the Range has an address starting `192.168.60.`"
+/>
+
+Now try `ping range-web-01`. The first line shows the name turned into an address, `192.168.60.20`, and each answer shows how long the round trip took.
+
+<Quiz
+  question="A packet arrives with the wrong 'to' address on it. What happens?"
+  options={[
+    {
+      text: "The right computer gets it anyway",
+      explanation:
+        "Computers only go by the address written on the packet. They can't guess who it was meant for.",
+    },
+    {
+      text: "It goes to whatever computer has that address, or nowhere",
+      correct: true,
+      explanation:
+        "Right. The address decides where it goes. If no computer has it, the packet never arrives.",
+    },
+    {
+      text: "The network fixes the address",
+      explanation: "The network passes packets on. It doesn't know what the sender meant to write.",
+    },
+  ]}
+/>
+
+## In practice
+
+In the mission [Mapping the network](/missions/net-01), you'll find your laptop's address at a bakery, then knock on every address nearby to see which computers answer. Each one lights up on your map.
+
+## Common misconceptions
+
+- **"A network needs the internet."** Two computers in the same room can be a network with no internet at all.
+- **"Wifi and a network are different things."** Wifi is one way computers join a network, with radio instead of cables.
+- **"Every computer answers when you knock."** Some are set to ignore "are you there?" messages. They're still there.

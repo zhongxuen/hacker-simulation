@@ -1,0 +1,140 @@
+---
+id: net-tcp-handshake
+title: The TCP handshake
+topic: networking
+level: 2
+readingMinutes: 6
+analogy: "A handshake is like starting a phone call: 'Hello, can you hear me?' 'Yes, can you hear me?' 'Yes!' Only then does the real talking start."
+summary: How two computers agree to talk before sending anything, and what that tells a scanner.
+prerequisites: [net-ports]
+relatedMissions: [net-01]
+relatedCommands: [netscan, ping]
+glossaryTerms: [packet, protocol, tcp, tcp-handshake, udp]
+---
+
+## The one-sentence version
+
+Before two computers exchange anything important, they greet each other in three quick steps to make sure both are listening. That greeting is the <Term id="tcp-handshake">TCP handshake</Term>.
+
+It's like starting a phone call on a bad line. "Hello, can you hear me?" "Yes, I hear you. Can you hear me?" "Yes!" Now you talk. Pick each step to see what it does:
+
+<PacketDiagram
+  title="The three-step greeting, then the conversation"
+  fields={[
+    {
+      label: "1. SYN",
+      value: "laptop → server",
+      size: 2,
+      note: "SYN is short for synchronise. The laptop says: I'd like to talk to your door 80, and here's the number I'll start counting my messages from.",
+    },
+    {
+      label: "2. SYN-ACK",
+      value: "server → laptop",
+      size: 2,
+      note: "ACK is short for acknowledge. The server says: I heard you, the door is open, and here's my own starting number.",
+    },
+    {
+      label: "3. ACK",
+      value: "laptop → server",
+      size: 2,
+      note: "The laptop says: I heard you too. Both sides now know the other is listening.",
+    },
+    {
+      label: "Data",
+      value: "GET /",
+      size: 3,
+      note: "Only now does the real message go: here, a request for the website's home page.",
+    },
+  ]}
+  caption="Each step is its own small message. The starting numbers let both sides notice a lost or repeated message later."
+/>
+
+## Why it matters in security
+
+The handshake is how a port scan learns that a door is open. A scanner sends step 1 to a port. If a service is listening, step 2 comes back. If nothing is listening, the computer says "no one here", and if a firewall is in the way, often nothing comes back at all. Those three answers, open, closed and silent, are what every scan result is built on.
+
+Defenders use the same fact the other way. Hundreds of step-1 messages from one address to many doors, with no real conversation after, is what a scan looks like in the logs. It's often the first sign that someone is looking around.
+
+## How it actually works
+
+Messages on a network travel in small chunks called <Term id="packet">packets</Term>, each with a label saying where it's from, where it's going, and which port it's for. The rules for how those packets are used form a <Term id="protocol">protocol</Term>: an agreed way of talking, like the etiquette of a phone call.
+
+<Term id="tcp">TCP</Term> (Transmission Control Protocol) is the careful protocol. It starts every
+conversation with the handshake, numbers every packet, and asks again for anything that goes
+missing. Websites, email and remote logins all use it, because a web page with a missing chunk is no
+good to anyone.
+
+Its quicker cousin, <Term id="udp">UDP</Term> (User Datagram Protocol), skips the handshake and the checking. It sends and hopes. That's fine for a video call, where a missing split second doesn't matter and waiting would be worse.
+
+<Annotated
+  title="Three answers a scanner can get"
+  code={`knock on port 80  →  SYN-ACK   the door is open: a service is listening
+knock on port 81  →  RST       the door is closed: "no one here"
+knock on port 82  →  (nothing) something in the way, often a firewall`}
+  notes={[
+    {
+      line: 1,
+      label: "Open",
+      text: "Step 2 of the handshake came back. A scanner marks the port open and stops there, without finishing the greeting.",
+    },
+    {
+      line: 2,
+      label: "Closed",
+      text: "RST is short for reset. The computer is there, but nothing listens on this door.",
+    },
+    {
+      line: 3,
+      label: "Silent",
+      text: "No reply at all. The knock was dropped on the way, usually by a firewall rule. The scanner can't tell whether anything is behind it.",
+    },
+  ]}
+/>
+
+Where the phone-call analogy breaks down: a phone call is one conversation, but a computer can hold thousands of handshakes at once, one for each door and visitor. And nobody hears the greeting: it's over in a few thousandths of a second.
+
+## See it
+
+`netscan` is a simulated scanner, so it doesn't send real packets, but it follows the same logic: a port shows as open when a service would answer the knock. Watch it find two open doors and skip the closed ones:
+
+<MiniTerminal
+  scenario="range-network"
+  commands={["netscan range-web-01 --ports common", "ping -c 2 range-web-01"]}
+  task="Knock on the web server's common doors with `netscan range-web-01 --ports common`."
+  expect="netscan"
+  success="Of 18 doors knocked on, 2 answered: 22 and 80. The other 16 said no one was there, so they aren't listed."
+/>
+
+<Quiz
+  question="A scanner sends step 1 of the handshake to a port and gets no reply at all. What's the most likely reason?"
+  options={[
+    {
+      text: "A firewall dropped the knock",
+      correct: true,
+      explanation:
+        "Right. Silence usually means something between you and the door threw the message away. You can't tell what's behind it.",
+    },
+    {
+      text: "The door is open",
+      explanation:
+        "An open door answers with step 2, SYN-ACK. Silence is the opposite of an answer.",
+    },
+    {
+      text: "The computer is using UDP instead",
+      explanation:
+        "The protocol is chosen per door, not per computer, and a TCP door without a listener says so with a reset. Silence points to something in the way.",
+    },
+  ]}
+/>
+
+## In practice
+
+In [Mapping the network](/missions/net-01), a printer at the bakery ignores the "are you there?" check that scans start with, so a normal scan never lists it. Adding `--no-ping` tells `netscan` to knock on its doors anyway, and door 9100 answers.
+
+<TryIt mission="net-01" />
+
+## Common misconceptions
+
+- **"A port scan is an attack."** A scan asks which doors answer. It doesn't open them. That said, on someone else's network without permission it looks exactly like the first step of an attack, and it's treated that way.
+- **"If there's no reply, there's nothing there."** Silence often means a firewall is dropping your knocks. The computer behind it may be busy serving everyone else.
+- **"TCP is safer than UDP."** TCP is more reliable, not more secret. Neither scrambles anything on its own. Scrambling comes from protocols on top, like HTTPS, the secure way websites send pages (the S stands for secure).
+- **"The handshake checks who you are."** It only checks that both sides are listening. Proving who you are, with a password or a key, comes later, inside the conversation.

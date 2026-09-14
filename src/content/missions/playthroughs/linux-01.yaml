@@ -1,0 +1,44 @@
+# Reading the machine, played the way a beginner might: a chmod without sudo first (it fails, and
+# the terminal explains why), a guess at the permissions that isn't right, then the fix, the
+# manual, and the intruder's note. Run it with `pnpm mission:play linux-01`.
+mission: linux-01
+description: Look around, find the password, misread the lock once, fix it with sudo, find the calling card.
+steps:
+  - run: ls
+    ticks: [look-around]
+  - run: cat welcome-from-roz.txt
+  - run: cd /srv/orders
+  - run: ls
+  - run: cat README.txt
+    ticks: [read-the-notes]
+  - run: ls config
+  - run: cat config/database.conf
+    ticks: [find-the-password]
+  - run: ls -l config
+  - answer: Its owner and its group
+    objective: who-can-read
+    accepted: false
+  - answer: Every account on this computer
+    objective: who-can-read
+    ticks: [who-can-read]
+  - run: man chmod
+    ticks: [read-the-label]
+  - run: chmod 640 config/database.conf
+  - run: sudo chmod 640 config/database.conf
+    ticks: [lock-it]
+  - run: ls -l config
+  - run: ls /tmp
+  - run: cat /tmp/for-the-owner.txt
+    ticks: [calling-card]
+expect:
+  complete: true
+  objectives:
+    [
+      look-around,
+      read-the-notes,
+      find-the-password,
+      who-can-read,
+      lock-it,
+      read-the-label,
+      calling-card,
+    ]

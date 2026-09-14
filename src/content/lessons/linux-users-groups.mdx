@@ -1,0 +1,121 @@
+---
+id: linux-users-groups
+title: Users and groups
+topic: linux
+level: 1
+readingMinutes: 5
+analogy: "Accounts are like staff badges in an office. Each person has their own badge, and a team badge opens the rooms the whole team shares."
+summary: Who you are on a Linux computer, what groups add, and why the admin account is special.
+prerequisites: [linux-permissions]
+relatedMissions: [linux-01]
+relatedCommands: [whoami, id, cat, sudo]
+glossaryTerms: [user-account, user-group, root, sudo]
+---
+
+## The one-sentence version
+
+Everything on a Linux computer happens as some <Term id="user-account">user account</Term>, and accounts can join <Term id="user-group">groups</Term> that share access to the same files.
+
+It's like badges in an office. Your own badge opens your own desk drawer. A team badge opens the room your whole team shares. `id` shows you which badges you're carrying:
+
+<MiniTerminal
+  scenario="range-permissions"
+  commands={["whoami", "id"]}
+  task="Type `id` to see your account and the groups it belongs to."
+  expect="id"
+  success="You're `recruit`, and you're also in the `team` group. That group badge is what lets you read the team's rota."
+/>
+
+## Why it matters in security
+
+Attackers don't break into computers so much as into accounts. Every account is a door, and every extra member of a powerful group is another key to a room that matters.
+
+Defenders use accounts as walls, too. A website can run under its own account with access to its own files and nothing else, so if someone takes over the website, they don't get the whole computer. Reviewing who has which accounts, and who is in which groups, is one of the first things a security check does.
+
+## How it actually works
+
+Linux keeps its list of accounts in a file called `/etc/passwd`. Despite the name, it doesn't hold passwords any more. Each line is one account, with its fields split by colons:
+
+<Annotated
+  title="/etc/passwd on a practice computer"
+  code={`root:x:0:0:root:/root:/bin/bash
+recruit:x:1000:1000:recruit:/home/recruit:/bin/bash
+kit:x:1001:1001:kit:/home/kit:/bin/bash`}
+  notes={[
+    {
+      line: 1,
+      label: "The admin account",
+      text: "Account number 0 is root, the admin. Whatever it's called, number 0 can read and change anything on the computer.",
+    },
+    {
+      line: 2,
+      label: "Your account",
+      text: "Name, an x where the password used to be, account number 1000, main group 1000, a description, the home folder, and the program that runs when you sign in.",
+    },
+    {
+      line: 3,
+      label: "Kit's account",
+      text: "Every person gets their own number and their own home folder.",
+    },
+  ]}
+/>
+
+The real passwords are kept scrambled in `/etc/shadow`, which only root may read. Groups are listed in `/etc/group`: the line `team:x:1004:kit,recruit` says Kit and you are both in `team`.
+
+When you open a file, the computer checks your account against the file's lock. Are you the owner? Use the owner's letters. If not, are you in the file's group? Use the group's letters. Otherwise, you get the everyone-else letters.
+
+<Term id="root">Root</Term> skips the check entirely. Most people never sign in as root. Instead,
+accounts in the `sudo` group can put <Term id="sudo">sudo</Term> in front of one command to run it
+as root, and every use is written down in a log.
+
+## See it
+
+Kit keeps the team rota in `/srv/team/rota.txt`, owned by `kit`, with the group `team` and the lock `-rw-r-----`. Read it, then try Kit's private plans in their home folder.
+
+<MiniTerminal
+  scenario="range-permissions"
+  commands={[
+    "cat /srv/team/rota.txt",
+    "ls -l /srv/team",
+    "cat /home/kit/plans.txt",
+    "cat /etc/group",
+  ]}
+  task="Read the team rota with `cat /srv/team/rota.txt`."
+  expect="cat"
+  success="You read a file you don't own. Your `team` group badge opened it."
+/>
+
+<Quiz
+  question="The rota's lock is `-rw-r-----`, its owner is `kit` and its group is `team`. Why can you read it?"
+  options={[
+    {
+      text: "You're in the `team` group, and the group may read it",
+      correct: true,
+      explanation:
+        "You're not the owner, so the computer checks the group next. You're in `team`, and the group's letters are `r--`.",
+    },
+    {
+      text: "You're the file's owner",
+      explanation:
+        "The owner is `kit`. You're `recruit`, so the owner's letters don't apply to you.",
+    },
+    {
+      text: "Every account may read it",
+      explanation:
+        "The last three letters are `---`. An account outside the `team` group couldn't read it.",
+    },
+  ]}
+/>
+
+## In practice
+
+In the mission [Reading the machine](/missions/linux-01), Roz made you an account called `recruit` on her order server, and put it in the `sudo` group so you could fix what you found. The ordering website runs as its own account, `orders`, and owns its settings file. You'll see why that matters when you try to change its lock.
+
+<TryIt mission="linux-01" />
+
+## Common misconceptions
+
+- **"Root is a person."** Root is an account: the admin account every Linux computer has. Whoever knows its password, or may use sudo, can act as root.
+- **"`/etc/passwd` holds everyone's passwords."** It used to. Today it holds an `x`, and the scrambled passwords live in `/etc/shadow`, which only root can read.
+- **"Every account belongs to a human."** Many belong to programs, like `syslog`, which writes the logs, or a website's own account. Programs get accounts so they can be kept to their own files.
+- **"An account nobody uses is harmless."** A forgotten account with an old password is an unlocked side door. Security reviews look for accounts nobody can explain, and remove them.

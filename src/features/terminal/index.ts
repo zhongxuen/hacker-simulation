@@ -51,3 +51,5 @@ export { announceBlock, MAX_ANNOUNCED_LINES } from "./a11y/announce";
 
 export { Terminal, type TerminalProps } from "./components/terminal";
 export { CommandCheatSheet } from "./components/cheat-sheet";
+export { TerminalPreview } from "./components/terminal-preview";
+export { TerminalLookSettings } from "./components/terminal-look-settings";

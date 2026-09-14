@@ -8,7 +8,7 @@ import {
 import { CommandNameSchema, ContentIdSchema, uniqueIds } from "./ids";
 
 /** Lesson ids that would collide with a page under /learn. */
-export const RESERVED_LESSON_IDS: readonly string[] = ["glossary"];
+export const RESERVED_LESSON_IDS: readonly string[] = ["glossary", "commands"];
 
 /**
  * A lesson's YAML frontmatter (md-files/09-learning-center.md, "Content model").

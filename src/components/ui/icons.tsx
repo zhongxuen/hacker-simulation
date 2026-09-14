@@ -152,6 +152,95 @@ export function PlayIcon(props: IconProps) {
   );
 }
 
+export function TerminalIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
+      <path d="m7.5 10 3 2.5-3 2.5" />
+      <path d="M13 15.5h3.5" />
+    </Icon>
+  );
+}
+
+export function NetworkIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="9" y="3" width="6" height="5" rx="1" />
+      <rect x="3" y="16" width="6" height="5" rx="1" />
+      <rect x="15" y="16" width="6" height="5" rx="1" />
+      <path d="M12 8v4M6 16v-2.5a1.5 1.5 0 0 1 1.5-1.5h9a1.5 1.5 0 0 1 1.5 1.5V16" />
+    </Icon>
+  );
+}
+
+export function GlobeIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3c2.5 2.6 3.5 5.6 3.5 9s-1 6.4-3.5 9c-2.5-2.6-3.5-5.6-3.5-9s1-6.4 3.5-9Z" />
+    </Icon>
+  );
+}
+
+export function KeyIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="8" cy="15" r="4.5" />
+      <path d="m11.2 11.8 8.3-8.3" />
+      <path d="m16.5 6.5 2.5 2.5M14 9l2 2" />
+    </Icon>
+  );
+}
+
+export function FootprintsIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M7 3.5c1.7 0 2.5 1.8 2.5 4.2 0 1.8-.6 3.3-.6 4.8H5.6C5.4 11 4.5 9.6 4.5 7.5 4.5 5.2 5.4 3.5 7 3.5Z" />
+      <path d="M5.8 15.5h3.1v1.2a1.6 1.6 0 0 1-3.1 0Z" />
+      <path d="M17 8c-1.6 0-2.5 1.8-2.5 4.2 0 1.8.6 3.3.6 4.8h3.3c.2-1.5 1.1-2.9 1.1-5 0-2.3-.9-4-2.5-4Z" />
+      <path d="M15.1 20h3.1v1.2a1.6 1.6 0 0 1-3.1 0Z" />
+    </Icon>
+  );
+}
+
+export function ShieldIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3 4.5 6v5.5c0 4.5 3.1 8 7.5 9.5 4.4-1.5 7.5-5 7.5-9.5V6Z" />
+      <path d="m9 12 2.2 2.2L15.5 10" />
+    </Icon>
+  );
+}
+
+export function MapIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M9 4.5 3.5 6.5v13L9 17.5l6 2 5.5-2v-13L15 6.5Z" />
+      <path d="M9 4.5v13M15 6.5v13" />
+    </Icon>
+  );
+}
+
+export function TableIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <path d="M3.5 9.5h17M3.5 14.5h17M9.5 9.5v10" />
+    </Icon>
+  );
+}
+
+export function DownloadIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 4v11" />
+      <path d="m7.5 10.5 4.5 4.5 4.5-4.5" />
+      <path d="M4.5 19.5h15" />
+    </Icon>
+  );
+}
+
 export function InboxIcon(props: IconProps) {
   return (
     <Icon {...props}>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SettingsBootScript } from "@/components/shell/settings-boot-script";
+import { TerminalThemeStyles } from "@/components/shell/terminal-theme-styles";
 import "@/styles/globals.css";
 
 const geistSans = Geist({
@@ -24,11 +25,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full bg-surface-base text-primary antialiased`}
-      // SettingsBootScript sets data-sidebar and data-motion here before React loads. This silences
-      // those expected attribute differences on <html> only, not on anything inside it.
+      // SettingsBootScript sets data-sidebar, data-motion and data-terminal-theme here before React
+      // loads. This silences those expected attribute differences on <html> only, not on anything
+      // inside it.
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col font-sans">
+        <TerminalThemeStyles />
         <SettingsBootScript />
         {children}
       </body>

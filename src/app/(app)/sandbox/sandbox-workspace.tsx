@@ -1,12 +1,13 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useCallback, useId, useMemo, useState } from "react";
 import { Callout } from "@/components/ui/callout";
 import { SANDBOX_SCENARIOS, type SandboxScenario } from "@/content/sandbox";
+import { NetworkMapPanel } from "@/features/network-visualizer";
 import { CommandCheatSheet, Terminal, useTerminalSession } from "@/features/terminal";
-import { TopologyGraph } from "@/features/network-visualizer";
 import { cx } from "@/lib/cx";
 import { selectTopology } from "@/sim";
+import type { SimEvent } from "@/sim/types";
 
 /** Keyboard focus on a radio that's visually hidden inside its label shows on the label. */
 const LABEL_FOCUS_RING =
@@ -65,38 +66,35 @@ export function SandboxWorkspace() {
 }
 
 function SandboxSession({ scenario }: { scenario: SandboxScenario }) {
-  const session = useTerminalSession({ scenario: scenario.scenario, seed: scenario.seed });
+  // Every event since the machine started, for the map's "found by" lines, and the learner's notes
+  // on hosts. Both live in memory only, like everything in the sandbox.
+  const [events, setEvents] = useState<readonly SimEvent[]>([]);
+  const [notes, setNotes] = useState<Readonly<Record<string, string>>>({});
+  const onEvents = useCallback(
+    (latest: readonly SimEvent[]) => setEvents((previous) => [...previous, ...latest]),
+    [],
+  );
+  const session = useTerminalSession({
+    scenario: scenario.scenario,
+    seed: scenario.seed,
+    onEvents,
+  });
   const topology = useMemo(() => selectTopology(session.sim), [session.sim]);
-  const [selectedHost, setSelectedHost] = useState<string | undefined>();
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="min-w-0 space-y-6">
         <Terminal session={session} outputClassName="h-[28rem]" />
         {scenario.showMap && (
-          <section
-            aria-labelledby="sandbox-map-title"
-            className="rounded-xl border border-subtle bg-surface-raised"
-          >
-            <header className="flex min-h-12 items-center justify-between gap-3 border-b border-subtle px-4 py-2">
-              <h2 id="sandbox-map-title" className="text-sm font-semibold tracking-wide">
-                Network map
-              </h2>
-              <p className="text-sm text-secondary">
-                {topology.counts.found === 1
-                  ? "1 computer found"
-                  : `${topology.counts.found} computers found`}{" "}
-                · keep scanning to find more
-              </p>
-            </header>
-            <div className="p-4">
-              <TopologyGraph
-                topology={topology}
-                selectedHostId={selectedHost}
-                onSelectHost={setSelectedHost}
-              />
-            </div>
-          </section>
+          <NetworkMapPanel
+            topology={topology}
+            events={events}
+            notes={notes}
+            onNoteChange={(hostId, text) =>
+              setNotes((previous) => ({ ...previous, [hostId]: text }))
+            }
+            exportName={scenario.title}
+          />
         )}
       </div>
 

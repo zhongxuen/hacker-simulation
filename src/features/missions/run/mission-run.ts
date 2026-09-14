@@ -68,7 +68,12 @@ export interface MissionRunState {
   /** Command lines run in this attempt, and Reset machine presses: shown in no score, ever. */
   readonly commandsRun: number;
   readonly resets: number;
+  /** The learner's notes on hosts in the network map's details panel, by host id. */
+  readonly notes: Readonly<Record<string, string>>;
 }
+
+/** The longest a note on one host may be. Notes live in memory only, but still have a size. */
+export const MAX_NOTE_LENGTH = 2000;
 
 export type MissionRunAction =
   /** Start mission: from the briefing into the workspace, with the machine's starting state. */
@@ -88,7 +93,9 @@ export type MissionRunAction =
   /** Back from the debrief to the workspace, to keep exploring. */
   | { readonly type: "resume" }
   /** Restart mission: back to the briefing with a fresh run. */
-  | { readonly type: "restart" };
+  | { readonly type: "restart" }
+  /** The learner edited their note on a host in the network map. Empty text removes it. */
+  | { readonly type: "note"; readonly hostId: string; readonly text: string };
 
 export const HINT_TIERS = 3;
 
@@ -108,6 +115,7 @@ export function createMissionRun(attempt = 0): MissionRunState {
     newSecrets: [],
     commandsRun: 0,
     resets: 0,
+    notes: {},
   };
 }
 
@@ -163,6 +171,14 @@ function reduce(mission: Mission, run: MissionRunState, action: MissionRunAction
       return run.phase === "debrief" ? { ...run, phase: "workspace" } : run;
     case "restart":
       return createMissionRun(run.attempt + 1);
+    case "note": {
+      if (run.phase === "briefing") return run;
+      const notes: Record<string, string> = { ...run.notes };
+      const text = action.text.slice(0, MAX_NOTE_LENGTH);
+      if (text.trim() === "") delete notes[action.hostId];
+      else notes[action.hostId] = text;
+      return { ...run, notes };
+    }
   }
 }
 

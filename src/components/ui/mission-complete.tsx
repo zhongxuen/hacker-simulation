@@ -6,11 +6,14 @@ import { cx } from "@/lib/cx";
 import { Badge } from "./badge";
 import { MedalIcon } from "./icons";
 
+/** A skill the mission practised: its display name, and optionally its (decorative) icon. */
+export type PractisedSkill = string | { readonly label: string; readonly icon?: ReactNode };
+
 interface MissionCompleteProps {
   /** The mission's name, as the learner saw it in the briefing. */
   missionTitle: string;
   /** Skills the mission practised, by display name ("Linux", "Networking"). */
-  skills: readonly string[];
+  skills: readonly PractisedSkill[];
   /** One optional extra line under the title. */
   children?: ReactNode;
   /** Use "h1" when this heads the debrief page. Defaults to "h2". */
@@ -114,11 +117,16 @@ export function MissionComplete({
             <div className="mt-5">
               <p className="text-sm font-semibold text-secondary">Skills you practised</p>
               <ul className="mt-2 flex flex-wrap gap-2">
-                {skills.map((skill) => (
-                  <li key={skill}>
-                    <Badge tone="reward">{skill}</Badge>
-                  </li>
-                ))}
+                {skills.map((skill) => {
+                  const { label, icon } = typeof skill === "string" ? { label: skill } : skill;
+                  return (
+                    <li key={label}>
+                      <Badge tone="reward" icon={icon}>
+                        {label}
+                      </Badge>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

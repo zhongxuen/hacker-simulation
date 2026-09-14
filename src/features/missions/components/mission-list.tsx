@@ -10,6 +10,7 @@ import { SKILL_IDS, SKILLS, type Skill } from "@/content/skills";
 import { cx } from "@/lib/cx";
 import { DIFFICULTY_LABELS, MissionText } from "./mission-text";
 import type { MissionSummary } from "./mission-summary";
+import { SkillBadge } from "./skill-badge";
 
 const CHIP = cx(
   "inline-flex h-9 items-center rounded-full border px-3.5 text-sm font-medium",
@@ -140,9 +141,7 @@ export function MissionList({
                       About {mission.estimatedMinutes} min
                     </span>
                     {mission.skills.map((candidate) => (
-                      <Badge key={candidate} tone="accent">
-                        {SKILLS[candidate].label}
-                      </Badge>
+                      <SkillBadge key={candidate} skill={candidate} />
                     ))}
                   </span>
                   {mission.bestAfter.length > 0 && (

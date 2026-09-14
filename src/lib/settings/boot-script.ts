@@ -1,13 +1,16 @@
+import { DEFAULT_TERMINAL_THEME, TERMINAL_THEME_IDS } from "@/content/themes";
 import { REDUCED_MOTION_OVERRIDES } from "./schema";
 import { SETTINGS_STORAGE_KEY } from "./store";
 
 const MOTION_ATTRIBUTE_VALUES = REDUCED_MOTION_OVERRIDES.filter((value) => value !== "system");
+const THEME_ATTRIBUTE_VALUES = TERMINAL_THEME_IDS.filter((id) => id !== DEFAULT_TERMINAL_THEME);
 
 /**
  * A tiny inline script that applies the saved settings to <html> before first paint, so a
- * collapsed sidebar never flashes open and reduced motion is on from the first frame. It does what
- * applySettingsToElement (document.ts) does, in plain ES5, and swallows every error: with blocked
- * storage or bad JSON the page starts on defaults.
+ * collapsed sidebar never flashes open, reduced motion is on from the first frame, and the
+ * terminal starts in the learner's colour theme. It does what applySettingsToElement (document.ts)
+ * does, in plain ES5, and swallows every error: with blocked storage or bad JSON the page starts on
+ * defaults.
  *
  * Render it once, at the top of <body> in the root layout (SettingsBootScript in
  * src/components/shell). Import it from this file rather than the settings index, so a server
@@ -19,6 +22,8 @@ export const SETTINGS_BOOT_SCRIPT = [
   "var r=document.documentElement;",
   'if(s&&s.sidebarCollapsed===true)r.dataset.sidebar="collapsed";',
   `if(s&&${JSON.stringify(MOTION_ATTRIBUTE_VALUES)}.indexOf(s.reducedMotionOverride)>=0)`,
-  "r.dataset.motion=s.reducedMotionOverride",
+  "r.dataset.motion=s.reducedMotionOverride;",
+  `if(s&&${JSON.stringify(THEME_ATTRIBUTE_VALUES)}.indexOf(s.terminalTheme)>=0)`,
+  "r.dataset.terminalTheme=s.terminalTheme",
   "}catch(e){}",
 ].join("");

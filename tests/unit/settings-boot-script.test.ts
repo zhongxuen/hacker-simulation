@@ -40,6 +40,10 @@ const SAVED_VALUES: (string | null)[] = [
   JSON.stringify({ sidebarCollapsed: true, reducedMotionOverride: "reduce" }),
   JSON.stringify({ reducedMotionOverride: "full" }),
   JSON.stringify({ reducedMotionOverride: "system" }),
+  JSON.stringify({ terminalTheme: "phosphor" }),
+  JSON.stringify({ terminalTheme: "candlewright", sidebarCollapsed: true }),
+  JSON.stringify({ terminalTheme: "neon-pink", reducedMotionOverride: "reduce" }),
+  JSON.stringify({ terminalTheme: "toString" }),
   // Corrupt or hand-edited values.
   JSON.stringify({ sidebarCollapsed: "true", reducedMotionOverride: "sometimes" }),
   JSON.stringify({ reducedMotionOverride: "constructor" }),

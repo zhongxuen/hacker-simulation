@@ -11,20 +11,41 @@ import {
   type KeyboardEvent,
   type Ref,
 } from "react";
-import { PlayIcon, SearchIcon } from "@/components/ui/icons";
+import { BookOpenIcon, InfoIcon, PlayIcon, SearchIcon, TerminalIcon } from "@/components/ui/icons";
+import { useSearchIndex } from "@/hooks/use-search-index";
 import { APP_SECTIONS } from "@/lib/app-sections";
 import { searchCommands, type SearchableCommand } from "@/lib/command-search";
 import { cx } from "@/lib/cx";
+import { searchIndex, SEARCH_KIND_LABELS, type SearchKind } from "@/lib/search";
 import { useGuardedNavigate } from "./leave-guard";
 import type { NextStep } from "@/lib/next-step";
 import { SECTION_ICONS } from "./icons";
 import { FOCUS_RING } from "./shell-styles";
 
+type PaletteGroup = "Start" | "Go to" | (typeof SEARCH_KIND_LABELS)[SearchKind];
+
 interface PaletteCommand extends SearchableCommand {
-  readonly group: "Start" | "Go to";
+  readonly group: PaletteGroup;
   readonly href: string;
   readonly icon: ComponentType<{ className?: string }>;
 }
+
+const GROUP_ORDER: readonly PaletteGroup[] = [
+  "Start",
+  "Go to",
+  SEARCH_KIND_LABELS.lesson,
+  SEARCH_KIND_LABELS.term,
+  SEARCH_KIND_LABELS.command,
+];
+
+const KIND_ICONS: Readonly<Record<SearchKind, ComponentType<{ className?: string }>>> = {
+  lesson: BookOpenIcon,
+  term: InfoIcon,
+  command: TerminalIcon,
+};
+
+/** Lessons, glossary words and commands shown per group, so every group stays in view. */
+const RESULTS_PER_KIND = 5;
 
 function buildCommands(nextStep: NextStep): PaletteCommand[] {
   return [
@@ -80,8 +101,9 @@ interface CommandPaletteProps {
  * Jump anywhere in the app by typing: ⌘K / Ctrl+K, or the Search button in the top bar.
  *
  * A modal <dialog> (focus stays inside, Escape closes, focus returns to where it was) holding a
- * combobox: type to filter, ↑/↓ to move, Enter to go. The list is a hook for later phases to add
- * missions and lessons to.
+ * combobox: type to filter, ↑/↓ to move, Enter to go. With something typed, it also searches every
+ * lesson, glossary word and command manual page (md-files/09-learning-center.md, prompt 09.5),
+ * from a small index built with the app and loaded the first time the palette opens.
  *
  * The shortcut ignores key presses something else already handled (event.defaultPrevented), so
  * the terminal (phase 05) keeps Ctrl+K for "delete to end of line" by preventing it while focused.
@@ -93,12 +115,35 @@ export function CommandPalette({ nextStep, ref }: CommandPaletteProps) {
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
+  const [everOpened, setEverOpened] = useState(false);
+  const index = useSearchIndex(everOpened);
   const id = useId();
   const listId = `${id}-list`;
 
   const commands = buildCommands(nextStep);
-  const results = searchCommands(commands, query);
+  const found: PaletteCommand[] =
+    index.state === "ready"
+      ? searchIndex(index.entries, query, { perKind: RESULTS_PER_KIND }).map((entry) => ({
+          id: entry.id,
+          group: SEARCH_KIND_LABELS[entry.kind],
+          label: entry.title,
+          description: entry.summary,
+          href: entry.href,
+          icon: KIND_ICONS[entry.kind],
+        }))
+      : [];
+  const groups = GROUP_ORDER.map((group, order) => ({
+    group,
+    // An id-safe name for the group's heading ("Go to" has a space).
+    key: `g${order}`,
+    items: [...searchCommands(commands, query), ...found].filter(
+      (command) => command.group === group,
+    ),
+  })).filter(({ items }) => items.length > 0);
+  // Results show grouped, so the arrow keys follow the order on screen.
+  const results = groups.flatMap(({ items }) => items);
   const active = results[Math.min(activeIndex, results.length - 1)];
+  const searching = query.trim() !== "" && index.state === "loading";
 
   const open = () => {
     const dialog = dialogRef.current;
@@ -107,6 +152,7 @@ export function CommandPalette({ nextStep, ref }: CommandPaletteProps) {
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setQuery("");
     setActiveIndex(0);
+    setEverOpened(true);
     dialog.showModal();
     inputRef.current?.focus();
   };
@@ -162,10 +208,6 @@ export function CommandPalette({ nextStep, ref }: CommandPaletteProps) {
     }
   };
 
-  const groups = (["Start", "Go to"] as const)
-    .map((group) => ({ group, items: results.filter((command) => command.group === group) }))
-    .filter(({ items }) => items.length > 0);
-
   return (
     <dialog
       ref={dialogRef}
@@ -184,7 +226,7 @@ export function CommandPalette({ nextStep, ref }: CommandPaletteProps) {
       <div className="flex items-center gap-3 border-b border-subtle px-4 focus-within:shadow-[inset_0_-2px_0_var(--focus-ring)]">
         <SearchIcon className="size-5 shrink-0 text-muted" />
         <label htmlFor={`${id}-input`} className="sr-only">
-          Where do you want to go?
+          Search lessons, words and commands, or pick a place to go
         </label>
         <input
           ref={inputRef}
@@ -197,7 +239,7 @@ export function CommandPalette({ nextStep, ref }: CommandPaletteProps) {
           aria-activedescendant={active ? `${id}-option-${active.id}` : undefined}
           autoComplete="off"
           spellCheck={false}
-          placeholder="Where do you want to go?"
+          placeholder="Search, or pick a place to go"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -214,13 +256,13 @@ export function CommandPalette({ nextStep, ref }: CommandPaletteProps) {
       <div
         id={listId}
         role="listbox"
-        aria-label="Places"
+        aria-label="Results"
         className="max-h-[50vh] overflow-y-auto p-2"
       >
-        {groups.map(({ group, items }) => (
-          <div key={group} role="group" aria-labelledby={`${id}-group-${group}`} className="py-1">
+        {groups.map(({ group, key, items }) => (
+          <div key={group} role="group" aria-labelledby={`${id}-group-${key}`} className="py-1">
             <p
-              id={`${id}-group-${group}`}
+              id={`${id}-group-${key}`}
               className="px-3 pt-1 pb-1.5 text-xs font-semibold tracking-wide text-muted uppercase"
             >
               {group}
@@ -257,16 +299,22 @@ export function CommandPalette({ nextStep, ref }: CommandPaletteProps) {
             })}
           </div>
         ))}
-        {results.length === 0 && (
+        {searching && <p className="px-3 py-2 text-sm text-muted">Looking through the lessons…</p>}
+        {index.state === "failed" && query.trim() !== "" && (
+          <p className="px-3 py-2 text-sm text-muted">
+            Lessons, words and commands couldn&apos;t load just now. The places above still work.
+          </p>
+        )}
+        {results.length === 0 && !searching && (
           <p className="px-3 py-6 text-center leading-6 text-secondary">
-            Nothing matches &ldquo;{query.trim()}&rdquo;. Try a section name, like Missions or
-            Learn.
+            Nothing matches &ldquo;{query.trim()}&rdquo;. Try a word like port, a command like ls,
+            or a section like Missions.
           </p>
         )}
       </div>
 
       <p className="sr-only" aria-live="polite">
-        {results.length === 1 ? "1 place found" : `${results.length} places found`}
+        {results.length === 1 ? "1 result" : `${results.length} results`}
       </p>
 
       <p className="hidden gap-4 border-t border-subtle px-4 py-2.5 text-xs text-muted sm:flex">

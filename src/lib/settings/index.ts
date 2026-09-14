@@ -7,8 +7,10 @@
  */
 export {
   DEFAULT_SETTINGS,
+  NETWORK_VIEWS,
   REDUCED_MOTION_OVERRIDES,
   parseSettings,
+  type NetworkView,
   type ReducedMotionOverride,
   type Settings,
 } from "./schema";

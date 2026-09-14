@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
-import { SectionPlaceholder } from "@/components/shell/section-placeholder";
+import { campaignMissionIds, MAIN_CAMPAIGN } from "@/content/campaigns";
+import { CampaignMap, summarizeMission } from "@/features/missions";
+import { getMissionById, listMissions } from "@/features/missions/server";
 import { getAppSection } from "@/lib/app-sections";
-import { FIRST_STEP } from "@/lib/next-step";
 
 export const metadata: Metadata = { title: getAppSection("campaign").label };
 
+/**
+ * The campaign map: the story's chapters and their missions, read from the campaign data and the
+ * mission files at build time. Every mission is open; the order is a recommendation.
+ */
 export default function CampaignPage() {
-  return (
-    <SectionPlaceholder headline="Your story starts here" nextStep={FIRST_STEP}>
-      <p>
-        You&apos;re the newest recruit on a team of good-guy hackers. Companies hire the team to
-        find the weak spots in their computers before criminals do, and always with permission.
-      </p>
-      <p>
-        The campaign is your path through the story. Each mission teaches you one new skill and
-        moves the story forward.
-      </p>
-    </SectionPlaceholder>
-  );
+  const titles = new Map(listMissions().map((mission) => [mission.id, mission.title]));
+  const missions = campaignMissionIds(MAIN_CAMPAIGN).flatMap((id) => {
+    const mission = getMissionById(id);
+    return mission ? [summarizeMission(mission, titles)] : [];
+  });
+
+  return <CampaignMap campaign={MAIN_CAMPAIGN} missions={missions} />;
 }

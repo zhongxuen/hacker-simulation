@@ -17,7 +17,7 @@ import { SearchIcon } from "@/components/ui/icons";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 import { cx } from "@/lib/cx";
 import type { DiscoveredTopology } from "@/sim/types";
-import { EMPTY_DESCRIPTION, EMPTY_TITLE, KEYBOARD_HELP } from "../copy";
+import { EMPTY_DESCRIPTION, EMPTY_TITLE, KEYBOARD_HELP, nodeExplanation } from "../copy";
 import {
   layoutKeys,
   layoutTopology,
@@ -155,6 +155,9 @@ export function TopologyGraph({
   // True during a drag, pinch or wheel: the view follows the pointer with no easing.
   const [live, setLive] = useState(false);
   const [focusedId, setFocusedId] = useState<string | undefined>(undefined);
+  // Which card's explanation shows under the map: the one under the pointer, else the focused one.
+  const [hoveredId, setHoveredId] = useState<string | undefined>(undefined);
+  const [focusWithin, setFocusWithin] = useState(false);
 
   const viewport = size && size.width > 0 && size.height > 0 ? size : DEFAULT_VIEWPORT;
   const view = manualView ?? fitView(layout, viewport);
@@ -351,6 +354,7 @@ export function TopologyGraph({
     const hostId = hostIdOf(event.target);
     if (hostId === undefined) return;
     setFocusedId(hostId);
+    setFocusWithin(true);
     const place = layout.nodes.find((node) => node.hostId === hostId);
     if (!place) return;
     // Bring a card focused from the keyboard into view, pills and focus ring included.
@@ -386,6 +390,8 @@ export function TopologyGraph({
   };
 
   const empty = layout.nodes.length === 0;
+  const explainedId = hoveredId ?? (focusWithin ? focusedId : undefined);
+  const explained = topology.nodes.find((node) => node.hostId === explainedId);
 
   return (
     <div className={cx("flex flex-col gap-3", className)}>
@@ -401,6 +407,15 @@ export function TopologyGraph({
         onPointerCancel={onPointerEnd}
         onClick={onClick}
         onFocus={onFocus}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            setFocusWithin(false);
+          }
+        }}
+        onPointerOver={(event) => {
+          if (event.pointerType === "mouse") setHoveredId(hostIdOf(event.target));
+        }}
+        onPointerLeave={() => setHoveredId(undefined)}
         onKeyDown={onKeyDown}
       >
         {empty ? (
@@ -471,6 +486,20 @@ export function TopologyGraph({
           </>
         )}
       </div>
+      {!empty && (
+        // The explanation a card's tooltip gives, for keyboard users too. Not a live region: the
+        // card's own description says the same to screen readers as focus lands on it.
+        <p className="min-h-10 text-sm leading-5 text-secondary">
+          {explained ? (
+            <>
+              <span className="font-semibold text-primary">{explained.label}</span>:{" "}
+              {nodeExplanation(explained)}
+            </>
+          ) : (
+            "Point at a computer, or move to it with the arrow keys, to see what its state means."
+          )}
+        </p>
+      )}
       <p id={helpId} className="text-xs leading-5 text-muted">
         {KEYBOARD_HELP}
       </p>

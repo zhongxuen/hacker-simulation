@@ -47,6 +47,7 @@
   --color-focus-ring: var(--focus-ring);
 
   --color-term-bg: var(--term-bg);
+  --color-term-cursor: var(--term-cursor);
   --color-term-fg: var(--term-fg);
   --color-term-dim: var(--term-dim);
   --color-term-black: var(--term-black);

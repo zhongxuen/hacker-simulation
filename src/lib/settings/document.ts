@@ -1,10 +1,13 @@
+import { DEFAULT_TERMINAL_THEME } from "@/content/themes";
 import type { Settings } from "./schema";
 
 /**
  * Puts the settings that change the page's look onto <html>, where CSS reads them:
- * data-sidebar="collapsed" for the `rail:` variant (src/styles/globals.css), and
- * data-motion="reduce" | "full" for --motion-scale (src/styles/motion.css). "system" removes
- * data-motion, so the device's own reduce-motion setting decides.
+ * data-sidebar="collapsed" for the `rail:` variant (src/styles/globals.css),
+ * data-motion="reduce" | "full" for --motion-scale (src/styles/motion.css), and
+ * data-terminal-theme for the terminal's colours (src/lib/terminal-themes.ts). A default value
+ * removes its attribute: "system" motion lets the device's own setting decide, and the default
+ * terminal theme is the plain --term-* tokens.
  *
  * The boot script (boot-script.ts) does the same before first paint and must stay in step with
  * this: tests/unit/settings-boot-script.test.ts checks that they agree.
@@ -18,4 +21,7 @@ export function applySettingsToElement(
 
   if (settings.reducedMotionOverride === "system") delete root.dataset.motion;
   else root.dataset.motion = settings.reducedMotionOverride;
+
+  if (settings.terminalTheme === DEFAULT_TERMINAL_THEME) delete root.dataset.terminalTheme;
+  else root.dataset.terminalTheme = settings.terminalTheme;
 }

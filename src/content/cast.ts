@@ -89,6 +89,13 @@ export const CAST: Readonly<Record<CastId, CastMember>> = {
   },
 };
 
+/**
+ * The mentor: the in-world face of hints and the AI Mentor (phase 10), and the voice of generic
+ * mentor lines like the network map's first-discovery tip. Components use this rather than
+ * naming a cast id.
+ */
+export const MENTOR: CastMember = CAST["mentor-noor"];
+
 /** The cast member with this id, or undefined. */
 export function getCastMember(id: string): CastMember | undefined {
   return Object.hasOwn(CAST, id) ? CAST[id as CastId] : undefined;

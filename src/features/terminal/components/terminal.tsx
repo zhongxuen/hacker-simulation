@@ -83,7 +83,7 @@ export function Terminal({
   className,
   outputClassName = "h-[26rem]",
 }: TerminalProps) {
-  const { beginnerMode } = useSettings();
+  const { beginnerMode, promptStyle, cursorStyle } = useSettings();
   const [value, setValue] = useState("");
   const [cursor, setCursor] = useState(0);
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
@@ -417,6 +417,7 @@ export function Terminal({
               key={block.id}
               block={block}
               beginnerMode={beginnerMode}
+              promptStyle={promptStyle}
               latest={block.id === lastId}
               virtualize={index < blocks.length - RECENT_BLOCKS}
             />
@@ -444,7 +445,7 @@ export function Terminal({
               "search: "
             ) : (
               <>
-                <PromptLabel prompt={prompt} />{" "}
+                <PromptLabel prompt={prompt} style={promptStyle} />{" "}
               </>
             )}
           </span>
@@ -458,6 +459,7 @@ export function Terminal({
             inputRef={inputRef}
             label={search ? "Search earlier commands" : `Command, in ${prompt.cwd}`}
             describedBy={hintId}
+            cursorStyle={cursorStyle}
           />
         </div>
         <p

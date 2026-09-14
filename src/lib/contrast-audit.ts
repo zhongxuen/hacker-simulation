@@ -102,6 +102,24 @@ export const CONTRAST_AUDIT_GROUPS: readonly ContrastAuditGroupSpec[] = [
     backgrounds: ["term-bg"],
   },
   {
+    id: "terminal-cursor",
+    title: "Terminal cursor and focus",
+    description:
+      "The prompt's cursor, and the keyboard focus ring on anything inside the terminal, need 3:1 against the terminal background.",
+    use: "non-text",
+    foregrounds: ["term-cursor", "focus-ring"],
+    backgrounds: ["term-bg"],
+  },
+  {
+    id: "terminal-under-cursor",
+    title: "Text under the cursor",
+    description:
+      "The block cursor covers the next letter, which shows in the terminal background colour on the cursor colour.",
+    use: "text",
+    foregrounds: ["term-bg"],
+    backgrounds: ["term-cursor"],
+  },
+  {
     id: "non-text",
     title: "Borders, focus rings and indicators",
     description:
@@ -111,6 +129,13 @@ export const CONTRAST_AUDIT_GROUPS: readonly ContrastAuditGroupSpec[] = [
     backgrounds: SURFACES,
   },
 ];
+
+/**
+ * The groups about the terminal alone: what every terminal colour theme (src/content/themes) must
+ * pass, measured with the theme's colours in place of the default --term-* tokens.
+ */
+export const TERMINAL_CONTRAST_GROUPS: readonly ContrastAuditGroupSpec[] =
+  CONTRAST_AUDIT_GROUPS.filter((group) => group.id.startsWith("terminal-"));
 
 /** Colour tokens deliberately left out of the audit as foregrounds, and why. */
 export const CONTRAST_AUDIT_EXCLUSIONS: Readonly<Record<string, string>> = {

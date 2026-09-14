@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import type { RefObject } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FOCUS_RING } from "@/components/ui/focus-ring";
 import { CheckIcon, PlayIcon } from "@/components/ui/icons";
@@ -10,6 +9,7 @@ import type { Mission } from "@/content/schemas/mission";
 import { SKILLS } from "@/content/skills";
 import { cx } from "@/lib/cx";
 import { DIFFICULTY_LABELS, MissionText } from "./mission-text";
+import { SkillBadge } from "./skill-badge";
 import type { MissionLinks } from "./types";
 
 const LINK = cx(
@@ -36,6 +36,14 @@ export function MissionBriefing({ mission, links, onStart, headingRef }: Mission
     <article aria-labelledby="mission-briefing-title" className="mx-auto max-w-3xl">
       <p className="flex flex-wrap items-center gap-2 text-sm text-secondary">
         <span className="font-semibold text-accent">Mission briefing</span>
+        {links.chapter && (
+          <>
+            <span aria-hidden="true">·</span>
+            <span>
+              Chapter {links.chapter.number}: {links.chapter.title}, episode {links.chapter.episode}
+            </span>
+          </>
+        )}
         <span aria-hidden="true">·</span>
         <span>{DIFFICULTY_LABELS[mission.difficulty]}</span>
         <span aria-hidden="true">·</span>
@@ -104,14 +112,19 @@ export function MissionBriefing({ mission, links, onStart, headingRef }: Mission
         </section>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        <span className="text-sm text-secondary">Skills you&apos;ll practise:</span>
-        {mission.skills.map((skill) => (
-          <Badge key={skill} tone="accent">
-            {SKILLS[skill].label}
-          </Badge>
-        ))}
-      </div>
+      <section aria-labelledby="briefing-skills" className="mt-6">
+        <h2 id="briefing-skills" className="text-sm font-semibold tracking-wide text-secondary">
+          Skills you&apos;ll practise
+        </h2>
+        <ul className="mt-2 space-y-1.5">
+          {mission.skills.map((skill) => (
+            <li key={skill} className="flex flex-wrap items-center gap-x-2 gap-y-1 leading-7">
+              <SkillBadge skill={skill} />
+              <span className="text-sm text-secondary">{SKILLS[skill].description}.</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {(links.bestAfter.length > 0 || links.concepts.length > 0) && (
         <div className="mt-6 space-y-2 text-sm leading-6 text-secondary">

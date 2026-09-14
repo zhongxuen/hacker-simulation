@@ -8,6 +8,6 @@ export default defineConfig({
   test: {
     // Plain Node, no jsdom: the simulation engine must run headless.
     environment: "node",
-    include: ["src/**/*.test.ts", "tests/unit/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "tests/unit/**/*.test.ts", "tests/mentor/**/*.test.ts"],
   },
 });

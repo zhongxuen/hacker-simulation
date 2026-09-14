@@ -55,9 +55,10 @@ export default function PrivacyPage() {
           }
         >
           A few choices about how the app looks and helps: whether the sidebar is small, how many
-          animations you see, and whether the terminal shows beginner help. New settings will join
-          them as the app grows. They&apos;ll always be choices about how the app looks and works,
-          never a record of what you&apos;ve done.
+          animations you see, whether the terminal shows beginner help, the terminal&apos;s colours,
+          prompt and cursor, and whether the network map shows as a drawing or a table. New settings
+          will join them as the app grows. They&apos;ll always be choices about how the app looks
+          and works, never a record of what you&apos;ve done.
         </StoreCard>
 
         <StoreCard
@@ -65,11 +66,13 @@ export default function PrivacyPage() {
           where="Passed along to write you an answer, then dropped."
           howLong="We don't store any of it."
         >
-          When you ask the mentor for help, your recent commands in that mission go to an AI service
-          (a program that writes text) so it can write a hint that fits what you tried. Nothing in
-          it says who you are. The mentor is still being built, so right now nothing is sent
-          anywhere. Later we may also count visits to see where beginners get stuck. Those counts
-          will be anonymous and won&apos;t use cookies, and this page will say when they start.
+          When you ask the mentor for a hint, a few of your most recent commands in that mission go
+          to an AI service (a program that writes text) so it can write a hint that fits what you
+          tried. Only that handful of commands is sent, never your whole session, and nothing in it
+          says who you are. It&apos;s used to write the hint and then dropped; we don&apos;t keep
+          it. If the mentor is switched off or busy, you still get the same hint, written ahead of
+          time. Later we may also count visits to see where beginners get stuck. Those counts will
+          be anonymous and won&apos;t use cookies, and this page will say when they start.
         </StoreCard>
 
         <StoreCard title="Never stored, anywhere" where="Nowhere." howLong="Not at all.">

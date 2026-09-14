@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState, type RefObject } from "react";
+import { useEffect, useId, useMemo, useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
+import { CharacterMessage } from "@/components/ui/character-message";
 import { Dialog } from "@/components/ui/dialog";
-import { MedalIcon } from "@/components/ui/icons";
+import { BookOpenIcon, MapIcon, MedalIcon } from "@/components/ui/icons";
 import { SecretFoundToast } from "@/components/ui/secret-found-toast";
 import { ToastViewport } from "@/components/ui/toast";
+import { MENTOR } from "@/content/cast";
 import type { Mission } from "@/content/schemas/mission";
-import { TopologyGraph } from "@/features/network-visualizer";
+import { commandOf, ReferenceDrawer } from "@/features/learning";
+import { FIRST_DISCOVERY_LINE, NetworkMapPanel } from "@/features/network-visualizer";
 import { Terminal, type TerminalSession } from "@/features/terminal";
 import { selectTopology } from "@/sim";
 import { isMissionComplete } from "../evaluate";
@@ -34,12 +37,17 @@ interface MissionWorkspaceProps {
   /** Start the terminal's guided tour: the mission asks for it, on the first visit only. */
   startTour: boolean;
   headingRef: RefObject<HTMLHeadingElement | null>;
+  /** Show the mentor's one-time "That's your first host!" line on the map. */
+  mapTip: boolean;
+  onDismissMapTip: () => void;
+  /** Start with the reference drawer open. */
+  initialReferenceOpen?: boolean;
 }
 
 /**
  * The workspace: the team chat, the phase 05 terminal, the network map when the mission has more
- * than one computer, and the live objectives beside them. Everything comes from the mission object
- * and the run: there's no mission-specific code here.
+ * than one computer (with its details panel and notes), and the live objectives beside them.
+ * Everything comes from the mission object and the run: there's no mission-specific code here.
  */
 export function MissionWorkspace({
   mission,
@@ -48,9 +56,16 @@ export function MissionWorkspace({
   session,
   startTour,
   headingRef,
+  mapTip,
+  onDismissMapTip,
+  initialReferenceOpen = false,
 }: MissionWorkspaceProps) {
   const [confirmRestart, setConfirmRestart] = useState(false);
-  const [selectedHost, setSelectedHost] = useState<string | undefined>();
+  // The map sits under the terminal, shown to start with. Hiding it keeps everything on it.
+  const [mapOpen, setMapOpen] = useState(true);
+  const mapId = useId();
+  // The reference drawer opens over the side of the workspace. The terminal never unmounts.
+  const [referenceOpen, setReferenceOpen] = useState(initialReferenceOpen);
   const complete = isMissionComplete(mission, run.completed);
   const current = currentObjective(mission, run);
   const storyAnswer = current && canAnswer(mission, run, current) ? current : undefined;
@@ -89,9 +104,33 @@ export function MissionWorkspace({
             {mission.title}
           </h1>
         </div>
-        <Button variant="danger" size="sm" onClick={() => setConfirmRestart(true)}>
-          Restart mission
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<BookOpenIcon />}
+            aria-expanded={referenceOpen}
+            aria-haspopup="dialog"
+            onClick={() => setReferenceOpen((open) => !open)}
+          >
+            Reference
+          </Button>
+          {topology && (
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<MapIcon />}
+              aria-expanded={mapOpen}
+              aria-controls={mapId}
+              onClick={() => setMapOpen((open) => !open)}
+            >
+              {mapOpen ? "Hide the map" : "Show the map"}
+            </Button>
+          )}
+          <Button variant="danger" size="sm" onClick={() => setConfirmRestart(true)}>
+            Restart mission
+          </Button>
+        </div>
       </header>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
@@ -151,29 +190,36 @@ export function MissionWorkspace({
           <Terminal session={session} startTour={startTour} outputClassName="h-[24rem]" />
 
           {topology && (
-            <section
-              aria-labelledby="mission-map-title"
-              className="rounded-xl border border-subtle bg-surface-raised"
-            >
-              <header className="flex min-h-12 flex-wrap items-center justify-between gap-3 border-b border-subtle px-4 py-2">
-                <h2 id="mission-map-title" className="text-sm font-semibold tracking-wide">
-                  Network map
-                </h2>
-                <p className="text-sm text-secondary">
-                  {topology.counts.found === 1
-                    ? "1 computer found"
-                    : `${topology.counts.found} computers found`}{" "}
-                  · keep scanning to find more
-                </p>
-              </header>
-              <div className="p-4">
-                <TopologyGraph
-                  topology={topology}
-                  selectedHostId={selectedHost}
-                  onSelectHost={setSelectedHost}
-                />
-              </div>
-            </section>
+            // Hidden, not removed, so the selected host and the table's search survive a toggle.
+            <div id={mapId} hidden={!mapOpen}>
+              <NetworkMapPanel
+                topology={topology}
+                events={run.events}
+                notes={run.notes}
+                onNoteChange={(hostId, text) => dispatch({ type: "note", hostId, text })}
+                exportName={mission.title}
+                tip={
+                  mapTip ? (
+                    <div className="flex flex-wrap items-end gap-3">
+                      <CharacterMessage
+                        speaker={{
+                          name: MENTOR.name,
+                          role: MENTOR.role,
+                          initials: MENTOR.initials,
+                        }}
+                        tone={MENTOR.tone}
+                        className="min-w-0 flex-1"
+                      >
+                        {FIRST_DISCOVERY_LINE}
+                      </CharacterMessage>
+                      <Button variant="ghost" size="sm" onClick={onDismissMapTip}>
+                        Got it
+                      </Button>
+                    </div>
+                  ) : undefined
+                }
+              />
+            </div>
           )}
         </div>
 
@@ -184,9 +230,18 @@ export function MissionWorkspace({
             answeringInStory={storyAnswer?.id}
             onAnswer={(objectiveId, answer) => dispatch({ type: "answer", objectiveId, answer })}
             onHint={(objectiveId) => dispatch({ type: "hint", objectiveId })}
+            terminalBlocks={session.blocks}
           />
         </aside>
       </div>
+
+      <ReferenceDrawer
+        open={referenceOpen}
+        onClose={() => setReferenceOpen(false)}
+        missionId={mission.id}
+        missionLessonIds={[...mission.concepts, ...mission.debrief.furtherReading]}
+        lastCommand={commandOf(session.history.at(-1))}
+      />
 
       <ToastViewport>
         {run.newSecrets.map((id) => {

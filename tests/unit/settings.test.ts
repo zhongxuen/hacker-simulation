@@ -65,20 +65,30 @@ describe("parseSettings", () => {
       sidebarCollapsed: false,
       reducedMotionOverride: "system",
       beginnerMode: true,
+      networkView: "graph",
+      terminalTheme: "candlewright",
+      promptStyle: "classic",
+      cursorStyle: "block",
     });
     expect(DEFAULT_SETTINGS).toEqual(parseSettings({}));
   });
 
   it("falls back per field, so one bad value doesn't wipe the others", () => {
     expect(parseSettings({ sidebarCollapsed: "yes", reducedMotionOverride: "reduce" })).toEqual({
-      sidebarCollapsed: false,
+      ...DEFAULT_SETTINGS,
       reducedMotionOverride: "reduce",
-      beginnerMode: true,
     });
     expect(parseSettings({ sidebarCollapsed: true, reducedMotionOverride: "sometimes" })).toEqual({
+      ...DEFAULT_SETTINGS,
       sidebarCollapsed: true,
-      reducedMotionOverride: "system",
-      beginnerMode: true,
+    });
+    expect(parseSettings({ terminalTheme: "amber", cursorStyle: "sparkly" })).toEqual({
+      ...DEFAULT_SETTINGS,
+      terminalTheme: "amber",
+    });
+    expect(parseSettings({ networkView: "table", promptStyle: "huge" })).toEqual({
+      ...DEFAULT_SETTINGS,
+      networkView: "table",
     });
     expect(parseSettings({ beginnerMode: false }).beginnerMode).toBe(false);
     expect(parseSettings({ beginnerMode: "off" }).beginnerMode).toBe(true);
@@ -87,7 +97,7 @@ describe("parseSettings", () => {
   it("drops unknown keys", () => {
     expect(
       parseSettings({ sidebarCollapsed: true, completedMissions: ["intro-01"], xp: 900 }),
-    ).toEqual({ sidebarCollapsed: true, reducedMotionOverride: "system", beginnerMode: true });
+    ).toEqual({ ...DEFAULT_SETTINGS, sidebarCollapsed: true });
   });
 
   it("treats anything that isn't an object as nothing saved", () => {
@@ -111,9 +121,9 @@ describe("settings store", () => {
       withSaved(JSON.stringify({ sidebarCollapsed: true, reducedMotionOverride: "full" })),
     );
     expect(store.get()).toEqual({
+      ...DEFAULT_SETTINGS,
       sidebarCollapsed: true,
       reducedMotionOverride: "full",
-      beginnerMode: true,
     });
   });
 
@@ -126,17 +136,13 @@ describe("settings store", () => {
   it("drops unknown keys and saves only known settings", () => {
     const storage = withSaved(JSON.stringify({ sidebarCollapsed: true, streak: 12 }));
     const store = storeOver(storage);
-    expect(store.get()).toEqual({
-      sidebarCollapsed: true,
-      reducedMotionOverride: "system",
-      beginnerMode: true,
-    });
+    expect(store.get()).toEqual({ ...DEFAULT_SETTINGS, sidebarCollapsed: true });
 
     store.update({ reducedMotionOverride: "reduce" });
     expect(JSON.parse(storage.getItem(SETTINGS_STORAGE_KEY) ?? "")).toEqual({
+      ...DEFAULT_SETTINGS,
       sidebarCollapsed: true,
       reducedMotionOverride: "reduce",
-      beginnerMode: true,
     });
   });
 
@@ -175,9 +181,8 @@ describe("settings store", () => {
     store.update({ reducedMotionOverride: "reduce" });
     expect(listener).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenLastCalledWith({
-      sidebarCollapsed: false,
+      ...DEFAULT_SETTINGS,
       reducedMotionOverride: "reduce",
-      beginnerMode: true,
     });
 
     store.update({ reducedMotionOverride: "reduce" });
@@ -287,9 +292,13 @@ describe("applySettingsToElement", () => {
     expect(apply({ reducedMotionOverride: "full" })).toEqual({ motion: "full" });
   });
 
-  it("removes both attributes for the defaults, leaving others alone", () => {
-    expect(apply({}, { sidebar: "collapsed", motion: "reduce", theme: "dark" })).toEqual({
-      theme: "dark",
-    });
+  it("marks a terminal theme other than the default", () => {
+    expect(apply({ terminalTheme: "phosphor" })).toEqual({ terminalTheme: "phosphor" });
+  });
+
+  it("removes every attribute for the defaults, leaving others alone", () => {
+    expect(
+      apply({}, { sidebar: "collapsed", motion: "reduce", terminalTheme: "amber", theme: "dark" }),
+    ).toEqual({ theme: "dark" });
   });
 });

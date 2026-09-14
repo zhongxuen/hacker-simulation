@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ArrowRightIcon, BookOpenIcon } from "@/components/ui/icons";
+import { ArrowRightIcon, BookOpenIcon, TerminalIcon } from "@/components/ui/icons";
 import { ButtonLink } from "@/components/ui/button";
 import { GLOSSARY } from "@/content/glossary";
 import { LESSON_LEVEL_LABELS, LESSON_TOPIC_IDS, LESSON_TOPICS } from "@/content/topics";
@@ -81,6 +81,23 @@ export default function LearnPage() {
           <span className="mt-1 block leading-7 text-secondary">
             {GLOSSARY.length} words from security, networking and Linux, each explained in one plain
             sentence.
+          </span>
+        </span>
+        <ArrowRightIcon aria-hidden="true" className="mt-1 size-5 shrink-0 text-accent" />
+      </Card>
+
+      <Card href="/learn/commands" className="mt-3 flex items-start gap-4">
+        <span
+          aria-hidden="true"
+          className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-overlay text-accent [&_svg]:size-5"
+        >
+          <TerminalIcon />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-lg font-semibold">Command manual</span>
+          <span className="mt-1 block leading-7 text-secondary">
+            Every command the terminal knows, with the same manual page{" "}
+            <code className="font-mono text-primary">man</code> shows.
           </span>
         </span>
         <ArrowRightIcon aria-hidden="true" className="mt-1 size-5 shrink-0 text-accent" />

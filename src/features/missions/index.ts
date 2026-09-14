@@ -22,6 +22,7 @@ export {
   createMissionRun,
   currentObjective,
   HINT_TIERS,
+  MAX_NOTE_LENGTH,
   isRunInProgress,
   missionRunReducer,
   rewardSummary,
@@ -45,6 +46,15 @@ export { verifyPlaythrough, type PlaythroughCheck } from "./run/verify";
 
 export { MissionRunner, type MissionRunnerProps } from "./components/mission-runner";
 export { MissionList } from "./components/mission-list";
+export { CampaignMap } from "./components/campaign-map";
 export { summarizeMission, type MissionSummary } from "./components/mission-summary";
 export { DIFFICULTY_LABELS, MissionText } from "./components/mission-text";
-export type { LessonLink, MissionLink, MissionLinks, MissionRunStatus } from "./components/types";
+export { SKILL_ICONS, SkillBadge, SkillIconGlyph } from "./components/skill-badge";
+export type {
+  ChapterLink,
+  LessonLink,
+  MissionLink,
+  MissionLinks,
+  MissionRunStatus,
+  NextMissionLink,
+} from "./components/types";

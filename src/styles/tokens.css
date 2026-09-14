@@ -54,8 +54,10 @@
     --border-strong: #66778c;
     --focus-ring: #7ee6f7;
 
-    /* Terminal palette, consumed by the terminal renderer in phase 05. */
+    /* Terminal palette, consumed by the terminal renderer in phase 05. Terminal themes (phase 08,
+       src/content/themes) reassign these on [data-terminal-theme]; this is the default theme. */
     --term-bg: #080b10;
+    --term-cursor: #3dd6ef;
     --term-fg: #d6e2ee;
     --term-dim: #8593a5;
     --term-black: #2b3340; /* a background colour: too dark to read as text on --term-bg */

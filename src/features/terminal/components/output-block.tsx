@@ -2,23 +2,57 @@
 
 import { memo, useId, useState, type CSSProperties } from "react";
 import { FOCUS_RING } from "@/components/ui/focus-ring";
+import type { PromptStyleId } from "@/content/themes";
 import { cx } from "@/lib/cx";
 import { explainBlock } from "../beginner/what-happened";
 import type { PromptInfo, TerminalBlock, TerminalLine } from "../session/terminal-session";
 import { AnsiText, CopyText } from "./styled-text";
 
-/** The prompt as a real shell shows it: user@host:folder$, in green and blue. */
-export function PromptLabel({ prompt }: { prompt: PromptInfo }) {
-  return (
-    <>
-      <span className="font-bold text-term-green">
-        {prompt.user}@{prompt.host}
-      </span>
-      <span>:</span>
-      <span className="font-bold text-term-blue">{prompt.cwd}</span>
-      <span>{prompt.symbol}</span>
-    </>
-  );
+/**
+ * The prompt, in the learner's prompt style (src/content/themes, picked on /settings):
+ *
+ * - `classic`: as a real shell shows it, user@host:folder$, in green and blue.
+ * - `short`: the folder, then the $ (or # for the admin account).
+ * - `arrow`: an arrow, then the folder. The # still shows for the admin account.
+ * - `minimal`: the $ or # alone.
+ */
+export function PromptLabel({
+  prompt,
+  style = "classic",
+}: {
+  prompt: PromptInfo;
+  style?: PromptStyleId;
+}) {
+  switch (style) {
+    case "short":
+      return (
+        <>
+          <span className="font-bold text-term-blue">{prompt.cwd}</span>{" "}
+          <span>{prompt.symbol}</span>
+        </>
+      );
+    case "arrow":
+      return (
+        <>
+          <span className="font-bold text-term-green">➜</span>{" "}
+          <span className="font-bold text-term-cyan">{prompt.cwd}</span>
+          {prompt.symbol === "#" && <span> #</span>}
+        </>
+      );
+    case "minimal":
+      return <span>{prompt.symbol}</span>;
+    case "classic":
+      return (
+        <>
+          <span className="font-bold text-term-green">
+            {prompt.user}@{prompt.host}
+          </span>
+          <span>:</span>
+          <span className="font-bold text-term-blue">{prompt.cwd}</span>
+          <span>{prompt.symbol}</span>
+        </>
+      );
+  }
 }
 
 /**
@@ -62,6 +96,8 @@ const TerminalLineView = memo(function TerminalLineView({ line }: { line: Termin
 interface OutputBlockProps {
   block: TerminalBlock;
   beginnerMode: boolean;
+  /** How the prompt before the command is drawn. */
+  promptStyle?: PromptStyleId;
   /** The newest block keeps its "What just happened?" button in view. */
   latest: boolean;
   /**
@@ -79,6 +115,7 @@ interface OutputBlockProps {
 export const OutputBlock = memo(function OutputBlock({
   block,
   beginnerMode,
+  promptStyle,
   latest,
   virtualize,
 }: OutputBlockProps) {
@@ -103,7 +140,7 @@ export const OutputBlock = memo(function OutputBlock({
       {block.kind === "command" && (
         <div className="flex items-start gap-2">
           <p className="min-w-0 flex-1 break-words whitespace-pre-wrap">
-            <PromptLabel prompt={block.prompt} /> {block.input}
+            <PromptLabel prompt={block.prompt} style={promptStyle} /> {block.input}
           </p>
           {canExplain && (
             <button

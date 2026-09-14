@@ -1,4 +1,12 @@
 import { z } from "zod";
+import {
+  CURSOR_STYLE_IDS,
+  DEFAULT_CURSOR_STYLE,
+  DEFAULT_PROMPT_STYLE,
+  DEFAULT_TERMINAL_THEME,
+  PROMPT_STYLE_IDS,
+  TERMINAL_THEME_IDS,
+} from "@/content/themes";
 
 /**
  * The learner's settings: the only thing the app remembers between visits
@@ -12,6 +20,7 @@ import { z } from "zod";
  * the boot script (boot-script.ts) to apply it.
  */
 const ReducedMotionOverrideSchema = z.enum(["system", "reduce", "full"]);
+const NetworkViewSchema = z.enum(["graph", "table"]);
 
 export const SETTINGS_SHAPE = {
   /** The desktop sidebar is collapsed to an icon rail. */
@@ -27,6 +36,19 @@ export const SETTINGS_SHAPE = {
    * row of suggested commands. On by default, because most learners are brand new.
    */
   beginnerMode: z.boolean().catch(true),
+  /**
+   * How the network map shows what you've found (phase 07): the drawing ("graph") or the table,
+   * which says everything the drawing does in rows and columns.
+   */
+  networkView: NetworkViewSchema.catch("graph"),
+  /**
+   * The terminal's colours, prompt and cursor (phase 08, src/content/themes). All free, all there
+   * from the start, and none changes difficulty, content or hints. The colour theme is applied as
+   * data-terminal-theme on <html> (src/lib/terminal-themes.ts).
+   */
+  terminalTheme: z.enum(TERMINAL_THEME_IDS).catch(DEFAULT_TERMINAL_THEME),
+  promptStyle: z.enum(PROMPT_STYLE_IDS).catch(DEFAULT_PROMPT_STYLE),
+  cursorStyle: z.enum(CURSOR_STYLE_IDS).catch(DEFAULT_CURSOR_STYLE),
 } as const;
 
 export const SettingsSchema = z.object(SETTINGS_SHAPE);
@@ -37,6 +59,10 @@ export type ReducedMotionOverride = Settings["reducedMotionOverride"];
 
 export const REDUCED_MOTION_OVERRIDES: readonly ReducedMotionOverride[] =
   ReducedMotionOverrideSchema.options;
+
+export type NetworkView = Settings["networkView"];
+
+export const NETWORK_VIEWS: readonly NetworkView[] = NetworkViewSchema.options;
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = Object.freeze(SettingsSchema.parse({}));
 

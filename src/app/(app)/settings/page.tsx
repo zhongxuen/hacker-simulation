@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SettingsForm } from "@/components/settings/settings-form";
 import { FOCUS_RING } from "@/components/ui/focus-ring";
+import { TerminalLookSettings } from "@/features/terminal";
 import { getAppSection } from "@/lib/app-sections";
 import { cx } from "@/lib/cx";
 
@@ -24,7 +25,9 @@ export default function SettingsPage() {
         </Link>
       </p>
       <div className="mt-8">
-        <SettingsForm />
+        <SettingsForm>
+          <TerminalLookSettings />
+        </SettingsForm>
       </div>
     </div>
   );

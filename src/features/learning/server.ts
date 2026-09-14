@@ -20,4 +20,5 @@ export {
   type LessonFilter,
 } from "./lessons/loader";
 export { renderLesson, renderLessonBody, type RenderedLesson } from "./lessons/render";
+export { buildSearchIndex } from "./search/build-index";
 export { TableOfContents } from "./lessons/table-of-contents";

@@ -73,6 +73,13 @@ function MissionAttempt({ mission, links, run, dispatch, onStatusChange }: Missi
     setShownPhase(run.phase);
   }
 
+  // The mentor's "That's your first host!" plays once per attempt: when the first new computer
+  // turns up on the map, until the learner dismisses it (md-files/07-network-visualizer.md).
+  const [mapTip, setMapTip] = useState<"waiting" | "showing" | "done">("waiting");
+  if (mapTip === "waiting" && run.events.some((event) => event.type === "host.discovered")) {
+    setMapTip("showing");
+  }
+
   // Moving between briefing, workspace and debrief puts focus on the new screen's heading (the
   // debrief focuses its own).
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -114,6 +121,8 @@ function MissionAttempt({ mission, links, run, dispatch, onStatusChange }: Missi
       session={session}
       startTour={mission.guidedTour && !tourDone}
       headingRef={headingRef}
+      mapTip={mapTip === "showing"}
+      onDismissMapTip={() => setMapTip("done")}
     />
   );
 }

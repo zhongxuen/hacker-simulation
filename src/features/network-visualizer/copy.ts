@@ -63,7 +63,30 @@ export const EMPTY_DESCRIPTION =
   "It lights up as you discover computers. Every computer you find appears here, grouped by the network it's on.";
 
 export const KEYBOARD_HELP =
-  "On the map, arrow keys move between computers and Enter selects one. Plus and minus zoom, 0 fits the whole map, and Shift with an arrow key scrolls it.";
+  "On the map, arrow keys move between computers and Enter opens one's details. Plus and minus zoom, 0 fits the whole map, and Shift with an arrow key scrolls it.";
+
+/**
+ * "3 computers found · keep scanning to find more". Only ever what's been found: a count of what's
+ * left would leak ground truth (md-files/07-network-visualizer.md, "Show what's left to find").
+ */
+export function foundSoFar(found: number): string {
+  return `${found === 1 ? "1 computer" : `${found} computers`} found · keep scanning to find more`;
+}
+
+/** The mentor's one-time line when the learner finds their first host in a mission. */
+export const FIRST_DISCOVERY_LINE =
+  "That's your first host, a computer that answered you on the network! Every device on a network has an address, like a house on a street.";
+
+/** The short "Host found!" pop in the map's header, after a scan finds something new. */
+export const HOST_FOUND = "Host found!";
+
+/** How the learner first learned about a host, when no command revealed it. */
+export const VIA_EXPLANATION: Readonly<Record<string, string>> = {
+  session: "This is your own computer: it's where you're typing.",
+  briefing: "You knew about it from the briefing, before it answered any of your tools.",
+};
+
+export const NOTES_HELP = "Only kept while this mission is open. Nothing is saved.";
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 

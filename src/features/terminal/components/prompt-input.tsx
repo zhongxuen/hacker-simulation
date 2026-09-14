@@ -1,7 +1,54 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react";
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+  type RefObject,
+} from "react";
+import type { CursorStyleId } from "@/content/themes";
 import { cx } from "@/lib/cx";
+
+/**
+ * The cursor over the next character, in the learner's cursor style (src/content/themes), drawn in
+ * the theme's --term-cursor colour. It blinks while you can type, unless motion is reduced; out of
+ * focus it shows as a still outline, so you can see where typing will go.
+ *
+ * - `block`: a filled box, the character inside in the terminal background colour.
+ * - `underline` and `bar`: a line under or before the character. Only the line blinks, never the
+ *   character, so the letter stays readable.
+ */
+export function CursorMark({
+  style = "block",
+  focused,
+  children,
+}: {
+  style?: CursorStyleId;
+  focused: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={cx(
+        "relative inline-block min-w-[1ch]",
+        style === "block" &&
+          (focused
+            ? "animate-cursor-blink bg-term-cursor text-term-bg"
+            : "outline-1 -outline-offset-1 outline-term-cursor"),
+        style !== "block" && "after:absolute after:bg-term-cursor",
+        style !== "block" && focused && "after:animate-cursor-blink",
+        style === "underline" && "after:inset-x-0 after:bottom-0",
+        style === "underline" && (focused ? "after:h-0.5" : "after:h-px"),
+        style === "bar" && "after:inset-y-0.5 after:left-0",
+        style === "bar" && (focused ? "after:w-0.5" : "after:w-px"),
+      )}
+    >
+      {children}
+    </span>
+  );
+}
 
 interface PromptInputProps {
   value: string;
@@ -17,13 +64,15 @@ interface PromptInputProps {
   label: string;
   describedBy?: string;
   disabled?: boolean;
+  /** The cursor's shape. Defaults to a block. */
+  cursorStyle?: CursorStyleId;
 }
 
 /**
  * The command line you type into. It's a real <input>, so typing, selection, pasting, screen
  * readers and on-screen keyboards all work as usual. Its own text and caret are transparent: a
- * mirror underneath draws the same text with a terminal-style block cursor (which blinks, unless
- * motion is reduced) and the ghost suggestion.
+ * mirror underneath draws the same text with a terminal-style cursor (which blinks, unless motion
+ * is reduced) and the ghost suggestion.
  */
 export function PromptInput({
   value,
@@ -36,6 +85,7 @@ export function PromptInput({
   label,
   describedBy,
   disabled,
+  cursorStyle,
 }: PromptInputProps) {
   const [focused, setFocused] = useState(false);
   const mirrorRef = useRef<HTMLDivElement>(null);
@@ -60,16 +110,9 @@ export function PromptInput({
         className="pointer-events-none overflow-hidden whitespace-pre"
       >
         {before}
-        <span
-          className={cx(
-            "inline-block min-w-[1ch]",
-            focused
-              ? "animate-cursor-blink bg-accent text-surface-base"
-              : "outline-1 -outline-offset-1 outline-accent",
-          )}
-        >
+        <CursorMark style={cursorStyle} focused={focused}>
           {under || " "}
-        </span>
+        </CursorMark>
         {after}
         {showGhost && <span className="text-term-dim">{ghost}</span>}
       </div>

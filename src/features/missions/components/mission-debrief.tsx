@@ -11,6 +11,7 @@ import { SKILLS } from "@/content/skills";
 import { cx } from "@/lib/cx";
 import { rewardSummary, type MissionRunAction, type MissionRunState } from "../run/mission-run";
 import { MissionText } from "./mission-text";
+import { SkillIconGlyph } from "./skill-badge";
 import type { MissionLinks } from "./types";
 
 const LINK = cx(
@@ -60,7 +61,10 @@ export function MissionDebrief({ mission, run, links, dispatch }: MissionDebrief
     <div ref={rootRef} className="mx-auto max-w-3xl space-y-6">
       <MissionComplete
         missionTitle={mission.title}
-        skills={mission.skills.map((skill) => SKILLS[skill].label)}
+        skills={mission.skills.map((skill) => ({
+          label: SKILLS[skill].label,
+          icon: <SkillIconGlyph skill={skill} />,
+        }))}
         headingLevel="h1"
       >
         <MissionText text={debrief.summary} />
@@ -167,6 +171,15 @@ export function MissionDebrief({ mission, run, links, dispatch }: MissionDebrief
         <p className="mt-2 text-lg leading-8 text-primary">
           <MissionText text={debrief.nextTease} />
         </p>
+        {links.next?.startsChapter && (
+          <p className="mt-2 leading-7 text-secondary">
+            That&apos;s the end of this chapter. Chapter {links.next.startsChapter.number},{" "}
+            {links.next.startsChapter.title}, starts with the next mission.
+          </p>
+        )}
+        {!links.next && links.campaignEnd && (
+          <p className="mt-2 leading-7 text-secondary">{links.campaignEnd}</p>
+        )}
         <div className="mt-4 flex flex-wrap gap-2">
           {links.next ? (
             <ButtonLink
@@ -175,6 +188,10 @@ export function MissionDebrief({ mission, run, links, dispatch }: MissionDebrief
               icon={<ArrowRightIcon />}
             >
               Next mission: {links.next.title}
+            </ButtonLink>
+          ) : links.chapter ? (
+            <ButtonLink href="/campaign" variant="primary" icon={<ArrowRightIcon />}>
+              Back to the campaign
             </ButtonLink>
           ) : (
             <ButtonLink href="/missions" variant="primary" icon={<ArrowRightIcon />}>

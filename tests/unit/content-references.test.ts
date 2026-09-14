@@ -80,7 +80,9 @@ describe("the real content", () => {
     expect(lessons.graph.cycles).toEqual([]);
   });
 
-  it("builds and renders every lesson", async () => {
+  // Compiling and rendering all 28 lessons takes 3 to 5 seconds, right at Vitest's 5-second
+  // default, so it gets a timeout that fits the work.
+  it("builds and renders every lesson", { timeout: 30_000 }, async () => {
     for (const lesson of lessons.lessons) {
       const { content } = await renderLessonBody(lesson.body, lesson.id);
       expect(renderToStaticMarkup(content), lesson.id).not.toBe("");

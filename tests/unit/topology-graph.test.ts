@@ -13,8 +13,8 @@ import type { DiscoveredTopology, HostSpec, ScenarioSpec } from "@/sim/types";
 /**
  * The network map's renderer (md-files/07-network-visualizer.md, prompt 07.2), rendered to HTML in
  * plain Node. This proves what the markup says: every host is a named, focusable button, states are
- * spelled out in words, and 200 hosts render without trouble. It can't measure frame rate: see the
- * note on the performance test.
+ * spelled out in words, and 200 hosts render without trouble. It can't measure frame rate: that's
+ * tests/e2e/network-map-performance.spec.ts, on a real browser.
  */
 
 const render = (props: TopologyGraphProps) =>
@@ -211,7 +211,7 @@ describe("TopologyGraph", () => {
    * Node has no layout, paint or compositor, so it can't see style recalculation or the cost of
    * drawing 200 cards. The design keeps per-frame work small (panning and zooming change one
    * transform and re-render no cards; cards are memoized), but the frame rate itself needs a
-   * browser check, which the phase 11 end-to-end tests can do.
+   * browser, and is measured in tests/e2e/network-map-performance.spec.ts.
    */
   it("renders 200 hosts within budget", () => {
     const big = bigTopology(4, 50);

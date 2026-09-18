@@ -45,6 +45,11 @@ interface MapLayersProps {
   tabStopId: string | undefined;
   /** Keys (see layoutKeys) of everything that appeared since the last discovery. */
   fresh: ReadonlySet<string>;
+  /**
+   * Animate what's new into place. False when so much arrived at once that animating all of it
+   * would cost frames (see MAX_POPPING_NODES); it then simply appears.
+   */
+  popEntrances: boolean;
   /** Label new cards "New!", for when motion is reduced and they can't pop in. */
   labelNew: boolean;
 }
@@ -60,8 +65,12 @@ export const MapLayers = memo(function MapLayers({
   selectedHostId,
   tabStopId,
   fresh,
+  popEntrances,
   labelNew,
 }: MapLayersProps) {
+  /** Whether this thing is new *and* worth animating in. */
+  const entering = (key: string) => popEntrances && fresh.has(key);
+
   const nodeById = useMemo(
     () => new Map(topology.nodes.map((node) => [node.hostId, node])),
     [topology.nodes],
@@ -82,7 +91,7 @@ export const MapLayers = memo(function MapLayers({
           <SubnetBox
             key={cluster.cidr}
             cluster={cluster}
-            isNew={fresh.has(`subnet:${cluster.cidr}`)}
+            isNew={entering(`subnet:${cluster.cidr}`)}
           />
         ))}
       </g>
@@ -93,7 +102,7 @@ export const MapLayers = memo(function MapLayers({
               key={link.key}
               route={link}
               targetName={subnetLabel(clusterByCidr.get(link.to) ?? {})}
-              isNew={fresh.has(link.key)}
+              isNew={entering(link.key)}
             />
           ) : (
             <InterfaceLine
@@ -101,7 +110,7 @@ export const MapLayers = memo(function MapLayers({
               link={link}
               hostLabel={nodeById.get(link.hostId)?.label ?? link.hostId}
               subnetName={subnetLabel(clusterByCidr.get(link.subnet) ?? {})}
-              isNew={fresh.has(link.key)}
+              isNew={entering(link.key)}
             />
           ),
         )}
@@ -120,7 +129,7 @@ export const MapLayers = memo(function MapLayers({
               const node = nodeById.get(hostId);
               const place = placeById.get(hostId);
               if (!node || !place) return null;
-              const isNew = fresh.has(nodeKey(node.hostId));
+              const key = nodeKey(node.hostId);
               return (
                 <HostCard
                   key={node.hostId}
@@ -128,8 +137,8 @@ export const MapLayers = memo(function MapLayers({
                   place={place}
                   selected={node.hostId === selectedHostId}
                   tabbable={node.hostId === tabStopId}
-                  isNew={isNew}
-                  labelNew={labelNew && isNew}
+                  isNew={entering(key)}
+                  labelNew={labelNew && fresh.has(key)}
                 />
               );
             })}

@@ -23,6 +23,7 @@ import {
   layoutTopology,
   nextFocus,
   NODE_HEIGHT,
+  NODE_KEY_PREFIX,
   NODE_WIDTH,
   type FocusMove,
   type TopologyLayout,
@@ -62,6 +63,16 @@ const DEFAULT_VIEWPORT: Size = { width: 800, height: 480 };
 const DRAG_THRESHOLD = 4;
 /** How long a "New!" label stays, when motion is reduced. */
 const NEW_LABEL_MS = 5000;
+/**
+ * How many hosts may pop in at once. Each entrance is an SVG transform animation, which the
+ * browser repaints every frame for as long as it runs and can't hand to the compositor; a couple
+ * of hundred of them at once is the one thing that costs this map its frame rate (measured in
+ * tests/e2e/network-map-performance.spec.ts). Past this many they appear without the pop.
+ *
+ * A scan finds a handful of hosts at a time, so the reveal moment is untouched by this: it only
+ * ever applies to a map filling in faster than anyone could follow anyway.
+ */
+const MAX_POPPING_NODES = 24;
 /** Wheel events this close together are one gesture: no easing between them. */
 const WHEEL_SETTLE_MS = 160;
 
@@ -174,6 +185,16 @@ export function TopologyGraph({
     const fresh = new Set([...keys].filter((key) => !reveal.known.has(key)));
     setReveal({ layout, known: keys, fresh: fresh.size > 0 ? fresh : reveal.fresh });
   }
+
+  // Whether this batch of discoveries is small enough to animate in. "New!" labels don't depend
+  // on it: they cost nothing, and a host that arrived without a pop still deserves one.
+  const popEntrances = useMemo(() => {
+    let count = 0;
+    for (const key of reveal.fresh) {
+      if (key.startsWith(NODE_KEY_PREFIX) && ++count > MAX_POPPING_NODES) return false;
+    }
+    return true;
+  }, [reveal.fresh]);
 
   const nodeIds = useMemo(() => new Set(layout.nodes.map((node) => node.hostId)), [layout.nodes]);
   const tabStopId =
@@ -449,6 +470,7 @@ export function TopologyGraph({
                   selectedHostId={selectedHostId}
                   tabStopId={tabStopId}
                   fresh={reveal.fresh}
+                  popEntrances={popEntrances}
                   labelNew={reduced}
                 />
               </g>

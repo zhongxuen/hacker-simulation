@@ -71,8 +71,19 @@ describe("the campaigns", () => {
     expect(FIRST_STEP.href).toBe(`/missions/${startHereMissionId(MAIN_CAMPAIGN)}`);
   });
 
-  it("gives every Chapter 1 mission at least one bonus objective and one secret", () => {
-    for (const id of MAIN_CAMPAIGN.chapters[0]?.missions ?? []) {
+  it("opens Chapter 2 where Chapter 1 left off", () => {
+    expect(MAIN_CAMPAIGN.chapters[1]?.missions).toEqual(["crypto-01", "forensics-01"]);
+    expect(campaignMissionIds(MAIN_CAMPAIGN)).toEqual([
+      "intro-01",
+      "linux-01",
+      "net-01",
+      "crypto-01",
+      "forensics-01",
+    ]);
+  });
+
+  it("gives every campaign mission at least one bonus objective and one secret", () => {
+    for (const id of campaignMissionIds(MAIN_CAMPAIGN)) {
       const mission = catalog.getMissionById(id);
       const bonus = mission?.objectives.filter(
         (objective) => objective.optional && !objective.hidden,
@@ -157,9 +168,22 @@ describe("nextMission", () => {
     expect(nextMission(TWO_CHAPTERS, "z-99")).toBeUndefined();
   });
 
-  it("plays Chapter 1 in story order", () => {
+  it("plays the campaign in story order", () => {
     expect(nextMission(MAIN_CAMPAIGN, "intro-01")?.missionId).toBe("linux-01");
     expect(nextMission(MAIN_CAMPAIGN, "linux-01")?.missionId).toBe("net-01");
+    expect(nextMission(MAIN_CAMPAIGN, "crypto-01")?.missionId).toBe("forensics-01");
+  });
+
+  it("hands net-01's debrief over to Chapter 2, and stops after the last mission", () => {
+    expect(nextMission(MAIN_CAMPAIGN, "net-01")).toMatchObject({
+      missionId: "crypto-01",
+      chapterNumber: 2,
+      episode: 1,
+      startsChapter: true,
+    });
+    expect(nextMission(MAIN_CAMPAIGN, "net-01")?.chapter.title).toBe("The handover");
+    expect(nextMission(MAIN_CAMPAIGN, "forensics-01")).toBeUndefined();
+    expect(MAIN_CAMPAIGN.upNext).toBeDefined();
   });
 
   it("finds each mission's chapter and episode", () => {
@@ -182,9 +206,16 @@ describe("bestAfter", () => {
     expect(bestAfter("unknown", missions)).toEqual([]);
   });
 
-  it("matches the real missions' prerequisites", () => {
+  it("matches the real missions' prerequisites, across the chapter boundary", () => {
     expect(bestAfter("net-01", catalog.missions).map((mission) => mission.id)).toEqual([
       "linux-01",
+    ]);
+    // Chapter 2, episode 1 points back at Chapter 1's last mission: a suggestion, not a lock.
+    expect(bestAfter("crypto-01", catalog.missions).map((mission) => mission.id)).toEqual([
+      "net-01",
+    ]);
+    expect(bestAfter("forensics-01", catalog.missions).map((mission) => mission.id)).toEqual([
+      "crypto-01",
     ]);
   });
 });

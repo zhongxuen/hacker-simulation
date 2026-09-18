@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { SettingsForm } from "@/components/settings/settings-form";
 import { UsageAnalytics } from "@/components/shell/usage-analytics";
 import { beforeSendUsage, reportFirstTick, trackUsage } from "@/lib/analytics";
@@ -26,6 +26,20 @@ const analyticsScripts = () =>
   [...document.querySelectorAll("script")].filter((script) =>
     /insights|speed-insights|vercel-scripts/.test(script.src),
   );
+
+/**
+ * UsageAnalytics renders the scripts through `lazy(() => import("./usage-analytics-scripts"))`, so
+ * the first render is what pulls that module — and with it @vercel/analytics/next and
+ * @vercel/speed-insights/next — through Vitest's transform. Under `pnpm test`, with all four
+ * projects competing for the cores, that first load can take longer than waitFor's one-second
+ * budget and fail the assertion for a reason that has nothing to do with the component.
+ *
+ * Loading it here turns that into something the test awaits: by the time React.lazy asks, the
+ * module registry already has it and the dynamic import resolves on a microtask.
+ */
+beforeAll(async () => {
+  await import("@/components/shell/usage-analytics-scripts");
+});
 
 beforeEach(() => {
   vercel.track.mockClear();

@@ -5,27 +5,31 @@ import { expect, test, type Page } from "@playwright/test";
 import { objectives, run, startMission } from "./helpers";
 
 /**
- * Accessibility on every route (md-files/11-testing-security-deployment.md, "Testing strategy":
- * "axe in Playwright, every route, zero serious/critical violations"), and the states a learner
+ * Accessibility on every route (md-files/remaining.md, Part 2, "Security posture": axe in
+ * Playwright, every route, zero serious or critical violations), and the states a learner
  * spends most time in: a mission's workspace with the map, the mentor's panel, the debrief, the
- * search palette. Every lesson is checked, read from the lessons folder so a new one is covered.
+ * search palette. Every lesson and every mission is checked, read from their folders so a new
+ * one is covered without anyone remembering to add it.
  *
  * axe finds what a machine can: missing names, contrast, roles, structure. It can't say whether a
- * page makes sense with a screen reader; that's the manual pass in md-files/launch-checklist.md.
+ * page makes sense with a screen reader; that's A7 in md-files/remaining.md, which a person does.
  */
 
 const LESSONS = readdirSync(join(process.cwd(), "src", "content", "lessons"))
   .filter((name) => name.endsWith(".mdx"))
   .map((name) => `/learn/${name.replace(/\.mdx$/, "")}`);
 
+/** Read from the mission files, so a new mission is checked without anyone remembering to add it. */
+const MISSIONS = readdirSync(join(process.cwd(), "src", "content", "missions"))
+  .filter((name) => name.endsWith(".yaml"))
+  .map((name) => `/missions/${name.replace(/\.yaml$/, "")}`);
+
 const ROUTES = [
   "/",
   "/privacy",
   "/campaign",
   "/missions",
-  "/missions/intro-01",
-  "/missions/linux-01",
-  "/missions/net-01",
+  ...MISSIONS,
   "/sandbox",
   "/terminal",
   "/network",

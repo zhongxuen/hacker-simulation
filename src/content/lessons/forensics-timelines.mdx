@@ -1,0 +1,137 @@
+---
+id: forensics-timelines
+title: Putting events in order
+topic: forensics
+level: 2
+readingMinutes: 6
+analogy: "A timeline is what a detective pins to the wall: everything anyone can prove, in the order it happened. The hard part is never the pins, it's agreeing what time it was."
+summary: Events from several logs, laid out in one order, and the clock problems that quietly ruin them.
+prerequisites: [forensics-what-logs-are]
+relatedMissions: [linux-01]
+relatedCommands: [logview, sort, date, cat]
+glossaryTerms:
+  [timeline, timestamp, log-entry, coordinated-universal-time, clock-drift, log-rotation]
+---
+
+## The one-sentence version
+
+A <Term id="timeline">timeline</Term> is every event you can prove, from every log you have, laid out in the order it actually happened.
+
+The order events happened in is not the order they sit in a file. Here are all six lines of the sign-in log from a practice computer, exactly as they're stored:
+
+<Annotated
+  title="/var/log/auth.log, in the order it's written"
+  code={`2026-03-02T08:30:10Z INFO sshd[901]: Accepted password for recruit from 192.168.60.10 port 50122
+2026-03-02T08:41:03Z WARN sshd[944]: Failed password for kit from 192.168.60.21 port 40011
+2026-03-02T08:41:09Z INFO sshd[944]: Accepted password for kit from 192.168.60.21 port 40011
+2026-03-02T02:14:07Z WARN sshd[977]: Failed password for admin from 192.168.60.66 port 51515
+2026-03-02T02:14:09Z WARN sshd[977]: Failed password for admin from 192.168.60.66 port 51516
+2026-03-02T02:14:12Z WARN sshd[977]: Failed password for admin from 192.168.60.66 port 51517`}
+  notes={[
+    {
+      line: 1,
+      label: "First in the file, at 08:30",
+      text: "A morning sign-in. Reading top to bottom, this looks like the start of the story.",
+    },
+    {
+      line: 4,
+      label: "Fourth in the file, at 02:14",
+      text: "Six hours earlier than the line above it. This is the real start of the night, and it's sitting in the middle of the file where a quick read slides straight past it.",
+    },
+    {
+      line: 6,
+      label: "The last of three, five seconds later",
+      text: "Three refused passwords in five seconds. Put them at the top, where they belong in time, and the whole file reads differently.",
+    },
+  ]}
+/>
+
+Files end up out of order all the time: logs get merged, copied back after a restore, or written by programs that batch things up. Sort by the time in the line, never by where the line sits.
+
+## Why it matters in security
+
+An investigation is a sentence with the word "then" in it. _Someone tried three passwords, then one worked, then a file left the building._ Without the order, you have three facts and no story, and you can't tell a client what happened or what to change.
+
+Order is also how you spot the difference between cause and effect. If the outgoing traffic started before the sign-in, the sign-in isn't what caused it, and you're still looking for the way in.
+
+<Quiz
+  question="A bakery's firewall recorded a blocked connection at 09:41 local time. Its order server recorded a refused sign-in at 08:41 UTC. The bakery is one hour ahead of UTC. What do you have?"
+  options={[
+    {
+      text: "One event, seen by two machines, that needs converting to one clock before it means anything",
+      correct: true,
+      explanation:
+        "09:41 local in a place one hour ahead of UTC is 08:41 UTC: the same minute. Convert everything to one clock first, and two mysteries an hour apart turn into one event with two witnesses.",
+    },
+    {
+      text: "Two separate events an hour apart, which suggests someone tried again later",
+      explanation:
+        "That's the trap. The hour of daylight between them is the time zone, not the attacker. Two records in different zones can describe the same moment.",
+    },
+    {
+      text: "A contradiction, so one of the two logs can't be trusted",
+      explanation:
+        "Both are honest. Each machine wrote the time its own settings told it to write. The mismatch is yours to resolve, not a sign that either program is at fault.",
+    },
+    {
+      text: "Not enough to say anything, because the two machines record different kinds of event",
+      explanation:
+        "Different kinds of event are what makes a timeline worth building. A blocked connection and a refused sign-in in the same minute say more together than either says alone.",
+    },
+  ]}
+/>
+
+## How it actually works
+
+Building a timeline is four steps, and the messy one is in the middle.
+
+**1. Gather.** Every source that might have seen the event: the machine itself, the firewall in front of it, the service it talks to, the door-entry system if the story involves a room.
+
+**2. Normalise.** Every line carries a <Term id="timestamp">timestamp</Term>, and the first job is to put every one of them on the same clock before comparing anything. Most servers record in <Term id="coordinated-universal-time">coordinated universal time</Term>, one world clock, which is what the `Z` on the end of `2026-03-02T02:14:07Z` means. Anything recorded in local time gets converted. Anything without a time zone at all gets a note saying so, because a guess written down as a fact is how investigations go wrong.
+
+**3. Sort.** One list, earliest first. Each <Term id="log-entry">log entry</Term> keeps a note of which file it came from, so you can go back and read it in context.
+
+**4. Read it as a story,** and keep going back past the event that started the investigation. The alert is rarely the beginning. The beginning is usually a dull line, days earlier, that nobody had a reason to look at.
+
+### The two things that break timelines
+
+**Clocks that disagree.** A machine running four minutes fast records everything four minutes early, so an effect can appear to happen before its cause. That slow slide is <Term id="clock-drift">clock drift</Term>, and it's why an investigator checks what each machine thought the time was before trusting the order of anything. Sometimes the drift is deliberate: changing a clock is a way to make records confusing.
+
+**Logs that ran out.** <Term id="log-rotation">Log rotation</Term> starts a fresh file every so often and deletes the oldest, so records never fill the disk. If a company keeps seven days and the way in was opened three weeks ago, that part of the timeline is gone. Finding out how far back the records go is worth doing early, before you spend a day looking for something that no longer exists.
+
+## See it
+
+The practice log you read above is out of order. Put it right.
+
+<MiniTerminal
+  scenario="range-logs"
+  commands={[
+    "logview /var/log/auth.log",
+    "sort /var/log/auth.log",
+    "logview /var/log/syslog",
+    "date",
+  ]}
+  task="Run `sort /var/log/auth.log` to put the lines in time order."
+  expect="sort"
+  success="Now the night reads properly: three refused passwords at 02:14 come first, and the morning follows. Sorting worked because every line starts with its time, written longest unit first."
+/>
+
+That ordering is a small gift from the way the times are written. `2026-03-02T02:14:07Z` puts the year first, then the month, then the day: sorting the text alphabetically sorts it by time as well. A log written `2/3/26 2:14am` sorts into nonsense, which is one reason the long form is the one to use.
+
+`date` tells you what this machine thinks the time is. On a real investigation that's step one, on every machine you touch.
+
+## In practice
+
+In [Reading the machine](/missions/linux-01) you work through one computer's files while Idris reads its logs. The moment the two of you put your findings in one order, the shape of the week appears: the password sitting in a readable file, and then the sign-in that used it.
+
+Every option `logview` takes is on its [manual page](/learn/commands#logview), [Reading logs](/learn/linux-logs) breaks a single line apart, and [What a log really is](/learn/forensics-what-logs-are) covers who writes the logs you're about to sort.
+
+<TryIt mission="linux-01" />
+
+## Common misconceptions
+
+- **"The order in the file is the order it happened."** Files get merged, restored and written out of sequence. Sort on the time in the line.
+- **"A timestamp is a fact."** It's what one machine's clock believed at the time, which is a different thing. Two records four minutes apart may be the same event seen by a machine that's running fast.
+- **"If two logs disagree, one of them is lying."** Time zones and drift explain nearly every disagreement you'll meet. Convert to one clock, check the clocks, and see what's left.
+- **"The timeline stops at the alert."** The alert is where you came in. The first interesting event is usually earlier and quieter, and finding it is the point of the exercise.
+- **"Same second, same moment, so the order doesn't matter."** Two events a fraction apart can land in the same second. When the order matters and the seconds can't settle it, say so in the report instead of picking one.

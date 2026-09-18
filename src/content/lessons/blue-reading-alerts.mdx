@@ -1,0 +1,139 @@
+---
+id: blue-reading-alerts
+title: Telling real warnings from noise
+topic: blue-team
+level: 1
+readingMinutes: 5
+analogy: "A smoke detector that goes off every time someone makes toast. The detector isn't broken, and the household that takes the battery out has a real problem."
+summary: Most warnings turn out to be nothing. Sorting the ones that matter from the ones that don't is most of what defending a network actually is.
+prerequisites: [forensics-what-logs-are, blue-incident-response]
+relatedMissions: [linux-01]
+relatedCommands: [logview, grep, netscan]
+glossaryTerms:
+  [alert, triage, false-positive, true-positive, false-negative, alert-fatigue, baseline]
+---
+
+## The one-sentence version
+
+An <Term id="alert">alert</Term> is a warning a tool raises when it sees something that looks suspicious, and the tool has no idea whether it's right.
+
+Both of these are failed sign-ins. One is a person having a bad morning and one isn't, and nothing but the pattern around them says which:
+
+<Annotated
+  title="Two failed sign-ins from /var/log/auth.log"
+  code={`2026-03-02T08:41:03Z WARN sshd[944]: Failed password for kit from 192.168.60.21 port 40011
+2026-03-02T08:41:09Z INFO sshd[944]: Accepted password for kit from 192.168.60.21 port 40011
+2026-03-02T02:14:07Z WARN sshd[977]: Failed password for admin from 192.168.60.66 port 51515
+2026-03-02T02:14:09Z WARN sshd[977]: Failed password for admin from 192.168.60.66 port 51516
+2026-03-02T02:14:12Z WARN sshd[977]: Failed password for admin from 192.168.60.66 port 51517`}
+  notes={[
+    {
+      line: 1,
+      label: "A warning that means nothing",
+      text: "Kit mistyped their password at 08:41, on their own account, from their own computer. A tool watching for failed sign-ins raises exactly the same kind of warning for this as for the lines below.",
+    },
+    {
+      line: 2,
+      label: "The line that settles it",
+      text: "Six seconds later, Kit is in. One slip then success, on a normal account at a normal hour, is what a human being looks like. The warning was real and the event was harmless.",
+    },
+    {
+      line: 3,
+      label: "The same warning, a different story",
+      text: "02:14, an account called `admin`, an address nobody recognises, and two more attempts in the next five seconds. Nothing here is a person mistyping.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+A tool can say "this looks unusual". Only a person can say "and here's why that's fine" or "and somebody needs to deal with this now". That judgement is the job, and it's the part that doesn't get automated away.
+
+There are four ways a warning can land, and the two on the right are the ones that hurt:
+
+|                           | Something was wrong                                                 | Nothing was wrong                                                            |
+| ------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **A warning was raised**  | <Term id="true-positive">True positive</Term>: the system worked    | <Term id="false-positive">False positive</Term>: attention spent for nothing |
+| **No warning was raised** | <Term id="false-negative">False negative</Term>: the quiet disaster | Normal life                                                                  |
+
+<Quiz
+  question="Three warnings arrive at once. Which do you look at first?"
+  options={[
+    {
+      text: "An account nobody has used since last year signed in successfully, from an address in another country",
+      correct: true,
+      explanation:
+        "Successful, unusual, and on a forgotten account: that's the combination worth dropping everything for. A dormant account signing in means somebody has working credentials, and nobody is going to notice the account missing.",
+    },
+    {
+      text: "Two hundred refused sign-ins on the public website in ten minutes",
+      explanation:
+        "Noisy and mostly harmless. Anything reachable from the internet gets this all day from automated guessing, and every one of these attempts was refused. Worth counting and worth a rule; not worth your first ten minutes.",
+    },
+    {
+      text: "The backup server read forty thousand files overnight",
+      explanation:
+        "That's what a backup server is for. The fix here isn't an investigation, it's telling the tool that this machine does this every night, so the warning stops arriving.",
+    },
+    {
+      text: "A staff member failed their password four times, then got in",
+      explanation:
+        "Four tries then success, in the morning, on their own account. Somebody came back from holiday. Glance at it and move on.",
+    },
+  ]}
+/>
+
+## How it actually works
+
+**Something raises the warning.** Usually a rule someone wrote (_more than five failed sign-ins in a minute_), or a comparison against a <Term id="baseline">baseline</Term>: a written-down picture of what normal looks like here. A machine that talks to two others and suddenly talks to a third is only interesting if somebody recorded that it usually talks to two.
+
+**Somebody triages it.** <Term id="triage">Triage</Term> is sorting the pile by how urgent each one looks. Three questions, in this order:
+
+1. **Is it real?** Did the thing the tool describes actually happen?
+2. **Does it matter here?** A weakness in software this organisation doesn't run is real and irrelevant.
+3. **Does someone need to act now?** The answer is usually no, and saying so out loud is a decision, not a shrug.
+
+**Then it gets written down.** Including the harmless ones. "Backup server, every night, expected" is worth thirty seconds now and saves the next person an hour.
+
+### The number that decides whether any of this works
+
+If ninety-nine warnings in a hundred are nothing, people stop reading them properly. That's <Term id="alert-fatigue">alert fatigue</Term>, and serious break-ins have happened with the warning sitting unread in a queue of thousands.
+
+So turning off a rule that cries wolf is security work, not tidying. A team that trusts its warnings investigates them. A team that doesn't, won't, whatever anybody puts in a policy.
+
+## See it
+
+Both patterns from the top of this lesson are in one small log. Find them.
+
+<MiniTerminal
+  scenario="range-logs"
+  commands={[
+    "logview /var/log/auth.log",
+    "logview /var/log/auth.log --grep Failed",
+    "logview /var/log/auth.log --level warn --count",
+    "sort /var/log/auth.log",
+  ]}
+  task="Run `logview /var/log/auth.log --grep Failed`, then read the whole log with `logview /var/log/auth.log` to see what happened either side."
+  expect="logview"
+  success="Four refused passwords. One of them is Kit at 08:41, followed by Kit getting in. The other three are 02:14 on the `admin` account, and no success after them."
+/>
+
+Filtering to `Failed` gives you four lines and no way to tell them apart. The whole log gives you what came next, which is what decides it. That's the shape of nearly every triage you'll ever do: the warning is the question, the surrounding lines are the answer.
+
+`--count` is worth knowing too. "Four refusals" and "four hundred refusals" are different situations, and counting is faster than reading.
+
+## In practice
+
+In [Reading the machine](/missions/linux-01), Idris brings you a line rather than an alarm: a sign-in that worked, using a password you found sitting in a readable file. Nothing raised a warning, because from the sign-in service's point of view somebody typed the right password. That's what a false negative looks like from the inside, and why people still read logs that nobody flagged.
+
+[What to do when something goes wrong](/learn/blue-incident-response) picks up where a warning turns out to be real, [What a log really is](/learn/forensics-what-logs-are) covers where these lines come from, and `logview` has a [manual page](/learn/commands#logview).
+
+<TryIt mission="linux-01" />
+
+## Common misconceptions
+
+- **"A false positive means the tool is broken."** It means the tool can't see the context. A backup job and somebody copying everything look identical from the outside. The fix is usually to teach the tool about this place, not to replace it.
+- **"More alerts means more security."** More alerts means more reading. Past a certain point it means less security, because nobody is reading any of them properly.
+- **"No alert, nothing happened."** That's the false negative, and it's the category you'll never see in a dashboard. It's why teams watch in several different ways, and why somebody still reads the logs by hand.
+- **"The tool decides whether it's serious."** The tool has never met this organisation. It doesn't know that the machine in question is switched off, or that the account belongs to somebody who left in March.
+- **"Switching off a noisy rule is cheating."** A rule that has never once been right is costing attention it hasn't earned. Turning it off, and writing down why, is a deliberate call and usually the right one.

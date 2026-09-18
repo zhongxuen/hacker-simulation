@@ -1,0 +1,132 @@
+---
+id: forensics-evidence-care
+title: Don't change what you're looking at
+topic: forensics
+level: 2
+readingMinutes: 6
+analogy: "A break-in at the bakery, and the first person through the door starts tidying. Every fingerprint they wipe was something a careful reader could have used."
+summary: Why investigators work on copies, what looking at a file can destroy, and how a team proves nothing was altered.
+prerequisites: [forensics-what-logs-are]
+relatedMissions: [linux-01]
+relatedCommands: [stat, ls, cp, cat]
+glossaryTerms: [digital-evidence, forensic-image, volatile-data, chain-of-custody, metadata, hash]
+---
+
+## The one-sentence version
+
+<Term id="digital-evidence">Digital evidence</Term> only means something if you can show it hasn't
+changed since you found it, so the rule is: look, copy, and leave the original alone.
+
+A file is more than the words inside it. `stat` shows the rest, without opening it:
+
+<Annotated
+  title="stat /var/log/auth.log"
+  code={`  File: /var/log/auth.log
+  Size: 560        Blocks: 8          IO Block: 4096   regular file
+Access: (0640/-rw-r-----)  Uid: (    0/    root)   Gid: ( 1001/     adm)
+Modify: 2026-03-02 09:00:00.000000000 +0000
+Change: 2026-03-02 09:00:00.000000000 +0000`}
+  notes={[
+    {
+      line: 1,
+      label: "The name, and nothing opened yet",
+      text: "`stat` reads the record the file system keeps about a file. It doesn't open the file, which is the point of using it first.",
+    },
+    {
+      line: 3,
+      label: "Who owns it and who may read it",
+      text: "Owned by `root`, readable by the `adm` group. If your account couldn't read it and now can, somebody changed something, and that itself is worth writing down.",
+    },
+    {
+      line: 4,
+      label: "When it was last written to",
+      text: "560 bytes, last modified at 09:00. Two numbers you can note down before you touch anything, and check again afterwards.",
+    },
+  ]}
+/>
+
+All of that is <Term id="metadata">metadata</Term>: information about the file rather than inside it. It's often the part that answers the question, and it's the part a careless first look destroys.
+
+## Why it matters in security
+
+Two reasons, and the second one surprises people.
+
+**Evidence that might have changed proves nothing.** If a client's insurer, a regulator or a court asks how you know a file said what you say it said, "I opened it and read it" is a weaker answer than you'd like. Work on a copy, record what the original looked like, and the question has an answer.
+
+**Changing things destroys the answer, not the file.** Copying a folder to your laptop to read it at leisure can rewrite every last-opened time in it. Restarting a struggling machine to see whether that helps throws away everything that was in its memory. Nothing was deleted, and the evidence is gone anyway.
+
+<Quiz
+  question="A small charity thinks a server has been broken into. Their office manager is on the phone, hand on the power switch, asking what to do. What's the first thing you say?"
+  options={[
+    {
+      text: "Leave it switched on and unplug its network cable instead",
+      correct: true,
+      explanation:
+        "Pulling the cable stops whoever is in there from doing anything more, and leaves the machine running so that what's in its memory survives: which programs are open, which connections are live, which account is being used. Switching off does the same job and throws all of that away.",
+    },
+    {
+      text: "Switch it off, because a machine that's off can't be used against them",
+      explanation:
+        "Understandable, and it costs you everything that lived only in memory. The cable achieves the containment without the loss. If the machine is actively destroying data, switching off can be the right call, and it's a decision worth making on purpose rather than by reflex.",
+    },
+    {
+      text: "Sign in and start reading the logs before anything else changes",
+      explanation:
+        "Signing in writes your own session into those logs and changes last-opened times. There's a place for reading the machine directly, and it comes after someone has decided how this will be handled.",
+    },
+    {
+      text: "Delete anything that looks like harmful software, then investigate",
+      explanation:
+        "That removes the thing that would tell you how they got in. Cleaning up comes after understanding, or the same way in stays open and it happens again.",
+    },
+  ]}
+/>
+
+## How it actually works
+
+**Copy first, then work on the copy.** For a whole machine that means a <Term id="forensic-image">forensic image</Term>: a copy of everything on the drive, made with the original mounted so it can't be written to. The original is locked away; every question gets asked of the copy. If the copy gets damaged during the work, you make another one.
+
+**Prove the copy matches.** A <Term id="hash">hash</Term> is a short fingerprint worked out from the contents of a file. Record the original's fingerprint, record the copy's, and if they match, the copy is exact. Record the copy's fingerprint again at the end of the work and you can show your own analysis changed nothing either.
+
+**Take the things that vanish first.** <Term id="volatile-data">Volatile data</Term> is anything that disappears when the power goes: what was running, what connections were open, what was in memory. That gets collected before the drive, because the drive will still be there tomorrow and memory won't.
+
+**Write down who had it.** The <Term id="chain-of-custody">chain of custody</Term> is a plain record: who took the copy, when, from which machine, where it was stored, who opened it since. It's dull, and a gap in it is the first thing anyone will point at. A notebook works.
+
+### What this looks like for a small business
+
+Most organisations in these missions have no evidence room and no budget for one. The realistic version is short: don't switch the machine off, don't sign in and start poking around, copy the logs somewhere safe before anything rotates them away, and write down the time you did each of those things. That's most of the value for almost none of the effort.
+
+## See it
+
+Look at the log's record before you open it, take a copy, then compare the two.
+
+<MiniTerminal
+  scenario="range-logs"
+  commands={[
+    "stat /var/log/auth.log",
+    "cp /var/log/auth.log ~/auth-copy.log",
+    "stat ~/auth-copy.log",
+    "ls -l /var/log",
+  ]}
+  task="Run `stat /var/log/auth.log`, then copy it with `cp /var/log/auth.log ~/auth-copy.log` and `stat` the copy."
+  expect="cp"
+  success="Same size, both 560 bytes, so the contents came across whole. Look at the rest, though: the copy is owned by `recruit`, not `root`, and its modified time is when you copied it."
+/>
+
+That's the lesson in three lines. The contents of a copy are the contents of the original; the _story around_ the file is not. Ownership, permissions and times all belong to the copy now. Anything you want to say about the original's metadata has to be written down from the original, before you copy, which is why `stat` comes first.
+
+## In practice
+
+In [Reading the machine](/missions/linux-01) you read a machine that the team has permission to examine, and the order you do things in is part of the work: look at what a file is before opening it, and notice what your own commands change. Idris keeps the notes, because somebody always has to.
+
+[What a log really is](/learn/forensics-what-logs-are) covers where the records come from, [Putting events in order](/learn/forensics-timelines) covers what to do with them once they're safe, and `logview`, which reads a log without writing to it, has a [manual page](/learn/commands#logview) of its own.
+
+<TryIt mission="linux-01" />
+
+## Common misconceptions
+
+- **"Reading a file doesn't change it."** Reading the contents leaves the contents alone and can still update the record of when it was last opened. On a real investigation that's a fact you may have needed.
+- **"The original is safest where it is."** Left where it is, records rotate away, scheduled jobs tidy it up, and whoever got in can come back. Safe means copied, fingerprinted and stored somewhere separate.
+- **"This only matters if it goes to court."** Most of it never does. The same care is what makes your report survive a sceptical question from the client's insurer, or from the person whose account got blamed.
+- **"A hash proves the file is genuine."** It proves two files are identical. It says nothing about where the original came from, which is what the written record of who handled it is for.
+- **"Turn it off and on again."** A restart is the most common way evidence dies. It clears memory, closes the connections you wanted to see, and starts the clean-up jobs you were racing.

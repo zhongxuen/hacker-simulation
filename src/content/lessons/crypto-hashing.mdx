@@ -1,0 +1,131 @@
+---
+id: crypto-hashing
+title: "Hashing: a fingerprint for data"
+topic: crypto
+level: 1
+readingMinutes: 5
+analogy: "Putting fruit in a blender: the same fruit always makes the same smoothie, and nobody can turn the smoothie back into fruit."
+summary: A short fingerprint made from any piece of data, by a recipe that only runs one way.
+prerequisites: [start-computer]
+relatedMissions: [linux-01]
+relatedCommands: [hashid, cat]
+glossaryTerms: [hash, plaintext, integrity, password-cracking]
+---
+
+## The one-sentence version
+
+A <Term id="hash">hash</Term> is a short string of characters made from a piece of data, by a recipe that only runs one way.
+
+Picture a blender. Put the same fruit in and you get the same smoothie every time. Swap one grape and the smoothie comes out a different colour. And nobody, however clever, can pour the smoothie back out as fruit.
+
+That last part is the bit that surprises almost everyone, so let's start there. Have a guess — there's no wrong turn here, and the explanations are worth reading either way:
+
+<Quiz
+  question="Two text files differ by a single letter. How different are their hashes?"
+  options={[
+    {
+      text: "Almost the same, with one character different",
+      explanation:
+        "A very reasonable guess, and it's how most people picture it at first. It would also be a problem if it were true: anyone could work backwards a letter at a time. Hash recipes are built so a tiny change scrambles the whole thing.",
+    },
+    {
+      text: "Completely different, top to bottom",
+      correct: true,
+      explanation:
+        "Nicely spotted. One changed letter gives a fingerprint that looks unrelated to the first, and nothing about the original survives in a readable form.",
+    },
+    {
+      text: "Identical, because the files are nearly the same",
+      explanation:
+        "Worth asking, though. Two different files landing on the same hash is called a collision, and a good hash recipe makes it so unlikely that finding one makes the news.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+You'll meet hashing in two places on almost every job, and they're worth keeping apart in your head.
+
+The first is **checking nothing changed**. Hash a file today, hash it again next month, and compare the two fingerprints. Same fingerprint, same file, down to the last byte. A different one means something edited it. That's <Term id="integrity">integrity</Term>, and it's why a downloaded program often comes with a hash printed beside it.
+
+The second is **storing passwords without keeping the password**. A shop that stores what you typed has a file that reads like a list of front-door keys. A shop that stores hashes has a list of fingerprints: when you sign in, it hashes what you typed and compares fingerprints. It never needs your password back, so it never keeps it. The next lesson, [How systems store your password](/learn/crypto-password-storage), follows that thread.
+
+## How it actually works
+
+A hash recipe takes data of any size and gives back a fixed number of characters. Three things make one useful, and they're all you need to carry from this lesson:
+
+1. **Same in, same out.** The same input always produces the same hash, on any computer, forever.
+2. **Fixed length.** One word and an entire library both come out the same size. The recipe called MD5 gives 32 characters; the one called SHA-256 gives 64. That's why a hash is a fingerprint rather than a summary: it tells you _which_ data, never _what_ the data said.
+3. **One direction only.** There is no un-blend button. The only way to find the input behind a hash is to guess an input, hash it, and see whether the fingerprints match. That guessing is called <Term id="password-cracking">password cracking</Term>, and it's why a long password matters: it makes the pile of guesses enormous.
+
+So a hash isn't a lock that someone might pick. It's a shape that can be recognised, and that's all it ever is. If that clicks, the rest of this topic gets much friendlier.
+
+Where the blender analogy stops: a smoothie made from ten grapes looks much like a smoothie made from eleven. Hashes don't work that way. The recipe is designed so that near-identical inputs give fingerprints with nothing in common.
+
+## See it
+
+Your turn. The simulated `hashid` command reads a fingerprint's _shape_ — how long it is, which characters it uses, whether it starts with a label — and names the recipes that produce that shape. It never turns a hash back into anything. Nothing does.
+
+<MiniTerminal
+  scenario="range-home"
+  commands={[
+    "hashid 9b1f3c2e7a4d5b6c8e0f1a2b3c4d5e6f",
+    "hashid '$2b$12$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0'",
+    "man hashid",
+  ]}
+  task="Type `hashid 9b1f3c2e7a4d5b6c8e0f1a2b3c4d5e6f` and press Enter."
+  expect="hashid"
+  success="You named a hash recipe from its shape alone, without learning one thing about the password behind it."
+/>
+
+Here's what comes back, line by line. It looks like a lot at first glance, and it's four short ideas stacked up:
+
+<Annotated
+  title="hashid on a 32-character fingerprint"
+  code={`hashid (simulated) · names hash formats by their shape · never cracks them
+
+9b1f3c2e7a4d5b6c8e0f1a2b3c4d5e6f
+32 characters, hexadecimal (0-9 and a-f)
+Most likely: MD5 (fast, and broken for security use: never safe for passwords)
+Also possible: NTLM, MD4`}
+notes={[
+{
+line: 1,
+label: "Simulated, and naming only",
+text: "Every tool on this platform is a practice version. This one reads shapes and stops there.",
+},
+{
+line: 4,
+label: "The shape",
+text: "32 characters, all of them digits or the letters a to f. That's the entire clue. A recipe's output always has the same shape, so the shape narrows down which recipe made it.",
+},
+{
+line: 5,
+label: "The best guess, and a warning",
+text: "Several recipes produce 32 characters of that kind, and MD5 is the common one. The note matters more than the name: MD5 runs so fast that a computer can try billions of guesses an hour against it, so nobody should store passwords with it today.",
+},
+{
+line: 6,
+label: "Shapes overlap",
+text: "Two other recipes give the same shape, so hashid lists them rather than pretending to be certain. Naming the recipe is where it stops: it can't say what was hashed.",
+},
+]}
+/>
+
+## In practice
+
+In the mission [Reading the machine](/missions/linux-01), you find a password sitting in a configuration file as <Term id="plaintext">plaintext</Term> — the readable form, no fingerprint anywhere. Anyone who could open the file could read it and use it. That's the problem hashing exists to solve, and meeting the plain version first is what makes the fingerprint version feel like a relief.
+
+When you meet a fingerprint on a client's machine, the habit to build is: name the shape, say whether the recipe is a strong one, and write that in the report. That's a genuinely useful finding, and it's one you can already write. If you'd like the full manual page, `man hashid` has it in any terminal here.
+
+<TryIt mission="linux-01" />
+
+## Common misconceptions
+
+If you arrived holding any of these, you're in very good company — they're the ideas almost everyone has to put down on the way in.
+
+- **"A hash can be decrypted."** Websites offering to "decrypt MD5" aren't reversing anything. They hashed millions of common passwords ahead of time and look yours up in that list. If your password isn't in their list, they have nothing — which is also why an unusual passphrase survives and `summer2024` doesn't.
+- **"Hashing and encrypting are the same thing."** Encryption is meant to be undone by whoever holds the key. Hashing is meant never to be undone by anyone. [Encryption, and how it differs from hashing](/learn/crypto-encryption-basics) takes that apart properly.
+- **"A longer hash means a stronger password."** The length comes from the recipe, not from you. A one-character password hashed with SHA-256 still gives 64 characters, and it still falls in under a second.
+- **"Two hashes that start with the same characters mean similar passwords."** Nothing about the input survives. Matching starts are coincidence, and tell an attacker nothing.
+- **"If a company hashed the passwords, a break-in doesn't matter."** It matters far less, and that's a real achievement worth giving a company credit for. But fast recipes and common passwords still lose. Turning "far less" into "hardly at all" is exactly where the next lesson picks up.

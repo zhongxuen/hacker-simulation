@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { ErrorState } from "@/components/shell/error-state";
 
 /**
@@ -15,6 +15,20 @@ vi.mock("@vercel/analytics", async (original) => ({
   ...(await original<typeof import("@vercel/analytics")>()),
   track: vercel.track,
 }));
+
+/**
+ * ErrorState loads `@/lib/analytics` on demand, from inside the effect that reports the error, so
+ * the first error screen to render is what pulls that module — and with it @vercel/analytics and
+ * the settings store — through Vitest's transform. Under `pnpm test`, with all four projects
+ * competing for the cores, that first load can take longer than waitFor's one-second budget, which
+ * fails the assertion below for a reason that has nothing to do with the component.
+ *
+ * Loading it here turns that into something the test awaits: by the time the effect asks, the
+ * module registry already has it and the dynamic import resolves on a microtask.
+ */
+beforeAll(async () => {
+  await import("@/lib/analytics");
+});
 
 describe("ErrorState", () => {
   it("says it's not the learner's fault, what it means for a mission, and offers ways on", async () => {

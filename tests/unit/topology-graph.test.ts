@@ -11,7 +11,7 @@ import { createInitialState, fixedClock, selectTopology, step } from "@/sim";
 import type { DiscoveredTopology, HostSpec, ScenarioSpec } from "@/sim/types";
 
 /**
- * The network map's renderer (md-files/07-network-visualizer.md, prompt 07.2), rendered to HTML in
+ * The network map's renderer (md-files/remaining.md, Part 2), rendered to HTML in
  * plain Node. This proves what the markup says: every host is a named, focusable button, states are
  * spelled out in words, and 200 hosts render without trouble. It can't measure frame rate: that's
  * tests/e2e/network-map-performance.spec.ts, on a real browser.
@@ -22,7 +22,7 @@ const render = (props: TopologyGraphProps) =>
 
 const count = (html: string, pattern: RegExp) => html.match(pattern)?.length ?? 0;
 
-/** From md-files/voice-and-tone.md, "Banned words". Whole words only. */
+/** From md-files/remaining.md, Part 2, "Voice and tone": the banned words. Whole words only. */
 const BANNED_WORDS =
   /\b(simply|just|merely|obviously|clearly|of course|as you know|easy|trivial|basic|invalid|illegal|wrong|failed|victim)\b/i;
 
@@ -204,31 +204,63 @@ describe("TopologyGraph", () => {
   });
 
   /**
-   * What this proves: 200 hosts produce 200 focusable cards, and a full render of the whole map (a
-   * one-off, when it first appears) stays inside a generous budget. On its own it takes around
-   * 15-30 ms, but the full suite runs every test file in parallel, which can slow it tenfold, so the
-   * budget is loose and the fastest of five runs counts. What it can't prove: 60fps in a browser.
-   * Node has no layout, paint or compositor, so it can't see style recalculation or the cost of
-   * drawing 200 cards. The design keeps per-frame work small (panning and zooming change one
-   * transform and re-render no cards; cards are memoized), but the frame rate itself needs a
-   * browser, and is measured in tests/e2e/network-map-performance.spec.ts.
+   * What this proves: 200 hosts produce 200 focusable cards, and the cost of drawing them grows
+   * with the number of hosts and not with the square of it — that nothing in here quietly looks at
+   * every other host while it draws one.
+   *
+   * It asks that as a ratio, four times the hosts for no more than eight times the work, because a
+   * ratio is the same question on a fast machine and a slow one. An absolute number is not: this
+   * test used to allow the fastest of five renders 1,000 ms, which passed on the machine it was
+   * written on and failed every run on a slower one, at 1.6 s for a render that was behaving
+   * perfectly. Measured here, the cost is about 3.7 ms a host all the way up: 12 hosts in 45 ms,
+   * 50 in 180 ms, 200 in 734 ms — a ratio of 4.1, against the 4.0 of a straight line. Anything
+   * that looked at every pair of hosts would be near 16.
+   *
+   * The loose ceiling underneath it is a second question: not the shape of the cost but its size,
+   * in case a card itself becomes expensive without the shape changing. It is deliberately far
+   * above any honest reading.
+   *
+   * What none of it can prove: 60fps in a browser. Node has no layout, paint or compositor, so it
+   * can't see style recalculation or the cost of drawing 200 cards. The design keeps per-frame work
+   * small (panning and zooming change one transform and re-render no cards; cards are memoized),
+   * but the frame rate itself needs a browser, and is measured in
+   * tests/e2e/network-map-performance.spec.ts.
    */
-  it("renders 200 hosts within budget", () => {
-    const big = bigTopology(4, 50);
-    expect(big.nodes).toHaveLength(200);
-    render({ topology: big }); // warm up: module loading and JIT aren't the renderer's cost
+  it("draws 200 hosts for four times the work of 50, not sixteen times", () => {
+    /** The fastest of a few renders: the one least interrupted by everything else on the machine. */
+    const fastestRender = (topology: DiscoveredTopology) => {
+      render({ topology }); // warm up: module loading and JIT aren't the renderer's cost
+      const times: number[] = [];
+      for (let run = 0; run < 5; run += 1) {
+        const start = performance.now();
+        render({ topology });
+        times.push(performance.now() - start);
+      }
+      return Math.min(...times);
+    };
 
-    const times: number[] = [];
-    let markup = "";
-    for (let run = 0; run < 5; run += 1) {
-      const start = performance.now();
-      markup = render({ topology: big });
-      times.push(performance.now() - start);
-    }
+    const small = bigTopology(1, 50);
+    const big = bigTopology(4, 50);
+    expect(small.nodes).toHaveLength(50);
+    expect(big.nodes).toHaveLength(200);
+
+    const smallMs = fastestRender(small);
+    const bigMs = fastestRender(big);
+    const markup = render({ topology: big });
+
     expect(count(markup, /data-host-id="/g)).toBe(200);
     expect(count(markup, /role="button"/g)).toBe(200);
     expect(count(markup, /tabindex="0"/g)).toBe(1);
+
+    expect(
+      bigMs / smallMs,
+      `four times the hosts took ${(bigMs / smallMs).toFixed(1)} times the work ` +
+        `(${smallMs.toFixed(0)} ms for 50 hosts, ${bigMs.toFixed(0)} ms for 200). ` +
+        "Drawing one host now depends on how many others there are.",
+    ).toBeLessThan(8);
     // Coverage instrumentation (pnpm test:coverage) slows rendering several times over.
-    expect(Math.min(...times)).toBeLessThan(process.env.COVERAGE ? 5000 : 1000);
+    expect(bigMs, "drawing one host has become expensive").toBeLessThan(
+      process.env.COVERAGE ? 20_000 : 5_000,
+    );
   });
 });

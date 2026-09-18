@@ -7,6 +7,7 @@ Playwright end-to-end tests (phase 11), run against a production build: `pnpm bu
 - `modules.spec.ts` — one happy path per module: campaign, missions (a wrong answer, the leave guard), terminal, sandbox, network map, lessons (quiz and practice terminal), glossary, command manual, search palette, mentor (and its 429 fallback), reference drawer, settings, privacy, the 404 page.
 - `a11y.spec.ts` — axe on every route (every lesson included) and the key states, with zero serious or critical violations; the SIMULATED marker on every app page, not dismissible.
 - `keyboard.spec.ts` — keyboard only: the shell (skip link first, every stop visible, no trap), and the sandbox from picking a machine to exploring the map with the arrow keys.
+- `network-map-performance.spec.ts` — how fast the network map draws with 200 hosts on it, panning, zooming and revealing. The hosts come from `/map-bench` (`src/app/(dev)/map-bench/`), a developer-only fixture page, never from a mission: no mission has 200 hosts and none should. Each test prints the frame times it measured and checks p90 against a budget. Skipped against `E2E_BASE_URL`, because a deployment doesn't serve the bench.
 - `security.spec.ts` — security headers and the CSP on real responses, no CSP violation or console error while using the app, the mentor routes refusing other sites, and nothing about the learner left in the browser.
 - `helpers.ts` — shared learner steps (`run`, `startMission`, `answer`).
 

@@ -220,7 +220,10 @@ export function layoutKeys(layout: TopologyLayout): Set<string> {
   ]);
 }
 
-export const nodeKey = (hostId: string): string => `node:${hostId}`;
+/** Host keys are told apart from subnet and link keys by this prefix. */
+export const NODE_KEY_PREFIX = "node:";
+
+export const nodeKey = (hostId: string): string => `${NODE_KEY_PREFIX}${hostId}`;
 
 /** The map's name for a host's card: shortened so it fits. */
 export function cardLabel(node: Pick<TopologyNode, "label">, max = 20): string {

@@ -38,8 +38,15 @@ export default defineConfig({
         url: BASE_URL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
-        // The mentor runs on its notes in these tests, whatever the shell has set.
-        env: { ANTHROPIC_API_KEY: "", MENTOR_DISABLED: "1" },
+        env: {
+          // The mentor runs on its notes in these tests, whatever the shell has set.
+          ANTHROPIC_API_KEY: "",
+          MENTOR_DISABLED: "1",
+          // Opens the developer-only measuring pages (src/app/(dev)/dev-only.ts) on this
+          // production build, so the network map's frame rate can be measured at 200 hosts.
+          // Never set on a deployment, so E2E_BASE_URL runs skip those tests.
+          E2E_FIXTURES: "1",
+        },
       },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },

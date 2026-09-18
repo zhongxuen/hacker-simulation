@@ -1,0 +1,649 @@
+# Chapter 2, "The handover", episode 2: the quiet week (md-files/remaining.md, Part 2). Larkmere
+# Public Library shut for a week to have new carpets laid, and its lending desk computer signed in
+# at two in the morning four nights running. The learner reads three logs, builds a timeline, and
+# finds the twist: the account used on those nights was created five weeks earlier by somebody with
+# a very different habit. Two people, not one. The payoff is the library's first incident report.
+# The borrowing records stay shut the whole way through, and the filesystem enforces it.
+id: forensics-01
+slug: forensics-01
+version: 1
+title: The quiet week
+difficulty: medium
+estimatedMinutes: 22
+skills: [forensics, blue-team]
+# Chapter 2, episode 2: crypto-01 is episode 1. A suggestion on the briefing, never a lock.
+prerequisites: [crypto-01]
+hook: "The library was shut all week. Something signed in every night anyway."
+learningGoals:
+  - What a log is, and where Linux keeps them
+  - How to filter a long log down to the lines that matter
+  - How a timeline turns a pile of lines into a story about people
+  - What to write down after a break-in, so the next person doesn't start from nothing
+concepts:
+  [forensics-what-logs-are, forensics-timelines, forensics-evidence-care, blue-incident-response]
+briefing:
+  scenario: >-
+    Idris Fenwick, who looks after the defensive side at Candlewright Security, is working this one
+    with you. Larkmere Public Library shut for a week to have new carpets laid, so nobody was in
+    the building. Its lending desk computer signed in at two in the morning, four nights running.
+    The library's manager, Halima Voss, asked the team to find out what happened.
+  role: >-
+    You're Candlewright's newest recruit, signed in as `recruit` on the library's lending desk
+    computer, `desk-01`.
+  authorization: >-
+    Larkmere Public Library asked Candlewright to read the log files on `desk-01`
+    (`172.16.45.10`) and work out what happened during the week the building was shut. The
+    borrowing records, `/srv/catalogue/borrowers.db`, are out of scope: they hold names,
+    addresses and what people read, and they stay shut. So does every computer at the addresses
+    that turn up in the logs, because they belong to other people and nobody there signed
+    anything. Signed: Halima Voss, library manager, Larkmere Public Library, and Theo Ashgrove,
+    team lead, Candlewright Security.
+story:
+  - on: start
+    speaker: teammate-idris
+    text: >-
+      Idris Fenwick, I look after the defensive side at Candlewright. Larkmere Public Library shut
+      for a week to have new carpets laid, so nobody was in the building. The lending desk computer
+      signed in at two in the morning, four nights running. Their manager, Halima Voss, asked us to
+      find out what happened, and signed the letter this morning.
+  - on: start
+    speaker: mentor-noor
+    text: >-
+      Noor here. A log is a diary a computer keeps: one line every time something happens, with the
+      time in front of it. We're going to read four nights of diary and put them in order.
+  - on: { objective: list-the-logs }
+    speaker: mentor-noor
+    text: >-
+      Logs live in a folder called `/var/log`. This computer keeps three: who signed in, what the
+      catalogue software did, and a copy of the wifi box's own diary. Start with the sign-ins,
+      `/var/log/auth.log`. It's five weeks long, so keep only the lines you want: add
+      `--grep` and a word, and every line without that word stays out of your way.
+  - on: { objective: find-the-nights }
+    speaker: teammate-idris
+    text: >-
+      There they are. Four nights, all a few minutes past two, in a week the front door was locked.
+      People don't keep to a timetable like that. Programs do, and so do people working from
+      somewhere a long way from the carpets.
+  - on: { objective: name-the-account }
+    speaker: teammate-idris
+    text: >-
+      `stockcheck`. The library's own stock-take job signs in as `stock`, so that name sat in
+      the list looking like it belonged. That's not an accident, that's camouflage.
+  - on: { objective: find-its-birthday }
+    speaker: teammate-idris
+    text: >-
+      Here's the part I don't like. `stockcheck` was made five weeks before the quiet week, on a
+      Saturday evening, by somebody who signed in with the shared staff password and then wandered
+      round the catalogue for six minutes. Whoever came back in the small hours never wandered
+      anywhere. They already knew the way.
+  - on: { objective: two-visitors }
+    speaker: mentor-noor
+    text: >-
+      Two habits, two people. The first one found the door and cut a key. The second one was handed
+      the key. That's why "we've changed the password" isn't an answer on its own.
+  - on: { objective: two-visitors }
+    speaker: teammate-theo
+    text: >-
+      So we write it down for Halima. An incident report is four plain answers: what happened,
+      when, what it touched, what to do now. No jargon, because she has to read it out to her
+      trustees on Thursday. There's an outline in your home folder.
+  - on: { event: log.queried, match: { path: /var/log/wifi.log } }
+    speaker: teammate-kit
+    text: >-
+      Kit Nakashima-Reyes, one year in. Heads up: that wifi box's clock runs fast. I lost an
+      afternoon to that once. Check a time you already know against it before you trust any of its
+      times. Your own sign-in this morning would do.
+  - on: { event: command.error, match: { code: EACCES, path: /srv/catalogue/borrowers.db } }
+    speaker: teammate-theo
+    text: >-
+      That one's shut, and the letter shuts it twice. A library's borrowing records say what people
+      read, and librarians have gone to court to keep them private. We don't need them to answer
+      Halima's question, so we don't open them.
+  - on: { event: file.read, match: { path: /home/desk/door.txt } }
+    speaker: teammate-idris
+    text: >-
+      Those are the same four words we found at the bakery, and again at the theatre. Same
+      signature. Put it in the report and leave the file exactly where it is.
+  - on: { objective: left-on-the-counter }
+    speaker: teammate-idris
+    text: >-
+      Four weeks old and still sitting there. Now we can say what they copied instead of guessing:
+      shelf marks and titles, no borrowers. Halima will be glad of that line.
+  - on: { objective: write-the-report }
+    speaker: teammate-theo
+    text: >-
+      That's the report Halima reads out on Thursday. Four plain answers, and a first move she can
+      make on Monday morning.
+  - on: complete
+    speaker: teammate-idris
+    text: >-
+      Filed. And now I can hold this up next to the theatre's timeline, which is a thing I couldn't
+      do this morning.
+scenario:
+  seed: 20260914
+  startTime: "2026-09-14T09:00:00Z"
+  network:
+    subnets:
+      - { cidr: 172.16.45.0/24, name: Library staff }
+      - { cidr: 172.16.46.0/24, name: Public computers }
+    hosts:
+      - id: desk-01
+        hostname: desk-01.larkmere.example
+        interfaces:
+          - { ip: 172.16.45.10, subnet: 172.16.45.0/24 }
+        os: { family: linux, name: Linux, version: "6.8" }
+        services:
+          - { port: 22, protocol: tcp, name: ssh, product: sshd, version: "9.6" }
+        users:
+          - { name: recruit, uid: 1000, groups: [adm] }
+          - { name: desk, uid: 1200 }
+          - { name: stock, uid: 1201, shell: /usr/sbin/nologin }
+          # Still here, five weeks after somebody made it. That is the finding.
+          - { name: stockcheck, uid: 1300, shell: /bin/sh }
+        fs:
+          entries:
+            - path: /etc/motd
+              content: "desk-01 - Larkmere Public Library lending desk. Please leave me switched on: the stock-take runs at six.\n"
+            - path: /home/recruit/scope.txt
+              owner: recruit
+              content: |
+                SCOPE LETTER - Larkmere Public Library
+
+                May be read:   the log files on desk-01 (172.16.45.10), in /var/log
+                              the catalogue share on desk-01, in /srv/catalogue
+                              the list of accounts on desk-01
+                Also covered: catalog-01 (172.16.45.20), wifi-ctl-01 (172.16.45.30)
+                              and the four public computers, 172.16.46.0/24
+                Not in scope: the borrowing records, /srv/catalogue/borrowers.db.
+                              They hold names, addresses and what people read.
+                              They stay shut.
+                Not in scope: any computer at any address that turns up in the
+                              logs. Those machines belong to other people, and
+                              nobody there has signed anything.
+
+                The borrowing records are named twice on purpose.
+
+                Signed: Halima Voss, library manager, Larkmere Public Library
+                        Theo Ashgrove, team lead, Candlewright Security
+                        14 September 2026
+            - path: /home/recruit/from-halima.txt
+              owner: recruit
+              content: |
+                From: Halima Voss, library manager, Larkmere Public Library
+                To:   Candlewright Security
+
+                What I know:
+
+                - We shut the whole building from Monday 7 to Friday 11 September
+                  so the carpets could be relaid. Nobody was in. The front door
+                  was locked and the alarm was on. We opened again on Saturday.
+                - The lending desk computer was left switched on, because the
+                  stock-take runs on it at six every morning and I did not want
+                  to miss a week of it.
+                - When I came in on the Friday to look at the carpets, the
+                  catalogue was slow. Our supplier said the computer had been
+                  busy at night, and told me to ask someone.
+                - We have one staff account, called `desk`. Eleven of us use it.
+                  I know how that sounds.
+                - I have never written an incident report. I do not know what one
+                  looks like, and I have to read it to the trustees on Thursday.
+
+                The logs are on this computer, in /var/log. Idris copied the wifi
+                one over from the wifi box so you would have all three in one
+                place.
+
+                Please do not open the borrowing records. I have said so in the
+                letter as well. What people read is their own business.
+
+                - Halima
+            - path: /home/recruit/report-outline.txt
+              owner: recruit
+              content: |
+                INCIDENT REPORT - Larkmere Public Library      (outline, from Theo)
+
+                Four plain answers. No jargon: Halima reads this to her trustees.
+
+                  1. What happened?
+                  2. When did it happen?
+                  3. What did it touch?
+                  4. What do we do now?
+
+                Answers 1 to 3 come out of the logs. Answer 4 is the one that
+                changes anything, so it goes at the top of the page.
+            - { path: /home/desk, type: dir, owner: desk, mode: "755" }
+            - path: /home/desk/door.txt
+              owner: desk
+              mode: "644"
+              content: |
+                The door was open.
+                - HL
+            - { path: /srv/catalogue, type: dir, owner: root, mode: "755" }
+            - path: /srv/catalogue/README.txt
+              content: |
+                The library catalogue, shared from catalog-01 (172.16.45.20) and
+                mounted here on the lending desk computer.
+
+                  titles.csv     shelf marks, titles, how many copies
+                  exports/       monthly copies of titles.csv, kept for the county
+                  borrowers.db   who borrowed what. Only the admin account (root)
+                                 can open it, and the letter says it stays shut.
+            - path: /srv/catalogue/titles.csv
+              content: |
+                shelfmark,title,copies,on_loan
+                823.914 LAR,The Larkmere Letters,3,1
+                942.08 HIS,A Short History of the Market Square,2,0
+                551.6 WEA,Weather Over the Estuary,1,1
+                629.13 FLI,First Flight from the Sands,2,2
+                641.5 BRE,Bread and Other Patient Things,4,1
+            - path: /srv/catalogue/exports/august.csv
+              content: |
+                shelfmark,title,copies,on_loan
+                (8,396 rows, exported 2026-08-20 for the county catalogue)
+            # Out of scope, and the filesystem agrees: root only, so a learner who tries gets a
+            # permission error and Theo's explanation, not a telling-off.
+            - path: /srv/catalogue/borrowers.db
+              owner: root
+              mode: "600"
+              content: |
+                (borrowing records: names, addresses and loan history)
+            # The secret. The night-three export was still being written when the connection
+            # dropped, so nobody came back for it. Its time is the time in catalogue.log.
+            - path: /tmp/catalogue-export-0910.csv
+              owner: stockcheck
+              mode: "644"
+              mtime: "2026-09-10T02:04:26Z"
+              content: |
+                # Larkmere Public Library - catalogue export
+                # written 2026-09-10T02:04:26Z by stockcheck
+                shelfmark,title,copies,on_loan
+                823.914 LAR,The Larkmere Letters,3,1
+                942.08 HIS,A Short History of the Market Square,2,0
+                551.6 WEA,Weather Over the Estuary,1,1
+                629.13 FLI,First Flight from the Sands,2,2
+                641.5 BRE,Bread and Other Patient Things,4,1
+                (8,412 rows in all: shelf marks and titles, no borrowers)
+            - path: /var/log/auth.log
+              group: adm
+              mode: "640"
+              content: |
+                2026-08-08T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-08T21:40:12Z INFO sshd[2210]: Accepted password for desk from 198.51.100.24 port 51112
+                2026-08-08T21:46:33Z NOTICE useradd[2244]: new user: name=stockcheck uid=1300 home=/home/stockcheck shell=/bin/sh
+                2026-08-08T21:46:58Z INFO sshd[2210]: Disconnected from user desk 198.51.100.24 port 51112
+                2026-08-09T06:00:01Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-10T06:00:03Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-11T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-11T08:52:19Z INFO login[1102]: session opened for user desk on tty1
+                2026-08-12T06:00:04Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-13T06:00:01Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-14T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-15T06:00:03Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-16T06:00:01Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-17T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-18T06:00:05Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-18T08:49:37Z INFO login[1118]: session opened for user desk on tty1
+                2026-08-19T06:00:01Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-20T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-21T06:00:03Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-22T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-23T06:00:01Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-24T06:00:03Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-25T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-25T08:55:04Z INFO login[1131]: session opened for user desk on tty1
+                2026-08-26T06:00:04Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-27T06:00:01Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-28T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-29T06:00:03Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-30T06:00:01Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-08-31T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-01T06:00:05Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-01T08:51:26Z INFO login[1147]: session opened for user desk on tty1
+                2026-09-02T06:00:01Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-03T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-04T06:00:03Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-05T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-06T06:00:01Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-07T06:00:03Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-08T02:04:03Z INFO sshd[3011]: Accepted password for stockcheck from 203.0.113.66 port 44102
+                2026-09-08T02:05:47Z INFO sshd[3011]: Disconnected from user stockcheck 203.0.113.66 port 44102
+                2026-09-08T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-09T02:07:19Z INFO sshd[3028]: Accepted password for stockcheck from 203.0.113.66 port 44207
+                2026-09-09T02:09:02Z INFO sshd[3028]: Disconnected from user stockcheck 203.0.113.66 port 44207
+                2026-09-09T06:00:04Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-10T02:03:26Z INFO sshd[3044]: Accepted password for stockcheck from 198.51.100.91 port 44310
+                2026-09-10T02:04:58Z WARN sshd[3044]: Connection reset by stockcheck 198.51.100.91 port 44310
+                2026-09-10T06:00:01Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-11T02:06:11Z INFO sshd[3061]: Accepted password for stockcheck from 203.0.113.140 port 44411
+                2026-09-11T02:07:55Z INFO sshd[3061]: Disconnected from user stockcheck 203.0.113.140 port 44411
+                2026-09-11T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-11T08:12:41Z INFO login[1180]: session opened for user desk on tty1
+                2026-09-12T06:00:03Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-12T08:47:53Z INFO login[1193]: session opened for user desk on tty1
+                2026-09-13T06:00:01Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-14T06:00:02Z INFO cron[441]: session opened for user stock (stock-take)
+                2026-09-14T08:58:11Z INFO login[1490]: session opened for user recruit on tty1
+            - path: /var/log/catalogue.log
+              group: adm
+              mode: "640"
+              content: |
+                2026-08-08T06:01:20Z INFO catalogd[880]: stock-take finished: 8,390 titles counted by stock
+                2026-08-08T21:40:40Z INFO catalogd[880]: search "local history" by desk
+                2026-08-08T21:41:55Z INFO catalogd[880]: settings page opened by desk
+                2026-08-08T21:43:02Z INFO catalogd[880]: accounts page opened by desk
+                2026-08-08T21:44:20Z INFO catalogd[880]: backup page opened by desk
+                2026-08-08T21:45:31Z INFO catalogd[880]: accounts page opened by desk
+                2026-08-09T06:01:21Z INFO catalogd[880]: stock-take finished: 8,390 titles counted by stock
+                2026-08-10T06:01:22Z INFO catalogd[880]: stock-take finished: 8,391 titles counted by stock
+                2026-08-11T06:01:23Z INFO catalogd[880]: stock-take finished: 8,391 titles counted by stock
+                2026-08-12T06:01:24Z INFO catalogd[880]: stock-take finished: 8,392 titles counted by stock
+                2026-08-13T06:01:25Z INFO catalogd[880]: stock-take finished: 8,392 titles counted by stock
+                2026-08-13T10:22:41Z INFO catalogd[880]: settings page opened by desk
+                2026-08-14T06:01:26Z INFO catalogd[880]: stock-take finished: 8,393 titles counted by stock
+                2026-08-15T06:01:27Z INFO catalogd[880]: stock-take finished: 8,393 titles counted by stock
+                2026-08-16T06:01:28Z INFO catalogd[880]: stock-take finished: 8,394 titles counted by stock
+                2026-08-17T06:01:20Z INFO catalogd[880]: stock-take finished: 8,394 titles counted by stock
+                2026-08-18T06:01:21Z INFO catalogd[880]: stock-take finished: 8,395 titles counted by stock
+                2026-08-19T06:01:22Z INFO catalogd[880]: stock-take finished: 8,395 titles counted by stock
+                2026-08-20T06:01:23Z INFO catalogd[880]: stock-take finished: 8,396 titles counted by stock
+                2026-08-20T14:05:12Z INFO catalogd[880]: export finished: 8,396 titles -> /srv/catalogue/exports/august.csv by desk
+                2026-08-21T06:01:24Z INFO catalogd[880]: stock-take finished: 8,396 titles counted by stock
+                2026-08-22T06:01:25Z INFO catalogd[880]: stock-take finished: 8,397 titles counted by stock
+                2026-08-23T06:01:26Z INFO catalogd[880]: stock-take finished: 8,397 titles counted by stock
+                2026-08-24T06:01:27Z INFO catalogd[880]: stock-take finished: 8,398 titles counted by stock
+                2026-08-25T06:01:28Z INFO catalogd[880]: stock-take finished: 8,398 titles counted by stock
+                2026-08-26T06:01:20Z INFO catalogd[880]: stock-take finished: 8,399 titles counted by stock
+                2026-08-27T06:01:21Z INFO catalogd[880]: stock-take finished: 8,399 titles counted by stock
+                2026-08-28T06:01:22Z INFO catalogd[880]: stock-take finished: 8,400 titles counted by stock
+                2026-08-29T06:01:23Z INFO catalogd[880]: stock-take finished: 8,400 titles counted by stock
+                2026-08-30T06:01:24Z INFO catalogd[880]: stock-take finished: 8,401 titles counted by stock
+                2026-08-31T06:01:25Z INFO catalogd[880]: stock-take finished: 8,401 titles counted by stock
+                2026-09-01T06:01:26Z INFO catalogd[880]: stock-take finished: 8,402 titles counted by stock
+                2026-09-01T09:14:55Z INFO catalogd[880]: settings page opened by desk
+                2026-09-02T06:01:27Z INFO catalogd[880]: stock-take finished: 8,402 titles counted by stock
+                2026-09-03T06:01:28Z INFO catalogd[880]: stock-take finished: 8,403 titles counted by stock
+                2026-09-04T06:01:20Z INFO catalogd[880]: stock-take finished: 8,403 titles counted by stock
+                2026-09-05T06:01:21Z INFO catalogd[880]: stock-take finished: 8,404 titles counted by stock
+                2026-09-06T06:01:22Z INFO catalogd[880]: stock-take finished: 8,404 titles counted by stock
+                2026-09-07T06:01:23Z INFO catalogd[880]: stock-take finished: 8,405 titles counted by stock
+                2026-09-08T02:04:28Z INFO catalogd[880]: export started by stockcheck
+                2026-09-08T02:05:03Z INFO catalogd[880]: export finished: 8,412 titles -> /tmp/catalogue-export-0908.csv
+                2026-09-08T02:05:20Z WARN catalogd[880]: read refused: /srv/catalogue/borrowers.db by stockcheck (needs root)
+                2026-09-08T02:05:39Z INFO catalogd[880]: /tmp/catalogue-export-0908.csv collected and removed by stockcheck
+                2026-09-08T06:01:24Z INFO catalogd[880]: stock-take finished: 8,405 titles counted by stock
+                2026-09-09T02:07:44Z INFO catalogd[880]: export started by stockcheck
+                2026-09-09T02:08:19Z INFO catalogd[880]: export finished: 8,412 titles -> /tmp/catalogue-export-0909.csv
+                2026-09-09T02:08:35Z WARN catalogd[880]: read refused: /srv/catalogue/borrowers.db by stockcheck (needs root)
+                2026-09-09T02:08:54Z INFO catalogd[880]: /tmp/catalogue-export-0909.csv collected and removed by stockcheck
+                2026-09-09T06:01:25Z INFO catalogd[880]: stock-take finished: 8,406 titles counted by stock
+                2026-09-10T02:03:51Z INFO catalogd[880]: export started by stockcheck
+                2026-09-10T02:04:26Z INFO catalogd[880]: export finished: 8,412 titles -> /tmp/catalogue-export-0910.csv
+                2026-09-10T02:04:42Z WARN catalogd[880]: read refused: /srv/catalogue/borrowers.db by stockcheck (needs root)
+                2026-09-10T06:01:26Z INFO catalogd[880]: stock-take finished: 8,406 titles counted by stock
+                2026-09-11T02:06:36Z INFO catalogd[880]: export started by stockcheck
+                2026-09-11T02:07:11Z INFO catalogd[880]: export finished: 8,412 titles -> /tmp/catalogue-export-0911.csv
+                2026-09-11T02:07:27Z WARN catalogd[880]: read refused: /srv/catalogue/borrowers.db by stockcheck (needs root)
+                2026-09-11T02:07:46Z INFO catalogd[880]: /tmp/catalogue-export-0911.csv collected and removed by stockcheck
+                2026-09-11T06:01:27Z INFO catalogd[880]: stock-take finished: 8,407 titles counted by stock
+                2026-09-12T06:01:28Z INFO catalogd[880]: stock-take finished: 8,407 titles counted by stock
+                2026-09-12T09:03:18Z WARN catalogd[880]: catalogue slow to answer: 2,140 ms (reported by desk)
+                2026-09-13T06:01:20Z INFO catalogd[880]: stock-take finished: 8,408 titles counted by stock
+                2026-09-14T06:01:21Z INFO catalogd[880]: stock-take finished: 8,408 titles counted by stock
+            # Copied over from wifi-ctl-01, whose clock runs 43 minutes fast. That is the bonus.
+            - path: /var/log/wifi.log
+              group: adm
+              mode: "640"
+              content: |
+                2026-08-08T10:18:45Z INFO wifi-ctl[204]: device 9c:2a:70:4b:11:08 joined public-wifi
+                2026-08-08T13:02:11Z INFO wifi-ctl[204]: device 9c:2a:70:4b:11:08 left public-wifi
+                2026-08-11T09:35:19Z INFO wifi-ctl[204]: desk-01 joined staff-wifi (user desk)
+                2026-08-11T11:06:27Z INFO wifi-ctl[204]: device 5e:88:c1:0d:74:a2 joined public-wifi
+                2026-08-11T15:44:03Z INFO wifi-ctl[204]: device 5e:88:c1:0d:74:a2 left public-wifi
+                2026-08-20T10:51:38Z INFO wifi-ctl[204]: device 3a:19:bb:62:0f:5c joined public-wifi
+                2026-08-20T16:12:09Z INFO wifi-ctl[204]: device 3a:19:bb:62:0f:5c left public-wifi
+                2026-09-05T11:29:52Z INFO wifi-ctl[204]: device 9c:2a:70:4b:11:08 joined public-wifi
+                2026-09-05T14:40:17Z INFO wifi-ctl[204]: device 9c:2a:70:4b:11:08 left public-wifi
+                2026-09-08T09:23:14Z INFO wifi-ctl[204]: device d2:47:6e:90:38:b1 joined public-wifi
+                2026-09-08T09:27:51Z INFO wifi-ctl[204]: device 7f:03:2c:55:e9:40 joined public-wifi
+                2026-09-08T12:53:06Z INFO wifi-ctl[204]: device d2:47:6e:90:38:b1 left public-wifi
+                2026-09-08T17:03:40Z INFO wifi-ctl[204]: device 7f:03:2c:55:e9:40 left public-wifi
+                2026-09-11T08:55:41Z INFO wifi-ctl[204]: desk-01 joined staff-wifi (user desk)
+                2026-09-12T09:30:05Z INFO wifi-ctl[204]: device 5e:88:c1:0d:74:a2 joined public-wifi
+                2026-09-12T13:18:22Z INFO wifi-ctl[204]: device 5e:88:c1:0d:74:a2 left public-wifi
+                2026-09-14T09:41:11Z INFO wifi-ctl[204]: desk-01 joined staff-wifi (user recruit)
+      - id: catalog-01
+        hostname: catalog-01.larkmere.example
+        interfaces:
+          - { ip: 172.16.45.20, subnet: 172.16.45.0/24 }
+        os: { family: linux, name: Linux, version: "6.8" }
+        services:
+          - { port: 22, protocol: tcp, name: ssh, product: sshd, version: "9.6" }
+          - { port: 443, protocol: tcp, name: https, product: httpd, version: "2.4.62" }
+      - id: wifi-ctl-01
+        hostname: wifi-ctl-01.larkmere.example
+        interfaces:
+          - { ip: 172.16.45.30, subnet: 172.16.45.0/24 }
+        os: { family: embedded, name: Wifi controller firmware, version: "3.4" }
+        services:
+          - port: 80
+            protocol: tcp
+            name: http
+            product: wifictl
+            version: "3.4"
+            http:
+              pages:
+                "/":
+                  status: 200
+                  title: "Larkmere wifi controller"
+                  body: "<html><head><title>Larkmere wifi controller</title></head><body><h1>Larkmere wifi controller</h1><p>public-wifi: on. staff-wifi: on.</p><p>Controller clock: 2026-09-14 09:43. Time source: none set.</p></body></html>"
+      - id: pc-pub-01
+        hostname: pc-pub-01.larkmere.example
+        interfaces:
+          - { ip: 172.16.46.11, subnet: 172.16.46.0/24 }
+        os: { family: linux, name: Linux, version: "6.8" }
+      - id: pc-pub-02
+        hostname: pc-pub-02.larkmere.example
+        interfaces:
+          - { ip: 172.16.46.12, subnet: 172.16.46.0/24 }
+        os: { family: linux, name: Linux, version: "6.8" }
+      - id: pc-pub-03
+        hostname: pc-pub-03.larkmere.example
+        interfaces:
+          - { ip: 172.16.46.13, subnet: 172.16.46.0/24 }
+        os: { family: linux, name: Linux, version: "6.8" }
+      - id: pc-pub-04
+        hostname: pc-pub-04.larkmere.example
+        interfaces:
+          - { ip: 172.16.46.14, subnet: 172.16.46.0/24 }
+        os: { family: linux, name: Linux, version: "6.8" }
+  session: { host: desk-01, user: recruit }
+  knownHosts: [catalog-01, wifi-ctl-01]
+objectives:
+  - id: list-the-logs
+    description: "See which diaries this computer keeps, with `logview`"
+    why: You can't read a log until you know which ones there are and which you're allowed to open.
+    success: "Three logs: who signed in, what the catalogue software did, and a copy of the wifi box's diary."
+    check:
+      kind: commandRun
+      pattern: "^logview\\s*$"
+  - id: find-the-nights
+    description: "Open the sign-in log, `/var/log/auth.log`, and find the four night-time sign-ins"
+    why: The sign-in log is where a computer writes down who came in, and when.
+    success: Four sign-ins, all a few minutes past two in the morning, in a week the building was locked.
+    check:
+      kind: event
+      event: log.queried
+      match: { path: /var/log/auth.log }
+  - id: name-the-account
+    description: Type the name of the account that signed in on those four nights
+    why: An account name is the thread you pull. Everything that account did can be found from it.
+    success: "`stockcheck`. Near enough to the library's own stock-take job that nobody looked twice."
+    check:
+      kind: answer
+      accept:
+        - stockcheck
+        - "`stockcheck`"
+        - the stockcheck account
+        - stockcheck account
+        - account stockcheck
+        - user stockcheck
+  - id: find-its-birthday
+    description: "Search the sign-in log for every line mentioning `stockcheck`, and find where the account came from"
+    why: An account has to be made by somebody. The line that made it says when, and who was signed in at the time.
+    success: >-
+      Made on Saturday 8 August at 21:46, by somebody signed in as `desk` - thirty-one days before
+      the first night visit.
+    check:
+      kind: any
+      of:
+        - { kind: commandRun, pattern: "^logview\\b.*\\bstockcheck\\b" }
+        - { kind: commandRun, pattern: "^grep\\b.*\\bstockcheck\\b" }
+  - id: two-visitors
+    description: Choose what the two patterns mean
+    why: >-
+      A timeline is worth reading twice: once for what happened, and once for what its shape says
+      about who did it.
+    success: Two habits, two people. The chapter's whole story is in that gap of thirty-one days.
+    check:
+      kind: answer
+      accept:
+        - "Two different people. One found the way in and left an account behind; the other used it weeks later."
+      choices:
+        - text: "Two different people. One found the way in and left an account behind; the other used it weeks later."
+        - text: One person who got better at it.
+          reply:
+            speaker: teammate-idris
+            text: >-
+              That was my first thought too. Then look at it: the first visit spent six minutes
+              looking around, the later ones went straight to the same three steps in the same order, and
+              they came from three addresses in four nights. People don't move house three times
+              in a week.
+        - text: The library's own stock-take job running at an odd hour.
+          reply:
+            speaker: teammate-idris
+            text: >-
+              The stock-take job signs in as `stock`, at six in the morning, and it's in the log
+              every morning of the quiet week too. It was doing its job while this was going on.
+  - id: write-the-report
+    description: Choose the first thing the library does, for the top of its incident report
+    why: A report that ends in a finding is a story. A report that ends in an action is a fix.
+    success: Switch the account off, then go looking for the others. That's the line Halima reads out on Thursday.
+    check:
+      kind: answer
+      accept:
+        - "Switch off the `stockcheck` account, then check every computer in the library for other accounts nobody remembers making."
+      choices:
+        - text: "Switch off the `stockcheck` account, then check every computer in the library for other accounts nobody remembers making."
+        - text: Change the lending desk password.
+          reply:
+            speaker: mentor-noor
+            text: >-
+              Worth doing, and on its own it wouldn't have stopped any of this. The four night
+              visits never used a password you can change. They used an account that was left
+              behind.
+        - text: Look up the three addresses and see what's running on them.
+          reply:
+            speaker: teammate-theo
+            text: >-
+              Those are somebody else's computers, and nobody there signed anything. It's the same
+              crime whichever direction it points. The addresses go in the report, and the report is
+              Halima's to take to the police if she wants to.
+  - id: clock-watcher
+    name: Clock Watcher
+    description: "Work out how many minutes fast the wifi box's clock is running, and type the number"
+    why: Two logs whose clocks disagree will build you a timeline of something that never happened.
+    success: >-
+      43 minutes fast. Every time in `wifi.log` needs 43 minutes taken off it before it goes
+      anywhere near your timeline.
+    optional: true
+    check:
+      kind: answer
+      accept:
+        - "43"
+        - 43 minutes
+        - 43 mins
+        - 43 min
+        - 43m
+        - "+43"
+        - 43 minutes fast
+        - 43 minutes ahead
+        - forty-three
+        - forty-three minutes
+  - id: left-on-the-counter
+    name: Left Behind
+    description: "Find what the night visitor left behind in `/tmp`"
+    why: "`/tmp` is the folder everybody leaves things in, and the folder nobody thinks to look in."
+    success: The export from night three, still sitting there four weeks later, with the time it was written on it.
+    hidden: true
+    check:
+      kind: event
+      event: file.read
+      match: { path: /tmp/catalogue-export-0910.csv }
+hints:
+  list-the-logs:
+    - Everything this mission needs is already written down on this computer. Find out what it keeps a diary of.
+    - >-
+      Linux keeps its logs in a folder called `/var/log`. One of the simulated tools lists them for
+      you and says which ones you're allowed to open.
+    - Type `logview` on its own and press Enter.
+  find-the-nights:
+    - "Sign-ins are the first thing to look at: who came in, and when."
+    - >-
+      `logview /var/log/auth.log` opens the sign-in log. It's long, so filter it: `--grep` keeps
+      only the lines containing some text.
+    - >-
+      Type `logview /var/log/auth.log --grep Accepted`, then look for the times that start `02:`.
+  name-the-account:
+    - The four sign-ins in the small hours all name the same account. Read one of those lines slowly.
+    - In a sign-in log, the account name is the word straight after `password for`.
+    - It's the library's stock-take job's name with `check` on the end. Type it into the box.
+  find-its-birthday:
+    - That account didn't always exist. Somebody made it, and the computer wrote that line down too.
+    - >-
+      Filter the whole sign-in log for the account's name and you'll see every line it appears in,
+      oldest at the top.
+    - Type `logview /var/log/auth.log --grep stockcheck` and read the first line.
+  two-visitors:
+    - Put the first visit and the four nights side by side. What's different about the way they moved?
+    - >-
+      One visit spent six minutes opening pages and looking around. The four later ones did the same
+      three things each time and left, from three different addresses in four nights.
+    - Somebody who already knows the way doesn't look around. Pick the answer that says two people.
+  write-the-report:
+    - Ask what would still be true tomorrow night if the library did nothing today.
+    - >-
+      The four night visits never used the shared staff password, so changing it leaves the way in
+      open. The account they did use is still on this computer.
+    - Pick the answer that switches `stockcheck` off and then goes looking for others like it.
+  clock-watcher:
+    - >-
+      One event is written down in two different logs. Find it, and the two times won't agree.
+    - >-
+      Your own sign-in this morning is in the sign-in log, and the wifi box wrote down the same
+      moment. The seconds match; the minutes don't.
+    - >-
+      Run `logview /var/log/auth.log --grep recruit` and `logview /var/log/wifi.log --grep recruit`,
+      take one time away from the other, and type the number of minutes.
+debrief:
+  summary: >-
+    You read four nights of a library's logs, found the account that signed in, tracked it back to
+    the evening somebody created it, worked out that two different people were involved, and gave
+    Larkmere the first incident report it has ever had.
+  whatYouLearned:
+    - "A log is a record of what a computer did, and `/var/log` is where Linux keeps them."
+    - "Filtering is what makes a long log usable: `--grep` keeps only the lines you asked for."
+    - A timeline turns a pile of lines into a story, and two different habits mean two different people.
+    - "An incident report is four plain answers, written down while it's fresh."
+  ethicsNote: >-
+    Halima Voss asked, and her letter named the computers and the logs. The borrowing records stayed
+    shut the whole time, because what somebody reads is nobody's business but theirs, and the answer
+    never needed them. The addresses in the log belong to other people's computers: they go in the
+    report, and nowhere else. Reading them back would be the same crime pointed the other way, and
+    the person at the other end is usually somebody whose computer is being borrowed without their
+    knowing.
+  defensiveTakeaway: >-
+    After any break-in, list the accounts on every machine and switch off the ones nobody remembers
+    making. Keep the clocks in step, so two logs can be read side by side. And write the incident
+    down while it's fresh: four plain lines beat a perfect memory, and they're what lets somebody
+    else join the dots later.
+  nextTease: "The theatre's timeline and the library's have the same account name in them. So does a third set of logs nobody has asked us to read."
+  furtherReading: [forensics-timelines, blue-incident-response, ethics-responsible-disclosure]

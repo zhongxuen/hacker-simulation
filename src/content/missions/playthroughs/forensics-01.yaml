@@ -1,0 +1,63 @@
+# The quiet week, played end to end: list the logs, read the sign-ins, name the account that used
+# them, track it back to the evening somebody made it, call the twist, and pick the library's first
+# move. Along the way: the wifi box's fast clock (bonus) and the export left behind in /tmp
+# (secret). Run it with `pnpm mission:play forensics-01`.
+mission: forensics-01
+description: >-
+  Read three logs, find `stockcheck` and the night it was created, catch the wifi box's fast clock,
+  name the two visitors, find the leftover export, then choose the report's first line.
+steps:
+  - run: logview
+    ticks: [list-the-logs]
+  # Halima's own words: the client says what she noticed, before the learner opens a log.
+  - run: cat from-halima.txt
+  - run: logview /var/log/auth.log --grep Accepted
+    ticks: [find-the-nights]
+  # A wrong turn: `stock` is the library's own job, and it is in the log every morning.
+  - answer: stock
+    objective: name-the-account
+    accepted: false
+  - answer: stockcheck
+    objective: name-the-account
+    ticks: [name-the-account]
+  - run: logview /var/log/auth.log --grep stockcheck
+    ticks: [find-its-birthday]
+  - run: logview /var/log/catalogue.log --grep stockcheck
+  # Out of scope, and the filesystem says so: a permission error, not a telling-off.
+  - run: cat /srv/catalogue/borrowers.db
+  - run: cat /home/desk/door.txt
+  # Bonus: the wifi box's clock, checked against a sign-in that is in both logs.
+  - run: logview /var/log/wifi.log --grep recruit
+  - run: logview /var/log/auth.log --grep recruit
+  - answer: "43"
+    objective: clock-watcher
+    ticks: [clock-watcher]
+  # Secret: nobody sends the learner to /tmp.
+  - run: ls -l /tmp
+  - run: cat /tmp/catalogue-export-0910.csv
+    ticks: [left-on-the-counter]
+  - answer: One person who got better at it.
+    objective: two-visitors
+    accepted: false
+  - answer: "Two different people. One found the way in and left an account behind; the other used it weeks later."
+    objective: two-visitors
+    ticks: [two-visitors]
+  - answer: Look up the three addresses and see what's running on them.
+    objective: write-the-report
+    accepted: false
+  - answer: "Switch off the `stockcheck` account, then check every computer in the library for other accounts nobody remembers making."
+    objective: write-the-report
+    ticks: [write-the-report]
+expect:
+  complete: true
+  objectives:
+    [
+      list-the-logs,
+      find-the-nights,
+      name-the-account,
+      find-its-birthday,
+      two-visitors,
+      write-the-report,
+      clock-watcher,
+      left-on-the-counter,
+    ]

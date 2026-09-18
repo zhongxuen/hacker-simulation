@@ -1,0 +1,59 @@
+# Curtain call, played end to end: read Theo's note and the "- HL" note, open the committee's
+# practice list, let hashid name the formats, name the one good row (after a wrong turn), then the
+# three choices - each tried the tempting way first - and finally the bonus (/etc/shadow through
+# sudo) and the secret (the password in the prompt book). Run it with `pnpm mission:play crypto-01`.
+mission: crypto-01
+description: Read the practice list, name MD5 and bcrypt, answer Kit, recommend the fix, then the yescrypt bonus and the prompt-book secret.
+steps:
+  # The first step lands the first tick: the briefing and Theo's note both point straight at
+  # ~/practice, so a beginner gets there inside two minutes.
+  - run: cat practice/volunteers-export.txt
+    ticks: [open-the-practice-file]
+  - run: cat from-theo.txt
+  - run: cat /home/boxoffice/Desktop/door.txt
+  - run: cat practice/how-this-was-made.txt
+  - run: hashid --file practice/volunteers-export.txt
+    ticks: [name-the-storage]
+  # A wrong turn: MD5 is the one hashid named ten times, so it's the tempting answer here.
+  - answer: md5
+    objective: find-the-better-one
+    accepted: false
+  - answer: bcrypt
+    objective: find-the-better-one
+    ticks: [find-the-better-one]
+  - answer: The password was too short.
+    objective: one-password-many-doors
+    accepted: false
+  - answer: "Everyone signed in as the same account, so one password was all eleven passwords."
+    objective: one-password-many-doors
+    ticks: [one-password-many-doors]
+  - answer: Find the address they came from and get into their computer.
+    objective: kits-question
+    accepted: false
+  - answer: "Write it up for the theatre, and let the theatre decide whether to go to the police."
+    objective: kits-question
+    ticks: [kits-question]
+  - answer: Pick a longer shared password and tell everyone the new one.
+    objective: recommend-fix
+    accepted: false
+  - answer: "Give every volunteer their own sign-in, store the passwords with a slow, salted method, and add a second step at sign-in."
+    objective: recommend-fix
+    ticks: [recommend-fix]
+  - run: sudo hashid --file /etc/shadow
+    ticks: [the-understudy]
+  - run: ls /home/boxoffice/promptbook
+  - run: cat /home/boxoffice/promptbook/act1-notes.txt
+    ticks: [break-a-leg]
+expect:
+  complete: true
+  objectives:
+    [
+      open-the-practice-file,
+      name-the-storage,
+      find-the-better-one,
+      one-password-many-doors,
+      kits-question,
+      recommend-fix,
+      the-understudy,
+      break-a-leg,
+    ]

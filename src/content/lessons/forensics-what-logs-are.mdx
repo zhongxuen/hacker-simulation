@@ -1,0 +1,126 @@
+---
+id: forensics-what-logs-are
+title: What a log really is
+topic: forensics
+level: 1
+readingMinutes: 5
+analogy: "A log is a diary a computer keeps. It writes a line every time something happens, without ever deciding whether the line matters. Deciding is your job."
+summary: Every program on a computer keeps its own diary. Knowing who writes which one is how you know where to look.
+prerequisites: [linux-logs]
+relatedMissions: [linux-01]
+relatedCommands: [logview, cat, grep, tail]
+glossaryTerms: [log-file, digital-forensics, digital-evidence, timestamp, indicator-of-compromise]
+---
+
+## The one-sentence version
+
+A <Term id="log-file">log file</Term> is a diary a computer keeps: a program writes one line every time something happens, with the date and time in front.
+
+Nobody sat down to write it. Each line was added by whichever program was doing the work at that moment. So a computer doesn't keep one diary, it keeps a shelf of them, one for each writer. Run `logview` with nothing after it and you see the shelf:
+
+<Annotated
+  title="logview with nothing after it: the log files on this computer"
+  code={`  auth.log  6 lines  readable
+  syslog    2 lines  readable`}
+  notes={[
+    {
+      line: 1,
+      label: "auth.log, the sign-in service's diary",
+      text: "A line every time someone signs in, or tries to. The program writing it is `sshd`, which handles sign-ins from other computers. It knows who knocked and from where, and nothing about anything else.",
+    },
+    {
+      line: 2,
+      label: "syslog, written by everything else",
+      text: "Scheduled jobs, disk-space warnings, printers. When a program has news and no diary of its own, this is where it writes.",
+    },
+  ]}
+/>
+
+Two files, two points of view, and neither one holds the whole story. An investigation nearly always means reading several logs and laying them side by side.
+
+## Why it matters in security
+
+Nobody watches a computer at 2 in the morning. The logs do, and they keep writing while an intruder works, because the programs writing them have no idea anything is wrong.
+
+That makes logs the raw material of <Term id="digital-forensics">digital forensics</Term>: working out what happened after the fact. A line nobody thought twice about on Tuesday becomes the first solid fact on Friday. It also makes them <Term id="digital-evidence">digital evidence</Term>, which is a higher bar than "useful": a line can only be relied on if you can show it hasn't been altered since it was written.
+
+<Quiz
+  question="A bakery's order website stopped answering at 03:10. Which log is the best place to start?"
+  options={[
+    {
+      text: "The web server's own log, because the web server is the program that stopped",
+      correct: true,
+      explanation:
+        "Start with the diary of the program that had the problem. A web server writes a line for every request it answers and every error it hits, so its log covers the minutes either side of 03:10 from the inside.",
+    },
+    {
+      text: "The sign-in log, because every problem starts with someone signing in",
+      explanation:
+        "Worth reading next, not first. Plenty of outages have nobody signing in anywhere near them: a full disk, a crashed program, an unplugged cable. Start with the program that stopped, then widen out.",
+    },
+    {
+      text: "Whichever log is longest, because it holds the most information",
+      explanation:
+        "Length tells you how chatty a program is, not how relevant it is. The log that answers your question is often a short one written by the program you care about.",
+    },
+    {
+      text: "None of them: a log written before anyone noticed the problem can't describe it",
+      explanation:
+        "It's the other way round. Logs are written as things happen, by programs that don't know yet what will turn out to matter. That's exactly what makes them worth reading afterwards.",
+    },
+  ]}
+/>
+
+## How it actually works
+
+A log line is written by a program, to a file, at the moment something happens. Three parts of that are worth holding on to.
+
+**Who writes.** On a Linux computer, most writers keep their diaries in the `/var/log` folder. The usual cast:
+
+- The operating system: the computer starting up, disks filling, hardware complaining.
+- Services that answer other computers: sign-ins, web requests, database queries.
+- Applications: whatever the program's authors decided was worth recording.
+- The network gear around the computer: a firewall writing down which messages it let through, and which it blocked.
+
+Each one sees a slice. The sign-in service can tell you that an account signed in at 02:14; only the web server can tell you what that account then asked for.
+
+**When.** Every line starts with a <Term id="timestamp">timestamp</Term>, and that's what lets you lay two diaries side by side. It's also the part most likely to mislead you, which is what [Putting events in order](/learn/forensics-timelines) is about.
+
+**What, and what not.** A program writes what its authors and its settings told it to write. Turn logging down to save disk space and the lines stop, with no warning to anyone. So a missing line means "nothing recorded this", never "this didn't happen".
+
+Some of what you find becomes an <Term id="indicator-of-compromise">indicator of compromise</Term>: a concrete clue other teams can check their own computers for, like an address that keeps coming back, or the name of an account nobody remembers creating.
+
+## See it
+
+This practice computer keeps two diaries. Have a look at the shelf before you open either one.
+
+<MiniTerminal
+  scenario="range-logs"
+  commands={[
+    "logview",
+    "logview /var/log/syslog",
+    "logview /var/log/auth.log",
+    "logview /var/log/auth.log --grep Failed",
+  ]}
+  task="Type `logview` on its own to see which logs this computer keeps."
+  expect="logview"
+  success="That's the shelf: `auth.log`, the sign-in service's diary, and `syslog`, where everything else writes. Open them both and notice how little they overlap."
+/>
+
+Read `syslog` and you get a scheduled job finishing and a disk filling up: a quiet morning. Read `auth.log` and you get three refused passwords for `admin` at 02:14. Same computer, same night, two different stories, and you need both to know which one to worry about.
+
+Every option `logview` takes is on its [manual page](/learn/commands#logview), [Reading logs](/learn/linux-logs) goes through a single line word by word, and [Don't change what you're looking at](/learn/forensics-evidence-care) covers how to handle a log you may need to rely on later.
+
+## In practice
+
+In [Reading the machine](/missions/linux-01), Idris reads the bakery's order database log while you're still going through its files. He finds a sign-in that used the password you found, from an address on the customer wifi. One line, in a diary nobody had opened in months, turns a tidy-up into an investigation.
+
+<TryIt mission="linux-01" />
+
+## Common misconceptions
+
+- **"There's a log of everything."** There's a log of everything somebody set up a log for. Plenty of programs write nothing at all, and plenty of settings quietly reduce what gets written.
+- **"The events that matter are the ones marked WARN or ERROR."** Those words are the writing program's opinion, formed long before your investigation. The sign-in that cost a bakery a weekend was marked INFO, because from the sign-in service's point of view it worked perfectly.
+- **"One log tells the story."** One log tells one program's side of it. The story lives in the gaps between diaries, which is why the next thing you learn is how to line them up.
+- **"Deleting the log deletes the evidence."** A missing file, or a gap in one, is a finding all by itself. Teams also copy logs to a separate computer as they're written, so that deleting the original changes nothing.
+- **"Logs are only read after an attack."** Most log reading is unglamorous: why is this slow, where did that print job go. The habit is what makes the 2 a.m. lines recognisable when they turn up.

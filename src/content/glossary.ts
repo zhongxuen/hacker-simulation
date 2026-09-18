@@ -221,7 +221,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     topic: "foundations",
     short: "Proving who you are to a computer, usually with a password.",
     long: 'Logging in is authentication. It answers the question "who are you?". What you\'re allowed to do afterwards is a separate question, called authorization. Adding a second kind of proof, like a code on your phone, makes authentication much stronger.',
-    relatedTerms: ["password", "two-factor-authentication", "authorization"],
+    relatedTerms: ["password", "credentials", "multi-factor-authentication", "authorization"],
     relatedLessons: ["web-cookies-sessions", "web-owasp-top-10"],
   },
   {
@@ -881,7 +881,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     everyday: true,
     short: "A secret word or phrase that proves an account is yours.",
     long: "Long passwords beat clever ones: a phrase of four random words is far harder to guess than `P@ssw0rd!`. Websites shouldn't store your password itself, only a hash of it.",
-    relatedTerms: ["hash", "authentication", "brute-force-attack"],
+    relatedTerms: ["hash", "authentication", "password-manager", "passphrase"],
   },
   {
     id: "encryption",
@@ -890,7 +890,13 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short:
       "Scrambling information so only someone with the right secret can unscramble and read it.",
     long: "Encryption turns plaintext into ciphertext using a key. Unscrambling it with the key is called decryption. Unlike a hash, encryption is meant to be reversed, by the right person.",
-    relatedTerms: ["encryption-key", "plaintext", "ciphertext", "hash"],
+    relatedTerms: [
+      "encryption-key",
+      "plaintext",
+      "ciphertext",
+      "decryption",
+      "symmetric-encryption",
+    ],
   },
   {
     id: "encryption-key",
@@ -925,7 +931,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short:
       "A fixed-length fingerprint made from any piece of data, which can't be turned back into the original, only matched by guessing.",
     long: "The same input always gives the same hash, and changing one letter changes the whole thing. Websites store password hashes instead of passwords: when you log in, they hash what you typed and compare. The simulated `hashid` command guesses which kind of hash you're looking at from its shape.",
-    relatedTerms: ["salt", "password-cracking", "integrity", "password"],
+    relatedTerms: ["salt", "password-cracking", "integrity", "checksum", "collision"],
   },
   {
     id: "salt",
@@ -934,7 +940,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short:
       "A random extra value mixed into a password before it's fingerprinted, so two identical passwords look different when stored.",
     long: "Without salt, everyone with the password `sunshine` has the same hash, and one lucky guess reveals them all. With salt, each has to be guessed separately. The salt isn't secret: it's stored right next to the hash.",
-    relatedTerms: ["hash", "password-cracking"],
+    relatedTerms: ["hash", "password-cracking", "rainbow-table", "key-stretching"],
   },
   {
     id: "brute-force-attack",
@@ -961,9 +967,131 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short:
       "Working out a password from its stored fingerprint by guessing again and again until one matches.",
     long: "Cracking doesn't reverse a hash. It hashes guess after guess and compares. Salt and slow hash methods make each guess cost more. Missions only ever crack made-up hashes in the simulation.",
-    relatedTerms: ["hash", "salt", "brute-force-attack", "dictionary-attack"],
+    relatedTerms: ["hash", "salt", "rainbow-table", "key-stretching"],
   },
 
+  {
+    id: "collision",
+    term: "Collision",
+    topic: "crypto",
+    short:
+      "When two different pieces of information end up with the exact same fingerprint, which a good fingerprint method makes far too hard to arrange.",
+    long: "A fingerprint is much shorter than what it was made from, so collisions have to exist somewhere. What matters is whether anyone can produce one on demand. Older methods such as MD5 turned out to allow that, which is why they're retired for anything that has to be trusted.",
+    relatedTerms: ["hash", "checksum", "integrity"],
+  },
+  {
+    id: "checksum",
+    term: "Checksum",
+    topic: "crypto",
+    short:
+      "A short fingerprint published next to a download so you can check that what arrived is exactly what was sent.",
+    long: "You work out the fingerprint of the file you received and compare it to the published one. If a single byte changed on the way, or someone swapped the file for their own, the two won't match. It's the same idea as a hash, used to prove nothing changed rather than to keep a secret.",
+    relatedTerms: ["hash", "collision", "integrity", "digital-evidence"],
+    relatedLessons: ["sec-cia-triad"],
+  },
+  {
+    id: "decryption",
+    term: "Decryption",
+    topic: "crypto",
+    short: "Turning scrambled information back into its readable form with the right secret.",
+    long: "Decryption is encryption run backwards, and it only works for whoever holds the key. This is the difference people trip over: if information can't be turned back at all, by anyone, it was hashed rather than encrypted.",
+    relatedTerms: ["encryption", "encryption-key", "ciphertext", "plaintext"],
+  },
+  {
+    id: "symmetric-encryption",
+    term: "Symmetric encryption",
+    topic: "crypto",
+    short:
+      "Scrambling where the same secret both locks and unlocks the information, like one key for one door.",
+    long: "It's quick, and it suits anything where the same person or machine does both halves, such as an encrypted backup you'll open yourself later. The hard part is handing that shared secret to someone else without anyone in between seeing it.",
+    relatedTerms: ["asymmetric-encryption", "encryption", "encryption-key"],
+  },
+  {
+    id: "asymmetric-encryption",
+    term: "Asymmetric encryption",
+    aka: ["public-key encryption"],
+    topic: "crypto",
+    short:
+      "Scrambling with a pair of matching secrets, where anything locked with one of them can only be unlocked with the other.",
+    long: "One of the pair is handed out to anyone who wants it, and the other never leaves its owner. That's how your browser can agree on a secret with a website it has never met, and how `ssh` lets you log in without sending a password anywhere.",
+    relatedTerms: ["symmetric-encryption", "public-key", "private-key", "https"],
+    relatedLessons: ["web-http"],
+  },
+  {
+    id: "public-key",
+    term: "Public key",
+    topic: "crypto",
+    short:
+      "The half of a matching pair of secrets that you hand out freely, so anyone can lock a message that only you can open.",
+    long: "Publishing it gives nothing away: knowing the public half doesn't tell anyone the private half. Servers hand theirs to every visitor, and you copy yours onto a machine you want to log in to with `ssh`.",
+    relatedTerms: ["private-key", "asymmetric-encryption", "encryption-key", "ssh"],
+  },
+  {
+    id: "private-key",
+    term: "Private key",
+    topic: "crypto",
+    short:
+      "The half of a matching pair of secrets that never leaves your machine, and that opens whatever the public half locked.",
+    long: "Anyone who copies it can pretend to be you, so it's kept in a file only your own account may read, usually with a passphrase on top. Finding one lying about with loose permissions is a serious finding in a security test.",
+    relatedTerms: ["public-key", "asymmetric-encryption", "encryption-key", "permissions"],
+    relatedLessons: ["linux-permissions"],
+  },
+  {
+    id: "rainbow-table",
+    term: "Rainbow table",
+    topic: "crypto",
+    short:
+      "A huge prepared list of common passwords next to their fingerprints, so a stolen fingerprint can be looked up instead of guessed.",
+    long: "Looking something up takes no time at all, which is what made these tables worth building. Salt is the answer: a random extra value per password means every stored fingerprint was made differently, and a prepared list matches none of them.",
+    relatedTerms: ["salt", "hash", "password-cracking", "dictionary-attack"],
+  },
+  {
+    id: "key-stretching",
+    term: "Key stretching",
+    aka: ["slow hashing"],
+    topic: "crypto",
+    short:
+      "Deliberately making each password check take a moment, so that working through billions of guesses stops being worth anyone's time.",
+    long: "Methods built for passwords, such as bcrypt and Argon2, repeat their work thousands of times over. A tenth of a second costs you nothing when you log in once a day, and it turns an afternoon of guessing into years.",
+    relatedTerms: ["hash", "salt", "password-cracking", "brute-force-attack"],
+  },
+  {
+    id: "credentials",
+    term: "Credentials",
+    topic: "crypto",
+    short:
+      "The pieces of information an account uses to prove who it is, such as a name and a password together.",
+    long: "They can also be a key file, a one-time code, or a long string an app uses instead of a person. Credentials left in a script, a settings file or a note on a shared drive are one of the most common findings in a real security test, which is why missions leave a few where you can find them.",
+    relatedTerms: ["password", "authentication", "user-account", "credential-stuffing"],
+    relatedLessons: ["linux-filesystem"],
+  },
+  {
+    id: "credential-stuffing",
+    term: "Credential stuffing",
+    topic: "crypto",
+    short:
+      "Taking names and passwords leaked from one website and trying them on many others, counting on people having reused them.",
+    long: "It needs no skill and it works often enough to be worth doing at scale, which is why a leaked list stays useful for years. A different password per site, kept in a password manager, takes the whole attack away.",
+    relatedTerms: ["data-breach", "password-manager", "multi-factor-authentication", "password"],
+  },
+  {
+    id: "password-manager",
+    term: "Password manager",
+    topic: "crypto",
+    short:
+      "An app that makes up a different long password for every site and remembers them all for you.",
+    long: "One passphrase unlocks it, and it fills the rest in. It also tells you which of your passwords are reused or turned up in a leak, and because it checks the address before filling anything in, it won't hand your password to a lookalike site.",
+    relatedTerms: ["passphrase", "password", "credential-stuffing", "phishing"],
+  },
+  {
+    id: "passphrase",
+    term: "Passphrase",
+    topic: "crypto",
+    short:
+      "A secret made of several random words, which is far harder to guess than a short jumble of symbols and much quicker to type.",
+    long: "Length is what makes guessing slow, and four random words give you length you can picture. Pick the words at random rather than writing a sentence, and don't use a famous line or a song lyric: guessing lists have those in them too.",
+    relatedTerms: ["password", "password-manager", "dictionary-attack", "brute-force-attack"],
+  },
   // Forensics: finding out what happened after the fact.
   {
     id: "digital-forensics",
@@ -981,7 +1109,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short:
       "Files, records and traces that show what happened on a computer, kept unchanged so they can be trusted.",
     long: "Investigators work on copies and record a hash of the original, so they can prove later that nothing was altered. Evidence that might have been changed can't be relied on.",
-    relatedTerms: ["chain-of-custody", "hash", "digital-forensics"],
+    relatedTerms: ["chain-of-custody", "forensic-image", "volatile-data", "digital-forensics"],
   },
   {
     id: "timestamp",
@@ -990,7 +1118,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short:
       "The date and time recorded next to an event, like when a file was changed or someone logged in.",
     long: "Timestamps let you line up events from different places. Watch the time zone: one log in local time and another in UTC can make events look hours apart.",
-    relatedTerms: ["timeline", "log-file", "metadata"],
+    relatedTerms: ["timeline", "log-file", "coordinated-universal-time", "clock-drift"],
     relatedLessons: ["linux-logs"],
   },
   {
@@ -999,7 +1127,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     topic: "forensics",
     short: "Events from different places put in time order, to show the story of what happened.",
     long: "A login from an unusual place at 02:14, a new file at 02:16, a spike in outgoing traffic at 02:20: on their own they're odd, and in order they tell a story.",
-    relatedTerms: ["timestamp", "digital-forensics", "security-incident"],
+    relatedTerms: ["timestamp", "clock-drift", "digital-forensics", "security-incident"],
   },
   {
     id: "indicator-of-compromise",
@@ -1029,6 +1157,66 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     relatedTerms: ["timestamp", "digital-evidence"],
   },
 
+  {
+    id: "log-entry",
+    term: "Log entry",
+    aka: ["log line"],
+    topic: "forensics",
+    short: "One line in a computer's diary, recording a single thing that happened and when.",
+    long: "A typical entry holds a time, the program that wrote it, and a short message: `Failed password for admin from 10.0.4.19`. On its own it means little. Next to the forty entries around it, it starts to mean something.",
+    relatedTerms: ["log-file", "timestamp", "timeline"],
+    relatedLessons: ["linux-logs"],
+  },
+  {
+    id: "log-rotation",
+    term: "Log rotation",
+    topic: "forensics",
+    short:
+      "The routine that starts a fresh diary every so often and throws the oldest one away, so records never fill the disk.",
+    long: "Rotation is why an investigation can hit a wall: if records are kept for seven days and the break-in was three weeks ago, there's nothing left to read. Deciding how long to keep them is a choice worth making before anything goes wrong, not after.",
+    relatedTerms: ["log-file", "digital-evidence", "digital-forensics"],
+    relatedLessons: ["linux-logs"],
+  },
+  {
+    id: "coordinated-universal-time",
+    term: "Coordinated universal time",
+    aka: ["UTC"],
+    topic: "forensics",
+    short:
+      "One world clock that computers record times against, so a record written in one country lines up with a record written in another.",
+    long: "Most servers keep their own records in it and convert only when showing you something. Put everything in one zone before you build a timeline: two records four hours apart may have been written at the same moment.",
+    relatedTerms: ["timestamp", "timeline", "clock-drift"],
+    relatedLessons: ["linux-logs"],
+  },
+  {
+    id: "clock-drift",
+    term: "Clock drift",
+    topic: "forensics",
+    short:
+      "The slow slide of one computer's time away from another's, until their records no longer line up.",
+    long: "A machine running four minutes fast puts its events four minutes early, which can make an effect look like it came before its cause. Machines are kept in step by checking against a shared time source, and an investigator checks the clocks before trusting the order of anything.",
+    relatedTerms: ["timestamp", "timeline", "coordinated-universal-time"],
+  },
+  {
+    id: "forensic-image",
+    term: "Forensic image",
+    aka: ["disk image"],
+    topic: "forensics",
+    short:
+      "An exact copy of everything on a drive, made so investigators can work on the copy and leave the original untouched.",
+    long: "The copy is fingerprinted with a hash so anyone can prove later that it matches, and the original is locked away. Working on the original changes timestamps and can destroy the very thing you were trying to show.",
+    relatedTerms: ["digital-evidence", "chain-of-custody", "hash", "volatile-data"],
+  },
+  {
+    id: "volatile-data",
+    term: "Volatile data",
+    topic: "forensics",
+    short:
+      "Information that disappears the moment a computer is switched off, such as what was running in its memory.",
+    long: "Which programs were running, which connections were open, what was typed a minute ago: often none of it is written down anywhere. Investigators collect the things that vanish first, then the things that will still be there tomorrow.",
+    relatedTerms: ["digital-evidence", "forensic-image", "process", "digital-forensics"],
+    relatedLessons: ["linux-processes"],
+  },
   // Defending: spotting attacks early and keeping systems safe.
   {
     id: "blue-team",
@@ -1063,7 +1251,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short:
       "Something that harms, or might harm, the safety of a system or its information, like a break-in or a leak.",
     long: "Not every alert is an incident: most turn out to be harmless. Once a team decides something is an incident, incident response begins.",
-    relatedTerms: ["incident-response", "alert", "timeline"],
+    relatedTerms: ["incident-response", "data-breach", "alert", "timeline"],
   },
   {
     id: "incident-response",
@@ -1072,7 +1260,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short:
       "The plan and the work of dealing with an attack: stopping it, cleaning up, and learning from it.",
     long: "The usual steps are: prepare, spot it, contain it, remove it, recover, and review what happened. Teams practise before anything goes wrong, so nobody's making it up under pressure.",
-    relatedTerms: ["security-incident", "digital-forensics", "blue-team"],
+    relatedTerms: ["security-incident", "containment", "eradication", "post-incident-review"],
   },
   {
     id: "alert",
@@ -1080,7 +1268,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     topic: "blue-team",
     short: "A warning a security tool raises when it sees something that looks suspicious.",
     long: "Too many false alarms and people stop paying attention, so tuning alerts is a real skill. A good alert says what happened, where, and why it might matter.",
-    relatedTerms: ["intrusion-detection-system", "security-operations-centre", "log-file"],
+    relatedTerms: ["triage", "false-positive", "alert-fatigue", "security-operations-centre"],
   },
   {
     id: "intrusion-detection-system",
@@ -1090,7 +1278,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short:
       "Software that watches computers or the messages between them and raises the alarm when something looks like an attack.",
     long: "Some look for known patterns, like a fingerprint of a known attack. Others learn what normal looks like and flag anything unusual. Either way, a person still decides what the alert means.",
-    relatedTerms: ["alert", "firewall"],
+    relatedTerms: ["alert", "baseline", "false-negative", "firewall"],
   },
   {
     id: "patch",
@@ -1108,7 +1296,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     short:
       "Making a system harder to attack by switching off what isn't needed and tightening its settings.",
     long: "Closing unused ports, removing old accounts, changing default passwords and applying patches are all hardening. Each one shrinks the attack surface.",
-    relatedTerms: ["attack-surface", "patch", "least-privilege"],
+    relatedTerms: ["attack-surface", "patch", "default-password", "baseline"],
   },
   {
     id: "asset-inventory",
@@ -1126,7 +1314,7 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     topic: "blue-team",
     short: "Logging in with two kinds of proof, such as a password plus a code on your phone.",
     long: "Even if someone steals your password, they still need the second factor. It stops most account break-ins, which is why security teams push everyone to turn it on.",
-    relatedTerms: ["authentication", "password", "phishing"],
+    relatedTerms: ["multi-factor-authentication", "authentication-factor", "one-time-code"],
     relatedLessons: ["sec-defence-in-depth", "web-cookies-sessions"],
   },
   {
@@ -1147,6 +1335,164 @@ const ENTRIES: readonly GlossaryEntryInput[] = [
     long: "Ransomware usually gets in through phishing or an unpatched weakness, then spreads across the network. Good backups, patching and network segmentation limit the damage.",
     relatedTerms: ["malware", "backup", "availability", "network-segmentation"],
     relatedLessons: ["sec-cia-triad"],
+  },
+  {
+    id: "triage",
+    term: "Triage",
+    topic: "blue-team",
+    short:
+      "Sorting a pile of warnings by how urgent each one looks, so the worst of them gets attention first.",
+    long: "The word comes from hospitals. An analyst triaging asks three questions of each one: is it real, does it matter here, and does someone need to act now. This is most of what a first job in defending looks like, and it's a skill in its own right.",
+    relatedTerms: ["alert", "false-positive", "severity", "security-operations-centre"],
+  },
+  {
+    id: "false-positive",
+    term: "False positive",
+    topic: "blue-team",
+    short: "A warning about something that turns out to be harmless.",
+    long: "A backup job reading thousands of files at 3am looks a lot like someone copying everything. Most warnings are false positives, and tuning the tool so the harmless ones stop arriving is how a team stays sharp for the real ones.",
+    relatedTerms: ["true-positive", "false-negative", "alert", "triage", "alert-fatigue"],
+  },
+  {
+    id: "true-positive",
+    term: "True positive",
+    topic: "blue-team",
+    short: "A warning about something that turns out to be real.",
+    long: "Every one is a small win for whoever set the tool up. Teams count them next to the harmless ones, because a rule that has never once been right is costing attention it doesn't earn.",
+    relatedTerms: ["false-positive", "alert", "security-incident"],
+  },
+  {
+    id: "false-negative",
+    term: "False negative",
+    topic: "blue-team",
+    short: "Something harmful that happened without any warning being raised at all.",
+    long: "This is the quiet one. You don't find these in today's warnings; you find them weeks later, in a review or in a phone call from somebody else. Several different tools, watching in different ways, means one of them missing something isn't the end of the story.",
+    relatedTerms: ["false-positive", "alert", "defence-in-depth", "intrusion-detection-system"],
+    relatedLessons: ["sec-defence-in-depth"],
+  },
+  {
+    id: "alert-fatigue",
+    term: "Alert fatigue",
+    topic: "blue-team",
+    short: "What happens to people who get so many warnings that they stop reading them properly.",
+    long: "Serious break-ins have happened with the warning sitting unread in a queue of thousands. Cutting the noise down is security work in its own right, not tidying up, and it's why a team will happily switch off a rule that cries wolf.",
+    relatedTerms: ["alert", "false-positive", "triage"],
+  },
+  {
+    id: "baseline",
+    term: "Baseline",
+    topic: "blue-team",
+    short:
+      "A picture of what normal looks like for a set of computers, so anything unusual stands out against it.",
+    long: "If you know a machine talks to two others and nothing else, a third connection is worth a look. Teams write the baseline down while things are calm, which is the quiet work that makes later warnings mean anything.",
+    relatedTerms: ["alert", "intrusion-detection-system", "asset-inventory", "hardening"],
+    relatedLessons: ["net-segmentation"],
+  },
+  {
+    id: "severity",
+    term: "Severity",
+    topic: "blue-team",
+    short:
+      "How much harm something could do, written as a level so that people can agree what to deal with first.",
+    long: "Levels usually run from low to critical. Severity isn't the same as urgency: a critical weak spot on a machine that's switched off can wait, while a middling one on a public website can't.",
+    relatedTerms: ["triage", "alert", "risk", "vulnerability"],
+    relatedLessons: ["sec-threat-modelling"],
+  },
+  {
+    id: "data-breach",
+    term: "Data breach",
+    topic: "blue-team",
+    short:
+      "An event where information someone was trusted to look after ends up in the hands of people who shouldn't have it.",
+    long: "The details decide how bad it is. A stolen table of salted, slowly-hashed passwords is a bad week; a stolen table of plaintext passwords is a disaster for every other site where those people reused them.",
+    relatedTerms: [
+      "security-incident",
+      "confidentiality",
+      "credential-stuffing",
+      "incident-response",
+    ],
+    relatedLessons: ["sec-cia-triad"],
+  },
+  {
+    id: "containment",
+    term: "Containment",
+    topic: "blue-team",
+    short: "Stopping trouble from spreading while you work out what to do about it.",
+    long: "Pulling a machine off the network, switching off an account or blocking an address buys the team time to think. It comes before cleaning up, and it's worth agreeing in advance who is allowed to unplug what in a hurry.",
+    relatedTerms: ["incident-response", "eradication", "security-incident", "network-segmentation"],
+    relatedLessons: ["net-segmentation"],
+  },
+  {
+    id: "eradication",
+    term: "Eradication",
+    topic: "blue-team",
+    short:
+      "Removing whatever caused the trouble, so it can't start up again the moment things are back to normal.",
+    long: "That means the harmful program and the way in: the unpatched weak spot, the stolen password, the old account nobody had removed. Recovering without this step is how an organisation gets hit twice in the same month.",
+    relatedTerms: ["incident-response", "containment", "malware", "patch"],
+  },
+  {
+    id: "post-incident-review",
+    term: "Post-incident review",
+    aka: ["lessons learned"],
+    topic: "blue-team",
+    short: "A calm meeting once the trouble is over, to work out what happened and what to change.",
+    long: "The useful ones ask what made the mistake possible rather than who made it, because people who expect blame stop speaking up early, and speaking up early is worth more than anything said in the meeting. The output is a short list of changes with names and dates on them.",
+    relatedTerms: ["incident-response", "security-incident", "blue-team", "timeline"],
+  },
+  {
+    id: "default-password",
+    term: "Default password",
+    topic: "blue-team",
+    short:
+      "The password a device or program comes with out of the box, printed in a manual that anyone can look up.",
+    long: "Lists of them are published for thousands of products. A printer, a camera or a router still on the one it shipped with is among the most common ways into a network, and changing it costs a minute.",
+    relatedTerms: ["hardening", "password", "attack-surface", "router"],
+    relatedLessons: ["sec-defence-in-depth"],
+  },
+  {
+    id: "multi-factor-authentication",
+    term: "Multi-factor authentication",
+    aka: ["MFA"],
+    topic: "blue-team",
+    short:
+      "Logging in with proof of two or more different kinds, so one stolen secret isn't enough.",
+    long: "Two-factor authentication is the everyday version: a password plus a code. Multi-factor is the same idea without fixing the number, which matters where a workplace asks for a third step on its most sensitive systems. It stops nearly every attack that starts with a leaked password.",
+    relatedTerms: [
+      "two-factor-authentication",
+      "authentication-factor",
+      "one-time-code",
+      "authentication",
+    ],
+    relatedLessons: ["sec-defence-in-depth"],
+  },
+  {
+    id: "authentication-factor",
+    term: "Authentication factor",
+    topic: "blue-team",
+    short:
+      "One of the three kinds of proof a login can ask for: something you know, something you have, or something you are.",
+    long: "A password is something you know. A phone or a small key you plug in is something you have. A fingerprint is something you are. Two steps of the same kind, like a password and a security question, aren't two factors: whoever gets one is well placed to get the other.",
+    relatedTerms: [
+      "multi-factor-authentication",
+      "two-factor-authentication",
+      "authentication",
+      "password",
+    ],
+  },
+  {
+    id: "one-time-code",
+    term: "One-time code",
+    topic: "blue-team",
+    short:
+      "A short number that works once and then stops, sent to your phone or worked out by an app when you log in.",
+    long: "Codes made by an app on your own device are safer than codes sent by text message, which can be redirected to someone else's phone. Anyone who rings you up and asks you to read one out is running a scam, without exception.",
+    relatedTerms: [
+      "two-factor-authentication",
+      "multi-factor-authentication",
+      "phishing",
+      "social-engineering",
+    ],
   },
 ];
 

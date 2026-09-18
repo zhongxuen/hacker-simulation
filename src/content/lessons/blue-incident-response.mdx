@@ -1,0 +1,147 @@
+---
+id: blue-incident-response
+title: What to do when something goes wrong
+topic: blue-team
+level: 1
+readingMinutes: 5
+analogy: "A fire drill. Nobody works out where the exits are while the building is filling with smoke: they worked it out on a quiet Tuesday, and wrote it on a card by the door."
+summary: The four steps of handling a security incident, written for an organisation with no security team and no spare afternoon.
+prerequisites: [sec-defence-in-depth]
+relatedMissions: [linux-01]
+relatedCommands: [logview, grep, ps, ifconfig]
+glossaryTerms:
+  [incident-response, security-incident, containment, eradication, post-incident-review]
+---
+
+## The one-sentence version
+
+<Term id="incident-response">Incident response</Term> is the agreed set of steps a team follows when
+something has gone wrong, decided in advance so that nobody is inventing it at 3 in the morning.
+
+A <Term id="security-incident">security incident</Term> is anything that harms, or might harm, the safety of a system or the information in it. Most organisations in these missions have four or five staff and no security team at all, so their plan fits on one card:
+
+<Annotated
+  title="/home/roz/when-something-goes-wrong.txt"
+  code={`WHEN SOMETHING GOES WRONG - Tumbleloaf Bakery
+1. Write down the time and what you saw. Take a photo of the screen.
+2. Unplug the network cable. Leave the machine switched on.
+3. Ring Theo at Candlewright: 555 0142. Then ring the bank if money is involved.
+4. Nobody deletes anything, tidies anything, or reinstalls anything until Theo says so.
+You will not be in trouble for ringing about something that turns out to be nothing.`}
+  notes={[
+    {
+      line: 2,
+      label: "Step one is a note, not an action",
+      text: "Memory of a stressful morning is unreliable, and the time somebody first saw something is the anchor for every timeline built later. A photo of the screen takes four seconds and survives a restart.",
+    },
+    {
+      line: 3,
+      label: "Stop it spreading without switching off",
+      text: "The cable cuts off whoever is in there. Leaving the power on keeps what's in memory, which is where the most useful answers often live.",
+    },
+    {
+      line: 5,
+      label: "The instruction nobody expects",
+      text: "The helpful reflex is to clean up. Cleaning up removes how they got in, and the way in is the one thing the whole exercise is trying to find.",
+    },
+    {
+      line: 6,
+      label: "The line that makes it work",
+      text: "A plan people are afraid to use is not a plan. Most calls turn out to be nothing, and a team that says thank you for those still hears about the one that isn't.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+The damage from an incident is decided in the first hour, and almost all of it by people who aren't security specialists: whoever noticed, and whoever they told.
+
+Two organisations get the same break-in. One has a card by the till and loses a morning. The other has four people trying to be helpful in different directions: one reinstalls the machine, one changes every password, one says nothing because they think they caused it. A week later nobody can say what happened, so nobody can say whether it's over.
+
+<Quiz
+  question="A bakery's order machine is behaving oddly and a member of staff has already restarted it twice. What's the most useful thing to do next?"
+  options={[
+    {
+      text: "Write down everything anyone has done to it so far, with times, before doing anything else",
+      correct: true,
+      explanation:
+        "You can't undo the restarts, and they're workable so long as somebody knows they happened. Undocumented changes are what make a timeline collapse later: an investigator who doesn't know about the restarts spends a day explaining them as the intruder's work.",
+    },
+    {
+      text: "Restart it once more, properly, to see whether the problem is consistent",
+      explanation:
+        "Each restart clears what was in memory and starts scheduled clean-up jobs. Reproducing a problem is good instinct in most of computing and costs evidence here.",
+    },
+    {
+      text: "Reinstall the machine from scratch, since it can't be trusted now",
+      explanation:
+        "That's a sound last step and a poor first one. Reinstalling removes how they got in, so the same door is open on the replacement, often within days.",
+    },
+    {
+      text: "Change every password in the organisation immediately",
+      explanation:
+        "Worth doing, but not before you know whether the intruder is still connected, or which account was used. Changing passwords first can tip them off and lock you out of seeing what they were doing.",
+    },
+  ]}
+/>
+
+## How it actually works
+
+Four steps, in this order. The order is the part people get wrong.
+
+### 1. Work out what's actually happening
+
+Confirm it's real before the fire drill starts. Read the logs, look at what's running, check whether the strange connection is a backup job that's run every night for two years. Write down the time you started and what you saw. This step ends with one sentence: _something is wrong, here, and it looks like this._
+
+### 2. Stop it spreading
+
+<Term id="containment">Containment</Term> buys time. Unplug the machine, switch off the account,
+block the address. It isn't a fix and doesn't pretend to be, and the questions worth settling in
+advance are: who is allowed to unplug what, and who do they ring at 3 in the morning.
+
+### 3. Get rid of it, then get working again
+
+<Term id="eradication">Eradication</Term> means removing the cause and the way in: the harmful
+program, the unpatched weak spot, the password that leaked, the old account nobody had removed. Then
+recovery, which for a small business usually means restoring from a backup and watching that machine
+more closely than usual for a fortnight. Skipping straight to recovery is how the same organisation
+gets hit twice in a month.
+
+### 4. Sit down afterwards and change one thing
+
+The <Term id="post-incident-review">post-incident review</Term> is a calm meeting once it's over. What happened, in order. What made it possible. What changes, who does it, by when. The useful version asks what made the mistake possible rather than who made it: people who expect blame stop mentioning things early, and mentioning things early is worth more than anything said in that meeting.
+
+## See it
+
+Step one is reading, and reading is the part you can practise. This practice machine's sign-in log has a night on it.
+
+<MiniTerminal
+  scenario="range-logs"
+  commands={[
+    "logview /var/log/auth.log",
+    "logview /var/log/auth.log --grep Failed",
+    "logview /var/log/syslog",
+    "sort /var/log/auth.log",
+  ]}
+  task="Run `logview /var/log/auth.log --grep Failed` to see the refused sign-ins."
+  expect="logview"
+  success="Three refused passwords for `admin` at 02:14, from one address, seconds apart. That's the sentence step one is looking for: something is wrong, here, and it looks like guessing."
+/>
+
+Notice what you haven't done: nothing has been switched off, deleted or reinstalled. You read, and now you can describe it. That's the whole of step one.
+
+## In practice
+
+[Reading the machine](/missions/linux-01) is step one in slow motion: the bakery has noticed something odd, and you and Idris work out what actually happened before anyone touches anything. The mission ends with the team writing it down for Roz in words she can act on, which is the part that decides whether any of it helps.
+
+[Telling real warnings from noise](/learn/blue-reading-alerts) covers how something reaches you in the first place, [Putting events in order](/learn/forensics-timelines) covers the timeline you'll need for step four, and `logview` has a [manual page](/learn/commands#logview).
+
+<TryIt mission="linux-01" />
+
+## Common misconceptions
+
+- **"We're too small for this."** Small organisations get broken into constantly, usually by something automated that had no idea who they were. The plan for a five-person bakery is one card, and writing it takes an afternoon once.
+- **"The first step is getting rid of the malware."** The first step is understanding. Remove the harmful program without finding the way in, and you've bought a few days.
+- **"Containment means the incident is over."** It means it stopped growing. The way in is still there until somebody closes it.
+- **"The review is where we find out whose fault it was."** A review that hunts for a person teaches everyone to stay quiet next time. The good ones change a setting, a habit or a default, and name who's doing it.
+- **"We'll know when something happens."** Most organisations find out from a customer, a bank or a stranger. That's an argument for having the card by the till, not for assuming the phone will stay quiet.

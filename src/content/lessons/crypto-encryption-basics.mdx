@@ -1,0 +1,133 @@
+---
+id: crypto-encryption-basics
+title: "Encryption, and how it differs from hashing"
+topic: crypto
+level: 2
+readingMinutes: 6
+analogy: "Encryption is a locked box with a key. Hashing is a paper shredder. Both protect what's inside, and only one of them gives it back."
+summary: Scrambling that's meant to be undone, who holds the key, and the one confusion nearly everyone arrives with.
+prerequisites: [crypto-hashing]
+relatedMissions: [net-01]
+relatedCommands: [webprobe]
+glossaryTerms: [encryption, encryption-key, ciphertext, plaintext, hash, https]
+---
+
+## The one-sentence version
+
+<Term id="encryption">Encryption</Term> scrambles information so that only someone with the right
+secret can unscramble it — and unscrambling is the *point*, not a flaw.
+
+A locked box and a paper shredder both keep a letter away from a stranger. The box gives the letter back to whoever has the key. The shredder never gives anything back to anyone. Encryption is the box. Hashing is the shredder.
+
+Nearly everyone mixes these two up on the way in, so let's sort it now:
+
+<Quiz
+  question="A company wants to protect the customer phone numbers in its database, and staff still need to read those numbers to ring people back. Encryption or hashing?"
+  options={[
+    {
+      text: "Hashing, because it can't be reversed",
+      explanation:
+        "That unreversible quality is exactly what makes it the wrong fit here. Hash the numbers and nobody can ever ring anyone back, staff included — the numbers would be gone for good.",
+    },
+    {
+      text: "Encryption, because the numbers have to come back",
+      correct: true,
+      explanation:
+        "That's the deciding question every time: does anyone need the original again? Phone numbers, yes, so encrypt them and guard the key carefully.",
+    },
+    {
+      text: "Either one — they do the same job",
+      explanation:
+        "They feel similar because both turn readable text into nonsense. What they do next is opposite: one can be undone by the key holder, the other can't be undone by anybody.",
+    },
+  ]}
+/>
+
+## Why it matters in security
+
+Choose the wrong one and you get a system that either loses data forever or protects nothing.
+
+Passwords get hashed, because nobody ever needs them back — not you, not the company. Messages, files and phone numbers get encrypted, because somebody does. A site that encrypts its passwords has quietly kept a way to read them all, and so has whoever steals the key.
+
+Encryption is also what makes the web usable. When you see the padlock, your browser and the server have agreed on a key and are scrambling everything between them, so the cafe wifi, the internet provider and anyone else along the way sees nonsense instead of your card number. That's <Term id="https">HTTPS</Term> — the protected version of the web, and one of the first things your team checks on a client's site.
+
+And it moves where the danger sits. Encrypted information is protected by its key, so the key becomes the thing worth stealing. A locked box with the key taped to the lid is a box with extra steps, and it's a finding you'll genuinely meet: a database encrypted beautifully, with the key sitting in a readable file on the same server.
+
+## How it actually works
+
+Start with the words, because they're half the battle:
+
+- <Term id="plaintext">Plaintext</Term> — the readable original. "Meet at the bakery at six."
+- <Term id="ciphertext">Ciphertext</Term> — the scrambled version. Nonsense to anyone without the
+  secret.
+- <Term id="encryption-key">Key</Term> — the secret that turns one into the other.
+
+The scrambling method itself is public. Cryptographers publish their methods so the whole world can spend years trying to break them, and a method nobody has broken after all that attention is one worth trusting. The key is what's secret. "The lock design is public, my key is not" is the entire arrangement.
+
+There are two shapes of it, and you'll hear both names:
+
+**One shared key.** The same key locks and unlocks, like a house key you cut a copy of. It's fast and it protects most of the data in the world — but both sides need that same key, and handing it over safely is a problem all of its own.
+
+**A pair of keys.** Everyone gets two keys that belong together: one published to the world, one kept private. Anything locked with the public one can only be opened with the private one. Now a stranger can send you something nobody else can read, having never met you. It's slower, so in practice it's used at the start of a conversation to agree on a shared key, and the fast kind takes over from there. That handshake is what happens in the moment before the padlock appears.
+
+<PacketDiagram
+  title="Three ways of handling one password"
+  fields={[
+    {
+      label: "Stored as plaintext",
+      value: "tea-and-toast-42",
+      size: 3,
+      note: "No protection at all. Anyone who opens the file can read it and sign in as that person. This is the finding you write up in red.",
+    },
+    {
+      label: "Encrypted",
+      value: "nonsense + a key somewhere",
+      size: 3,
+      note: "Unreadable without the key — and fully readable with it. Right for data someone needs back, wrong for passwords, because it means the password can still be read by whoever holds the key.",
+    },
+    {
+      label: "Hashed, with salt",
+      value: "a one-way fingerprint",
+      size: 3,
+      note: "Nobody gets it back, including the company. The system can still check whether you typed the right thing. This is what a password should look like at rest.",
+    },
+  ]}
+  caption="Same password, three fates. Only the third one has nothing left to steal."
+/>
+
+## See it
+
+`webprobe` is the simulated tool for looking at a website the way your browser does. On the practice shop, ask for the sign-in page and watch how the address is written.
+
+<MiniTerminal
+  scenario="range-web"
+  commands={[
+    "webprobe range-shop-01",
+    "webprobe range-shop-01 --path /login",
+    "webprobe range-shop-01 --path /admin",
+  ]}
+  task="Run `webprobe range-shop-01 --path /login` and read what comes back."
+  expect="webprobe"
+  success="You looked at a sign-in page the way your browser does — which is exactly where you'd check next whether it's protected in transit."
+/>
+
+A sign-in page that isn't protected sends the password across the network as plaintext, readable by anyone on the same wifi. "The sign-in page isn't encrypted" is a complete, useful finding on its own, and you can now explain to a client what it costs them.
+
+## In practice
+
+In [Mapping the network](/missions/net-01) you find the services running on a client's machines, and each one raises the same question: is what crosses this connection scrambled, or is it in the open? A service that sends passwords in readable text goes in the report, whatever else it does well.
+
+Keep the two habits apart and you'll rarely go wrong:
+
+- Somebody needs this back later → **encrypt it**, and then worry properly about where the key lives.
+- Nobody ever needs this back, only checked → **hash it**, salted, with a slow recipe.
+
+<TryIt mission="net-01" />
+
+## Common misconceptions
+
+- **"Encryption and hashing are two words for the same thing."** The most common mix-up there is, and understandable — both turn readable text into nonsense. Encryption is meant to be undone by the key holder. Hashing is meant never to be undone. Ask "does anyone need the original back?" and the answer picks itself.
+- **"Encrypted passwords are safer than hashed ones."** It sounds stronger, and it's weaker. Encrypted means readable to whoever has the key, and the key is usually on the same server as the data. A <Term id="hash">hash</Term> can't be read back by anyone.
+- **"A secret scrambling method is safer than a public one."** Homemade secret methods are broken with depressing regularity, usually by one curious person over a weekend. Public methods have survived thousands of experts trying for decades. Keep the key secret, not the method.
+- **"The padlock means the website is trustworthy."** It means the connection to that site is scrambled, and nothing more. A criminal's website can have a perfectly good padlock. It tells you nobody is listening in, not who you're talking to.
+- **"My data is encrypted, so a break-in can't hurt me."** Only while the key is out of reach. Encrypted files plus a readable key file on the same machine give an attacker both halves at once, and that pairing is one of the most common findings on a small client's server.

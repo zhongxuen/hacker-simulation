@@ -1,0 +1,148 @@
+---
+id: blue-hardening-basics
+title: The handful of changes that stop most of this
+topic: blue-team
+level: 1
+readingMinutes: 5
+analogy: "Locking the side door you never use, and taking the spare key out from under the mat. Neither is clever, and together they stop most of the people who try."
+summary: Six unglamorous changes that would have prevented most of the break-ins in this course, and how to work out which one to do first.
+prerequisites: [sec-defence-in-depth, sec-least-privilege]
+relatedMissions: [net-01]
+relatedCommands: [netscan, id, chmod, sudo]
+glossaryTerms:
+  [
+    hardening,
+    attack-surface,
+    asset-inventory,
+    patch,
+    default-password,
+    multi-factor-authentication,
+    backup,
+  ]
+---
+
+## The one-sentence version
+
+<Term id="hardening">Hardening</Term> is making a system harder to get into by switching off what
+nobody needs and tightening what's left.
+
+Every change on the list below does the same thing: it shrinks the <Term id="attack-surface">attack surface</Term>, which is the total of all the ways in that exist. And it starts with knowing what you have, because nothing else on the list can be done to a computer nobody remembers:
+
+<Annotated
+  title="netscan on a small practice network"
+  code={`ADDRESS        NAME                                       STATUS
+192.168.60.10  range-ws-01.range.candlewright.example     up (this computer)
+192.168.60.20  range-web-01.range.candlewright.example    up (replied in 1.7 ms)
+192.168.60.30  range-files-01.range.candlewright.example  up (replied in 1.0 ms)`}
+  notes={[
+    {
+      line: 2,
+      label: "The computer you're sitting at",
+      text: "Your own machine answers first, and it counts: it needs the same updates and the same tidying as everything else on the list.",
+    },
+    {
+      line: 3,
+      label: "Two more that answered",
+      text: "This is the start of an asset list: the machines that exist, rather than the machines somebody remembers buying. Teams scan their own networks for exactly this reason.",
+    },
+    {
+      line: 4,
+      label: "The third one is the story",
+      text: "On a real network, a machine on this list that nobody can account for is where the afternoon goes. Forgotten computers run old software and nobody updates them, because nobody knows they're there.",
+    },
+  ]}
+/>
+
+The scan checked 256 addresses and three answered. The 253 silent ones are the shape of a network with little switched on, and that's the goal: every extra machine, and every extra open door on it, is another thing somebody has to keep safe forever.
+
+That list has a name: an <Term id="asset-inventory">asset inventory</Term>. It's the least exciting item here and the one everything else depends on.
+
+## Why it matters in security
+
+Almost nothing in this course was stopped by cleverness. The break-ins your team investigates start with a password that came in the box, a program that had a fix available eleven months ago, or an account belonging to someone who left last spring.
+
+That's good news. It means the defences that work are cheap, dull and available to a bakery with no technical staff, which is not true of most of what gets sold as security.
+
+<Quiz
+  question="A five-person charity can do one thing this month. Their laptops are up to date, their staff use strong passwords, they have no backups, and their office router still has the password printed on its underside. Which one?"
+  options={[
+    {
+      text: "Change the router password",
+      correct: true,
+      explanation:
+        "Lists of the passwords devices ship with are published for thousands of products, and automated scanning finds a router on one within hours of it appearing online. It costs ten minutes and closes the way in that's most likely to be used. Backups are the next call, and they're a project rather than a coffee break.",
+    },
+    {
+      text: "Set up backups",
+      explanation:
+        "The most important thing on the list over a year, and it takes planning, money and a test restore that actually works. Do the ten-minute change that closes an open door first, then start the project.",
+    },
+    {
+      text: "Buy a security product that watches the network",
+      explanation:
+        "Something has to read what it produces, and a five-person charity has nobody to do that. A tool that nobody reads is a cost, not a defence. Close the open door first.",
+    },
+    {
+      text: "Run staff training on suspicious email",
+      explanation:
+        "Worth doing, and it doesn't help here. Their weak point is a device on the internet with a password anyone can look up, which no amount of careful reading by staff will affect.",
+    },
+  ]}
+/>
+
+## How it actually works
+
+Six changes. In rough order of how much trouble each one prevents for the effort it takes:
+
+**1. Install the fixes.** A <Term id="patch">patch</Term> is an update that closes a weak spot. Most break-ins use weaknesses that had a fix available months earlier. Turning on automatic updates is a setting, not a project.
+
+**2. Change what came in the box.** A <Term id="default-password">default password</Term> is printed in a manual anyone can download. Routers, printers, cameras and the odd database ship with one, and automated scanning finds them faster than you'd believe.
+
+**3. Add a second step to signing in.** <Term id="multi-factor-authentication">Multi-factor authentication</Term> asks for proof of two different kinds, so a stolen password on its own isn't enough. It stops nearly every attack that begins with a leaked password, which is most of them.
+
+**4. Switch off what nobody uses.** Unused services, open doors on the network, old accounts, software nobody has opened in two years. Each one is something that has to be kept up to date forever, or becomes the way in.
+
+**5. Give every account the smallest set of powers it needs.** Then a mistake or a stolen password reaches one person's work rather than everything the organisation owns.
+
+**6. Keep a <Term id="backup">backup</Term>, somewhere separate, and test restoring from it.** This is the one that turns a disaster into a bad week. A backup on the same network as what it protects gets locked up along with everything else.
+
+### Which one first
+
+Ask two questions about each thing you could do: _how likely is somebody to use this way in_, and _how much would it cost us if they did_. Something reachable from the internet with a password anyone can look up scores high on both, and gets done this week. A theoretical weakness in software the organisation doesn't run scores zero on the first, however alarming it sounds.
+
+## See it
+
+Hardening starts with looking. Find out what's actually switched on in this practice network.
+
+<MiniTerminal
+  scenario="range-network"
+  commands={[
+    "netscan 192.168.60.0/24",
+    "netscan 192.168.60.20 --ports common",
+    "netscan 192.168.60.30 --ports common",
+    "cat scope.txt",
+  ]}
+  task="Run `netscan 192.168.60.0/24` to see which computers answer, then check one with `netscan 192.168.60.20 --ports common`."
+  expect="netscan"
+  success="Three computers, and on the web server two open doors: one for remote sign-in and one for the website. Every open door is something somebody has to keep patched, so each one needs a reason to exist."
+/>
+
+That's the question hardening asks about everything it finds: _does this need to be here?_ The website's door does. The remote sign-in door might, and if only two people use it and only from the office, it can be closed to everyone else.
+
+Scanning a network is the same command a stranger would run. The difference is `scope.txt`, the letter saying which addresses your team may touch, which is the subject of [Authorization](/learn/ethics-authorization).
+
+## In practice
+
+[Mapping the network](/missions/net-01) is this lesson from the other side: you build the picture of what a client actually has, and the surprise is always the machine nobody mentioned. The mission ends with your team handing over the list and what to close, which is the moment a scan becomes hardening.
+
+[Defence in depth](/learn/sec-defence-in-depth) covers why these stack rather than compete, [Least privilege](/learn/sec-least-privilege) covers change five in detail, and `netscan` has a [manual page](/learn/commands#netscan).
+
+<TryIt mission="net-01" />
+
+## Common misconceptions
+
+- **"Hardening means buying something."** Five of the six changes above are settings somebody already has the power to change. The sixth, backups, is mostly a habit and some storage.
+- **"We patched everything last year."** Fixes come out continuously, and the gap between one being published and it being used is now days. This is a standing job, which is why the answer is to turn on automatic updates rather than to schedule an afternoon.
+- **"Nobody knows we're there."** Every address on the internet is scanned around the clock by software that has no idea what an organisation does and doesn't care. Being small and uninteresting is not a defence against something automated.
+- **"The firewall covers it."** A firewall decides who may reach which door. It has nothing to say about the door being opened with a password printed in a manual.
+- **"Turning things off will break something."** Sometimes, which is why you turn them off in a planned way and write down what you did. Every service left running because nobody was sure is a service nobody is maintaining either.

@@ -1,19 +1,35 @@
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { objectives, prompt, run, startMission } from "./helpers";
 
 /**
- * One happy path per module (md-files/00-overview-and-improvements.md, improvement #10;
- * md-files/11-testing-security-deployment.md, "Testing strategy"), each the way a first-time
- * learner would use it.
+ * One happy path per module (md-files/remaining.md, Part 2), each the way a first-time learner
+ * would use it.
  */
 
+/**
+ * How many missions the list has to show, read from the mission files rather than written down
+ * here: missions are data, so a new chapter adds YAML and this number follows it.
+ */
+const MISSION_COUNT = readdirSync(join(process.cwd(), "src", "content", "missions")).filter(
+  (name) => name.endsWith(".yaml"),
+).length;
+
 test.describe("Campaign", () => {
-  test("shows chapter 1 in order, with Start here, and every mission open", async ({ page }) => {
+  test("shows every chapter in order, with Start here, and every mission open", async ({
+    page,
+  }) => {
     await page.goto("/campaign");
     await expect(page.getByRole("heading", { level: 2, name: "First shift" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "The handover" })).toBeVisible();
     const missions = page.getByRole("list", { name: "Chapter 1 missions" }).getByRole("link");
     await expect(missions).toHaveCount(3);
     await expect(missions.first()).toContainText("Start here");
+    // Every mission is open from the start, in both chapters: a chapter is a recommendation.
+    const chapterTwo = page.getByRole("list", { name: "Chapter 2 missions" }).getByRole("link");
+    await expect(chapterTwo).toHaveCount(2);
+    await expect(chapterTwo.first()).toBeEnabled();
     await missions.nth(2).click();
     await expect(
       page.getByRole("heading", { level: 1, name: "Mapping the network" }),
@@ -25,7 +41,7 @@ test.describe("Campaign", () => {
 test.describe("Missions", () => {
   test("filters the list by skill and level", async ({ page }) => {
     await page.goto("/missions");
-    await expect(page.getByRole("main").getByRole("listitem")).toHaveCount(3);
+    await expect(page.getByRole("main").getByRole("listitem")).toHaveCount(MISSION_COUNT);
     await page
       .getByRole("group", { name: "Skill" })
       .getByRole("button", { name: "Networking" })

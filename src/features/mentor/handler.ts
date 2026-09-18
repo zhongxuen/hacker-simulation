@@ -2,7 +2,7 @@ import type { Mission } from "@/content/schemas/mission";
 import { MAX_OUTPUT_TOKENS, type MentorConfig } from "./config";
 import type { MentorModelRunner } from "./model";
 import { buildHintPrompt } from "./prompt-builder";
-import { HINT_PROMPT_VERSION } from "./prompts/hint.v1";
+import { HINT_PROMPT_VERSION } from "./prompts/hint.v2";
 import type { MentorFallbackReason } from "./protocol";
 import {
   defaultLog,

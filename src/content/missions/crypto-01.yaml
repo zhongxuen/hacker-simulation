@@ -1,0 +1,465 @@
+# Chapter 2, "The handover", episode 1 (md-files/remaining.md, Part 2). The theatre's box office was
+# opened with a password eleven volunteers shared, and there's a note signed "- HL" on the desktop.
+# The learner reads the committee's practice copy of its sign-in list, lets `hashid` name how the
+# passwords are stored, finds the one row that was stored properly, answers Kit's "let's go after
+# them" with the chapter's spine, and leaves the theatre a fix it can carry out. Nothing here turns
+# a hash back into a password, and the online ticketing company stays out of scope throughout.
+id: crypto-01
+slug: crypto-01
+version: 1
+title: Curtain call
+difficulty: medium
+estimatedMinutes: 20
+skills: [crypto, blue-team]
+prerequisites: [net-01]
+hook: "Eleven volunteers shared one box office password. So did somebody else."
+learningGoals:
+  - What a hash is, and why keeping one isn't the same as keeping the password
+  - Why a fast scrambling recipe is the last thing you want for passwords
+  - What a salt does, and which recipes are built for storing passwords
+  - Why a sign-in that eleven people share can't protect any of them
+concepts: [crypto-hashing, crypto-password-storage, auth-passwords-and-mfa, ethics-scope]
+briefing:
+  scenario: >-
+    Juniper Row Players are a community theatre run by volunteers, two streets from Tumbleloaf
+    Bakery. Last week somebody opened their box office computer with a password that wasn't theirs
+    and left a note on the desktop. Roz Kowalczyk, who owns the bakery and sits on the theatre's
+    committee, asked Candlewright Security to look at how the theatre keeps its passwords.
+  role: "You're Candlewright's newest recruit, signed in as `recruit` on the box office computer, `boxoffice-01`."
+  authorization: >-
+    Juniper Row Players asked Candlewright to examine `boxoffice-01` at `172.16.30.20`, the lighting
+    desk's status page at `172.16.30.40`, and the practice copy of the volunteer sign-in list that
+    the committee exported for this test. The online ticketing system is out of scope: it runs on
+    another company's computers, and the theatre can't give permission for machines it doesn't own.
+    Nothing in this test turns a stored password back into a password. Signed: Roz Kowalczyk,
+    committee member, Juniper Row Players, and Theo Ashgrove, team lead, Candlewright Security.
+story:
+  - on: start
+    speaker: teammate-theo
+    text: >-
+      Theo Ashgrove, I lead the team here at Candlewright. Juniper Row Players are a community
+      theatre run by volunteers, and last week somebody opened their box office computer with a
+      password that wasn't theirs. Their committee signed the letter this morning.
+  - on: start
+    speaker: mentor-noor
+    text: >-
+      Noor here, your mentor. We're not here to find out who opened it. We're here to look at how
+      the theatre keeps its passwords, and leave them keeping them better.
+  - on: { event: file.read, match: { path: /home/boxoffice/Desktop/door.txt } }
+    speaker: teammate-theo
+    text: >-
+      That's the note Idris found. Nothing broken, nothing taken, and somebody wanted the theatre to
+      know they'd been inside. That's the part I don't like.
+  - on: { objective: open-the-practice-file }
+    speaker: client-roz
+    text: >-
+      Roz Kowalczyk - I own the bakery on the corner and I'm on the theatre's committee. That list
+      is a practice copy we made for you. Those aren't the passwords, are they? They don't look like
+      words at all.
+  - on: { objective: open-the-practice-file }
+    speaker: mentor-noor
+    text: >-
+      They're not, Roz. A hash is what comes out when a computer puts a password through a one-way
+      mixer. Same password in, same scramble out, every time - and no way back. That's how a system
+      can check a password without keeping it.
+  - on: { event: hash.identified, match: { format: md5 } }
+    speaker: mentor-noor
+    text: >-
+      The shape tells you the recipe, and this recipe is fast. Fast is the problem: a mixer that
+      runs a million times a second lets somebody try a million guesses a second.
+  - on: { objective: find-the-better-one }
+    speaker: client-roz
+    text: "One of them looks nothing like the others. Is that a mistake?"
+  - on: { objective: find-the-better-one }
+    speaker: mentor-noor
+    text: >-
+      That one's deliberate. It's slow on purpose, and it has a pinch of random text mixed in - a
+      salt - so two volunteers who picked the same password don't end up with the same scramble.
+  - on: { objective: one-password-many-doors }
+    speaker: teammate-kit
+    text: >-
+      Kit Nakashima-Reyes, analyst, one year in. Eleven people, one sign-in. So when one person's
+      password goes for a walk, it isn't one person's password.
+  - on: { objective: one-password-many-doors }
+    speaker: teammate-kit
+    text: >-
+      And whoever left that note signed it. I could find the address they came from and have a look
+      at their machine. They started it.
+  - on: { objective: kits-question }
+    speaker: teammate-theo
+    text: >-
+      The law doesn't have a "they started it" clause, Kit. Getting into their computer is the same
+      crime as getting into this one. And the address on a note like that is usually a stranger's
+      home router that somebody's borrowed - you'd be breaking into a neighbour's house because
+      someone else parked outside it. We write up what we found. If the theatre wants the police,
+      that's the theatre's call.
+  - on: { objective: kits-question }
+    speaker: teammate-kit
+    text: "...Yeah. All right. I hate it, and you're right."
+  # hashid reads a file without going through `cat`, so this hangs on the format it names rather
+  # than on a file.read of /etc/shadow, which only `sudo cat` would send.
+  - on: { event: hash.identified, match: { format: yescrypt } }
+    speaker: mentor-noor
+    text: >-
+      Look at that - this computer's own accounts are stored the slow, salted way already. The thing
+      you're about to recommend is running on the machine you're sitting at.
+  - on: { event: web.probed, match: { hostId: lights-01 } }
+    speaker: teammate-kit
+    text: "The lighting desk has a web page. Act two, cue 31, house lights at 22:40. I love this job."
+  - on: { objective: recommend-fix }
+    speaker: client-roz
+    text: >-
+      So: everyone gets their own sign-in, and the computer asks for something else as well as the
+      password. I can put that to the committee on Thursday. Will they follow it?
+  - on: complete
+    speaker: teammate-theo
+    text: >-
+      Eleven sign-ins instead of one, stored properly, with a second step. Put it in three sentences
+      Roz can read out on Thursday, and we're done here.
+scenario:
+  seed: 20260924
+  startTime: "2026-03-24T10:00:00Z"
+  network:
+    subnets:
+      - { cidr: 172.16.30.0/24, name: Box office }
+    hosts:
+      - id: boxoffice-01
+        hostname: boxoffice-01.juniperrow.example
+        interfaces:
+          - { ip: 172.16.30.20, subnet: 172.16.30.0/24 }
+        os: { family: linux, name: Linux, version: "6.8" }
+        users:
+          # recruit is in the sudo group, which is what makes the bonus objective reachable.
+          # Every passwordHash here is a made-up yescrypt-shaped string, not a real hash.
+          - name: recruit
+            uid: 1000
+            groups: [sudo]
+            passwordHash: "$y$j9T$VxVRyX1eGuIflMYcs6T583$7l3Wljpyq7/XTgtw6875TZ3v7xuTK87VBnD0np4p9Im"
+          # The shared volunteer account: the whole problem in one line.
+          - name: boxoffice
+            uid: 1001
+            passwordHash: "$y$j9T$ida93t4H/rUSVc6ZN2dlL8$S/a8yefNzyRWFwJgrWqW7bImWHEtxfXWUZfvHlRuCM8"
+          - name: wren
+            uid: 1002
+            passwordHash: "$y$j9T$omjp46ycDXmZ2VMtKQbkRt$YTwTJGpuXU.G.FxfEwEUyli28VsRYDBuj8ViuQ.g1kL"
+        fs:
+          entries:
+            - path: /home/recruit/scope.txt
+              content: |
+                SCOPE LETTER - Juniper Row Players
+
+                May be examined:  boxoffice-01, the box office computer, 172.16.30.20
+                                  lights-01, the lighting desk's status page, 172.16.30.40
+                                  the practice copy of the volunteer sign-in list the
+                                  committee exported for this test, in ~/practice
+
+                Not in scope:     the online ticketing system. It runs on another
+                                  company's computers, and the theatre cannot give
+                                  permission for machines it does not own.
+                                  Ticket buyers' names, addresses and card details.
+
+                Nothing in this test is to be turned back into a password. We were
+                asked how the passwords are kept, and how to keep them better.
+
+                Signed: Roz Kowalczyk, committee member, Juniper Row Players
+                        Theo Ashgrove, team lead, Candlewright Security
+            - path: /home/recruit/from-theo.txt
+              content: |
+                What we know:
+                - Eleven volunteers share one sign-in on this computer,
+                  the account called "boxoffice".
+                - Last Tuesday it was used at 01:14, and the password
+                  worked first time.
+                - There is a note on that account's desktop.
+
+                What the committee asked for:
+                - How the theatre stores its volunteers' passwords.
+                - What it should do instead.
+
+                They put a practice copy of the sign-in list in your home
+                folder, in a folder called practice. Start there.
+
+                - Theo
+            - path: /home/recruit/practice/volunteers-export.txt
+              mtime: "2026-03-23T16:40:00Z"
+              content: |
+                # PRACTICE COPY - not live passwords. Made for this test.
+                bea:1d96a5c027e42b8b3b55e9cd94b369ce:2026-03-07
+                col:b899d7512bedfd3c3c8df0647deb877f:2026-03-05
+                dev:7446c23974b1a399cd285d2097ead788:2026-03-14
+                ffion:4a427277462f3f121d95e54e504257cb:2026-02-28
+                gus:c630de22f1130472b4d62b0466ee5a77:2026-03-11
+                hana:3329ad15e9b1ebf4e1b17d8c78b57859:2026-03-15
+                imre:4de66e52a159e2518bab18f945e7cb8e:2026-03-02
+                jo:5f237f93aa8468b0e3ce0160bbef71bf:2026-03-16
+                lex:570f08c5991524a500051ce1aa524005:2026-03-09
+                mira:de99319d20ec1f3574fe1a5022fe2fe7:2026-03-13
+                wren:$2b$12$0RgPuowfKNI/ud9HTeyieWuYRHw3UlXnBOIWZH9WhcNNv93rRqjbp:2026-03-12
+            - path: /home/recruit/practice/how-this-was-made.txt
+              content: |
+                The committee exported this list on 23 March for Candlewright
+                Security's test. Every row is a practice entry made for the
+                test: none of them is a volunteer's live stored password.
+
+                The format is name:stored-password:last-signed-in.
+
+                Ten rows came out of the sign-in book the theatre has used
+                since 2019. Wren rebuilt the treasurer's sign-in last autumn
+                and stored hers a different way.
+            # The shared account's folder is open to everyone on the machine, the way a shared
+            # account's folder usually ends up. That is what lets the learner read the note, and
+            # the prompt book if they look around.
+            - { path: /home/boxoffice, type: dir, owner: boxoffice, mode: "755" }
+            - path: /home/boxoffice/Desktop/door.txt
+              mtime: "2026-03-17T01:19:00Z"
+              content: |
+                The door was open.
+
+                We took nothing. We broke nothing.
+                Somebody should close it.
+
+                - HL
+            - path: /home/boxoffice/Desktop/ticket-totals-march.txt
+              content: |
+                Friday   118 seats sold
+                Saturday 141 seats sold, house full for the matinee
+                Sunday    96 seats sold
+
+                (Sales figures only. The ticketing company keeps the buyers'
+                details on its own computers, not on this one.)
+            - path: /home/boxoffice/promptbook/act1-notes.txt
+              mtime: "2026-01-14T19:05:00Z"
+              content: |
+                ACT ONE - prompt book, page 4
+
+                CUE 12   Lights down, house to half.
+                CUE 13   Spot on Bea, stage left.
+
+                         (box office sign-in is boxoffice / juniper2019 -
+                          don't lose it again. Wifi is juniperguest, and the
+                          spare key lives under the fire bucket by the door.)
+
+                CUE 14   Full up for the finale.
+                CUE 15   House lights, curtain call.
+            - path: /home/boxoffice/promptbook/act2-notes.txt
+              content: |
+                ACT TWO - prompt book, page 11
+
+                CUE 29   Slow fade, twelve seconds.
+                CUE 30   Doorbell effect, twice.
+                CUE 31   House lights, 22:40 on the dot.
+      - id: laptop-committee-01
+        hostname: laptop-committee-01.juniperrow.example
+        interfaces:
+          - { ip: 172.16.30.11, subnet: 172.16.30.0/24 }
+        os: { family: linux, name: Linux, version: "6.1" }
+        services:
+          - { port: 22, protocol: tcp, name: ssh, product: sshd, version: "9.6" }
+      - id: lights-01
+        hostname: lights-01.juniperrow.example
+        interfaces:
+          - { ip: 172.16.30.40, subnet: 172.16.30.0/24 }
+        os: { family: embedded, name: Lighting desk firmware, version: "3.4" }
+        services:
+          - port: 80
+            protocol: tcp
+            name: http
+            product: lightsweb
+            version: "3.4"
+            http:
+              pages:
+                "/":
+                  status: 200
+                  title: "Lighting desk"
+                  body: "<html><head><title>Lighting desk</title></head><body><h1>Juniper Row Players</h1><p>Standing by. Next cue: act two, cue 31, house lights at 22:40.</p></body></html>"
+  session: { host: boxoffice-01, user: recruit }
+  knownHosts: [lights-01]
+objectives:
+  - id: open-the-practice-file
+    description: "Read the committee's practice copy of the sign-in list, in `~/practice`"
+    why: Before you can say how the theatre keeps its passwords, you have to look at what it keeps.
+    success: >-
+      Eleven volunteers, eleven rows, and not a password in sight. What the theatre stores is a
+      scramble of each one.
+    check:
+      kind: event
+      event: file.read
+      match: { path: /home/recruit/practice/volunteers-export.txt }
+  - id: name-the-storage
+    description: "Let `hashid` name the recipe that made the scrambles in the practice file"
+    why: The recipe is what tells you how much protection the theatre's passwords actually have.
+    success: "Ten of the eleven are MD5: fast, and long since broken for security use."
+    check:
+      kind: event
+      event: hash.identified
+      match: { format: md5 }
+  - id: find-the-better-one
+    description: Type the name of the format, or of the volunteer, whose row was stored the safe way
+    why: Knowing what good looks like is how you recognise it, and how you recommend it.
+    success: "That's the one: wren's row is bcrypt, slow and salted, built for exactly this job."
+    check:
+      kind: answer
+      accept:
+        - bcrypt
+        - wren
+        - wren's
+        - wren's row
+        - the bcrypt one
+        - the bcrypt row
+        - $2b$
+        - $2b
+        - the last one
+        - the last row
+  - id: one-password-many-doors
+    description: Choose why one break-in opened the whole box office
+    why: A finding has to name the real cause, or the fix gets aimed at the wrong thing.
+    success: >-
+      Eleven people, one account, one password. The computer never knew which of them was at the
+      keyboard, and neither does anyone reading the record afterwards.
+    check:
+      kind: answer
+      accept: ["Everyone signed in as the same account, so one password was all eleven passwords."]
+      choices:
+        - text: "Everyone signed in as the same account, so one password was all eleven passwords."
+        - text: The password was too short.
+          reply:
+            speaker: mentor-noor
+            text: >-
+              Length helps, and a longer shared password is still shared. Eleven people can't keep
+              one secret between them, and the computer still can't tell which of them signed in.
+        - text: Somebody guessed it from the theatre's website.
+          reply:
+            speaker: teammate-idris
+            text: >-
+              Idris Fenwick, I look after the defensive side. They didn't guess - the sign-in worked
+              first time, on the first try. That's a password somebody already had.
+  - id: kits-question
+    description: Answer Kit - what does the team do about whoever left the note?
+    why: >-
+      Permission is what separates this job from the other one, and it holds even when the other
+      side started it.
+    success: >-
+      Write it up, hand it over, let the theatre decide. That's the answer every time, and it's the
+      reason the team gets invited back.
+    check:
+      kind: answer
+      accept:
+        ["Write it up for the theatre, and let the theatre decide whether to go to the police."]
+      choices:
+        - text: "Write it up for the theatre, and let the theatre decide whether to go to the police."
+        - text: Find the address they came from and get into their computer.
+          reply:
+            speaker: teammate-theo
+            text: >-
+              Same crime, Kit. The law doesn't have a "they started it" clause. And the address on a
+              note like this is nearly always a stranger's home router that somebody's borrowed -
+              you'd be breaking into a neighbour's house because someone else parked outside it.
+        - text: Put the note online and ask who recognises it.
+          reply:
+            speaker: teammate-idris
+            text: >-
+              Then eleven volunteers find out from the internet, and so does everybody who fancies a
+              go at the theatre next. It's the theatre's information. They tell people in their own
+              time, in their own words.
+  - id: recommend-fix
+    description: Choose what to recommend to the theatre's committee
+    why: A finding the client can't act on is a finding that changes nothing.
+    success: >-
+      One sign-in each, stored slowly and salted, and a second step. Roz can read that out on
+      Thursday, and the committee can carry it out.
+    check:
+      kind: answer
+      accept:
+        [
+          "Give every volunteer their own sign-in, store the passwords with a slow, salted method, and add a second step at sign-in.",
+        ]
+      choices:
+        - text: "Give every volunteer their own sign-in, store the passwords with a slow, salted method, and add a second step at sign-in."
+        - text: Pick a longer shared password and tell everyone the new one.
+          reply:
+            speaker: mentor-noor
+            text: >-
+              That's one secret in eleven heads again, and the computer still can't tell them apart.
+              What would let it?
+        - text: Scramble the passwords twice with the same fast method.
+          reply:
+            speaker: mentor-noor
+            text: >-
+              Two fast rounds are still fast. The point of the slow method isn't secrecy, it's time -
+              it makes guessing cost something.
+  - id: the-understudy
+    name: The Understudy
+    description: "Look at how `boxoffice-01` stores its own Linux passwords, and let `hashid` name that"
+    why: The method you're about to recommend is already running on the machine you're sitting at.
+    success: >-
+      yescrypt: slow, salted, and switched on by default. The good answer was waiting in the wings
+      the whole time.
+    optional: true
+    check:
+      kind: event
+      event: hash.identified
+      match: { format: yescrypt }
+  - id: break-a-leg
+    name: Break a Leg
+    description: Find where the box office password was actually written down
+    why: A password eleven people share doesn't stay in eleven heads. It gets written somewhere handy.
+    success: >-
+      Page four of the prompt book, between two lighting cues: the sign-in, the wifi password, and
+      where the spare key lives.
+    hidden: true
+    check:
+      kind: event
+      event: file.read
+      match: { path: /home/boxoffice/promptbook/act1-notes.txt }
+hints:
+  open-the-practice-file:
+    - The committee left a practice copy of their sign-in list in a folder of its own inside your home folder.
+    - "`ls practice` shows what's in that folder, and `cat` prints a file to the screen."
+    - "Type `cat ~/practice/volunteers-export.txt`."
+  name-the-storage:
+    - Those long strings aren't passwords. One of the tools on this machine reads the shape of a string like that and names the recipe that made it.
+    - "`hashid` names hash formats. Given `--file`, it reads a whole file and takes each line in turn."
+    - "Type `hashid --file ~/practice/volunteers-export.txt`."
+  find-the-better-one:
+    - Ten of the eleven rows look alike. One doesn't.
+    - Read what the tool said under each row. One of them is described as slow and salted, which is what you want for storing passwords.
+    - "It's the row belonging to `wren`, and the format is called bcrypt. Type either one."
+  one-password-many-doors:
+    - Eleven volunteers, eleven rows in the list - but how many accounts do they use between them?
+    - Think about what the computer sees when a volunteer signs in. Can it tell which of the eleven is at the keyboard?
+    - Pick the answer about everyone signing in as the same account.
+  kits-question:
+    - Kit wants to even the score. Think about who else could get caught up in that, and what the team has permission to touch.
+    - Nobody has given Candlewright permission to go near the machine that note came from, and a machine like that usually belongs to somebody who has no idea it's being used.
+    - Pick the answer that writes it up for the theatre and leaves the police to the theatre.
+  recommend-fix:
+    - "Two problems, not one: the passwords are kept badly, and eleven people share a sign-in."
+    - A good fix gives the computer a way to tell the volunteers apart, makes each guess cost time, and asks for something as well as the password.
+    - "Pick the answer with three parts: a sign-in each, slow salted storage, and a second step."
+  the-understudy:
+    - This computer keeps its own Linux passwords somewhere, in a file only the admin account may read.
+    - "They live in `/etc/shadow`. `sudo` runs a single command as the admin account, and `hashid` reads a whole file with `--file`."
+    - "Type `sudo hashid --file /etc/shadow`."
+debrief:
+  summary: >-
+    You read the theatre's practice list, worked out that ten of the eleven passwords were stored
+    with a fast, broken method, found the one that was stored properly, and wrote the committee a
+    fix they can carry out.
+  whatYouLearned:
+    - A hash is one-way, so a system can check a password without keeping it.
+    - Fast scrambling is the last thing you want for passwords, because guessing is fast too.
+    - A salt stops two identical passwords from looking identical, and a slow recipe makes each guess cost time.
+    - "A shared sign-in means nobody's sign-in: the computer can't tell eleven people apart."
+  ethicsNote: >-
+    The theatre exported a practice copy of its list for this test, and the file says so in its own
+    first line. `hashid` names a format and does nothing else - nothing here turns a hash back into
+    a password, and the mission never asks for one. The online ticketing system stayed out of scope
+    the whole way through, because the theatre can't give permission for another company's
+    computers. And when Kit wanted to go after whoever left the note, the answer was the one the law
+    gives: getting into their machine would be the same crime, whoever started it.
+  defensiveTakeaway: >-
+    One account per person, passwords stored with a slow salted method (bcrypt, scrypt or Argon2),
+    and a second step at sign-in. And when a password does escape, change it and look for what else
+    was left behind - which is the next episode.
+  nextTease: "Larkmere Public Library has been shut all week for new carpets. Its lending desk computer has been signing in at two in the morning anyway."
+  furtherReading: [crypto-password-storage, auth-passwords-and-mfa, ethics-unauthorized-testing]

@@ -1,12 +1,13 @@
 import type { Mission } from "@/content/schemas/mission";
 import type { HintTier } from "./protocol";
+import { renderTranscript, terminalBlock } from "./prompts/noor.v1";
 import {
-  buildSystemPrompt,
-  buildUserMessage,
+  buildHintSystemPrompt,
+  buildHintUserMessage,
   HINT_PROMPT_VERSION,
   TRANSCRIPT_CLOSE,
   TRANSCRIPT_OPEN,
-} from "./prompts/hint.v1";
+} from "./prompts/hint.v2";
 import type { MentorTranscript } from "./transcript";
 
 /**
@@ -38,27 +39,6 @@ export type BuildHintPromptResult =
   | { readonly ok: false; readonly problem: PromptProblem };
 
 /**
- * A learner could type the closing delimiter into their terminal to try to "escape" the data block.
- * Neutralise both delimiter tags anywhere in the transcript so the block can't be closed early.
- */
-function neutralizeDelimiters(text: string): string {
-  return text.replace(/<\/?\s*learner_terminal\s*>/gi, "[terminal-tag]");
-}
-
-/** The transcript rendered for the prompt: one command and its output per entry, delimiters removed. */
-function renderTranscript(transcript: MentorTranscript): string {
-  if (transcript.length === 0) {
-    return "(The learner hasn't run any commands yet.)";
-  }
-  return transcript
-    .map((entry) => {
-      const output = entry.output.trim() === "" ? "(no output)" : entry.output;
-      return `$ ${entry.input}\n${output}`;
-    })
-    .join("\n\n");
-}
-
-/**
  * Builds the prompt for `(mission, objectiveId, tier)`. Returns the authored tier text alongside, so
  * the caller has the exact string the client will fall back to. Fails (for a graceful fallback) when
  * the objective is unknown or hidden (hidden objectives ship no hints).
@@ -80,7 +60,7 @@ export function buildHintPrompt(
   const authoredTier = unlocked[tier - 1];
   if (authoredTier === undefined) return { ok: false, problem: "no_hints" };
 
-  const system = buildSystemPrompt({
+  const system = buildHintSystemPrompt({
     difficulty: mission.difficulty,
     requestedTier: tier,
     objectiveDescription: objective.description,
@@ -88,7 +68,9 @@ export function buildHintPrompt(
     authoredTiers: unlocked,
   });
 
-  const content = buildUserMessage(neutralizeDelimiters(renderTranscript(transcript)));
+  // `terminalBlock` renders the transcript into the delimited data block and neutralises every
+  // delimiter tag inside it, so a learner cannot forge a closing tag and "escape" the block.
+  const content = buildHintUserMessage(terminalBlock(renderTranscript(transcript)));
 
   return {
     ok: true,

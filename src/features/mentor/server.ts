@@ -46,12 +46,12 @@ export {
 export { buildExplainPrompt, type BuildExplainPromptResult } from "./explain-prompt";
 export { buildReviewPrompt, reviewLessonIds, type ReviewPromptBuild } from "./review-prompt";
 export {
-  buildSystemPrompt,
-  buildUserMessage,
+  buildHintSystemPrompt,
+  buildHintUserMessage,
   TRANSCRIPT_CLOSE,
   TRANSCRIPT_OPEN,
   vocabularyGuidance,
-} from "./prompts/hint.v1";
+} from "./prompts/hint.v2";
 export { EXPLAIN_PROMPT_VERSION } from "./prompts/explain.v1";
 export { REVIEW_JSON_SCHEMA, REVIEW_PROMPT_VERSION } from "./prompts/review.v1";
 export {

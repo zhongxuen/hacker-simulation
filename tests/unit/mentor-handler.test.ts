@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getMissionById } from "@/features/missions/server";
+import { getMissionById, listMissions } from "@/features/missions/server";
 import { handleHintRequest, type MentorLogEntry } from "@/features/mentor/handler";
 import type { MentorConfig } from "@/features/mentor/config";
 import type { MentorModelRunner, MentorModelStream } from "@/features/mentor/model";
-import type { MentorStreamEvent } from "@/features/mentor/protocol";
+import { authoredHint } from "@/features/mentor/client";
+import type { HintTier, MentorStreamEvent } from "@/features/mentor/protocol";
 
 /**
  * The mentor handler (md-files/10-ai-mentor.md, prompts 10.1, 10.2, 10.5). The model runner is
@@ -321,5 +322,57 @@ describe("handleHintRequest — logs no learner text", () => {
     const output = spy.mock.calls.map((call) => String(call[0])).join("\n");
     expect(output).toContain('"feature":"mentor"');
     expect(output).not.toContain(secret);
+  });
+});
+
+/**
+ * The deterministic fallback is the floor the whole mentor stands on, and hint.v2 must not have
+ * moved it: with no API key, no request reaches a model and the learner still sees the authored
+ * hint, word for word from the mission file. This walks every mission, every objective with hints
+ * and every tier, so it stays true as missions are added.
+ */
+describe("no API key: every hint is still the authored text", () => {
+  const NO_KEY: MentorConfig = {
+    hasApiKey: false,
+    apiKey: undefined,
+    disabled: false,
+    model: "test-model",
+  };
+
+  it("never calls a model and always falls back, for every mission, objective and tier", async () => {
+    const missions = listMissions();
+    expect(missions.length).toBeGreaterThan(0);
+
+    const runner = vi.fn(runnerYielding(["should not run"]));
+    let checked = 0;
+
+    for (const mission of missions) {
+      for (const objective of mission.objectives) {
+        const tiers = mission.hints[objective.id];
+        if (!tiers) continue;
+        for (let tier = 1; tier <= tiers.length; tier += 1) {
+          const response = await handleHintRequest(
+            makeRequest({
+              missionId: mission.id,
+              objectiveId: objective.id,
+              tier,
+              transcript: [{ input: "whoami", output: "recruit" }],
+            }),
+            { config: NO_KEY, getMission: getMissionById, runner, log: vi.fn() },
+          );
+
+          expect(response.headers.get("x-mentor-mode")).toBe("fallback");
+          expect(await readEvents(response)).toEqual([{ type: "fallback", reason: "disabled" }]);
+
+          // What the client shows on a fallback is the authored tier, verbatim from the YAML.
+          expect(authoredHint(mission, objective.id, tier as HintTier)).toBe(tiers[tier - 1]);
+          expect(authoredHint(mission, objective.id, tier as HintTier)).not.toBe("");
+          checked += 1;
+        }
+      }
+    }
+
+    expect(checked).toBeGreaterThan(0);
+    expect(runner).not.toHaveBeenCalled();
   });
 });

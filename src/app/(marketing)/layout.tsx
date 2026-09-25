@@ -23,6 +23,12 @@ export default function MarketingLayout({ children }: LayoutProps<"/">) {
                   What we store
                 </Link>
               </li>
+              <li>
+                {/* The sibling game: the same world, from the blue team's side. */}
+                <a href="https://forensics-simulation.vercel.app" className={FOOTER_LINK}>
+                  Candlewright: Incident Room, the blue team&apos;s cases
+                </a>
+              </li>
             </ul>
           </nav>
         </div>
